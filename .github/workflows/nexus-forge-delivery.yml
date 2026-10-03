@@ -1,0 +1,58 @@
+name: NEXUS FORGE Delivery
+
+on:
+  workflow_dispatch:
+    inputs:
+      mission_id:
+        description: 'NEXUS FORGE mission ID'
+        required: true
+        type: string
+      delivery_id:
+        description: 'NEXUS FORGE delivery ID'
+        required: true
+        type: string
+      artifact_ref:
+        description: 'Artifact or release reference to build'
+        required: false
+        type: string
+        default: 'main'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Test
+        run: npm test -- --run
+      - name: Delivery evidence
+        run: |
+          echo "NEXUS FORGE delivery checks completed."
+          echo "Commit: $GITHUB_SHA"
+          echo "Mission: ${{ inputs.mission_id }}"
+          echo "Delivery: ${{ inputs.delivery_id }}"
+          echo "Artifact ref: ${{ inputs.artifact_ref }}"
+
+  deploy-note:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Deployment gate
+        run: |
+          echo "Build/test passed. Deployment remains governed by the NEXUS FORGE approval gate."
+          echo "No deployment credential is stored in source control."

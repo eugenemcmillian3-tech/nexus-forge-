@@ -1,0 +1,43 @@
+import { paginationOptsValidator, paginationResultValidator } from "convex/server"
+import { v } from "convex/values"
+import { mutation, query } from "./_generated/server"
+
+const missionValidator = v.object({
+  _id: v.id("missions"),
+  _creationTime: v.number(),
+  title: v.string(),
+  mission: v.string(),
+  autonomy: v.string(),
+  budget: v.number(),
+  status: v.union(v.literal("draft"), v.literal("running"), v.literal("review"), v.literal("complete")),
+  completion: v.number(),
+  approved: v.boolean(),
+  ownerKey: v.string(),
+})
+
+export const list = query({
+  args: { ownerKey: v.string(), paginationOpts: paginationOptsValidator },
+  returns: paginationResultValidator(missionValidator),
+  handler: async (ctx, args) => ctx.db.query("missions").withIndex("by_owner", (q) => q.eq("ownerKey", args.ownerKey)).order("desc").paginate(args.paginationOpts),
+})
+
+export const create = mutation({
+  args: { title: v.string(), mission: v.string(), autonomy: v.string(), budget: v.number(), ownerKey: v.string() },
+  returns: v.id("missions"),
+  handler: async (ctx, args) => {
+    const mission = args.mission.trim()
+    if (!mission) throw new Error("Mission is required")
+    return ctx.db.insert("missions", { title: args.title.trim() || "Untitled Mission", mission, autonomy: args.autonomy, budget: Math.max(0, args.budget), status: "draft", completion: 0, approved: false, ownerKey: args.ownerKey })
+  },
+})
+
+export const approve = mutation({
+  args: { id: v.id("missions"), approved: v.boolean() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const mission = await ctx.db.get("missions", args.id)
+    if (!mission) throw new Error("Mission not found")
+    await ctx.db.patch("missions", args.id, { approved: args.approved, status: args.approved ? "running" : "draft" })
+    return null
+  },
+})
