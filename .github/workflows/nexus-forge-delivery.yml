@@ -47,10 +47,38 @@ jobs:
           echo "Delivery: ${{ inputs.delivery_id }}"
           echo "Artifact ref: ${{ inputs.artifact_ref }}"
 
+  report-result:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: ${{ always() && github.event_name == 'workflow_dispatch' }}
+    env:
+      CONVEX_SITE_URL: ${{ secrets.CONVEX_SITE_URL }}
+      NEXUS_FORGE_DELIVERY_SECRET: ${{ secrets.NEXUS_FORGE_DELIVERY_SECRET }}
+      DELIVERY_ID: ${{ inputs.delivery_id }}
+      MISSION_ID: ${{ inputs.mission_id }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      COMMIT_SHA: ${{ github.sha }}
+      CONCLUSION: ${{ needs.build-and-test.result }}
+    steps:
+      - name: Persist delivery result to Convex
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$CONVEX_SITE_URL" || -z "$NEXUS_FORGE_DELIVERY_SECRET" ]]; then
+            echo "Convex callback secrets are not configured; leaving CI green but not claiming backend synchronization."
+            exit 0
+          fi
+          payload=$(node -e 'console.log(JSON.stringify({deliveryId:process.env.DELIVERY_ID,conclusion:process.env.CONCLUSION,runUrl:process.env.RUN_URL,commitSha:process.env.COMMIT_SHA,summary:`Mission ${process.env.MISSION_ID}; GitHub Actions ${process.env.CONCLUSION}.`}))')
+          curl --fail-with-body --silent --show-error \
+            -X POST "$CONVEX_SITE_URL/github-actions/delivery-result" \
+            -H "Authorization: Bearer $NEXUS_FORGE_DELIVERY_SECRET" \
+            -H "Content-Type: application/json" \
+            --data "$payload"
+
   deploy-note:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.build-and-test.result == 'success' }}
     steps:
       - name: Deployment gate
         run: |
