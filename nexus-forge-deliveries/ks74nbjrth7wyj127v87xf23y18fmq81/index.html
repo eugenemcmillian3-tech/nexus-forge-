@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platform E2E Checker v2</title>
+<style>
+  :root{
+    --bg:#0f172a;
+    --panel:#1e293b;
+    --panel-light:#273449;
+    --text:#e2e8f0;
+    --muted:#94a3b8;
+    --accent:#38bdf8;
+    --yes:#22c55e;
+    --no:#ef4444;
+    --review:#f59e0b;
+    --border:#334155;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI",Roboto,Arial,sans-serif;
+    background:linear-gradient(180deg,#0b1222,#0f172a);
+    color:var(--text);
+    min-height:100vh;
+    padding:24px;
+  }
+  .app{
+    max-width:920px;
+    margin:0 auto;
+  }
+  header{
+    text-align:center;
+    margin-bottom:24px;
+  }
+  header h1{
+    margin:0 0 6px;
+    font-size:1.8rem;
+    letter-spacing:0.5px;
+  }
+  header p{
+    color:var(--muted);
+    margin:0;
+    font-size:0.95rem;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.35);
+  }
+  .card h2{
+    margin-top:0;
+    font-size:1.1rem;
+    border-bottom:1px solid var(--border);
+    padding-bottom:8px;
+  }
+  .item{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 10px;
+    border-bottom:1px dashed var(--border);
+  }
+  .item:last-child{border-bottom:none;}
+  .item-label{
+    flex:1 1 280px;
+    font-size:0.95rem;
+  }
+  .item-label .num{
+    color:var(--accent);
+    font-weight:600;
+    margin-right:6px;
+  }
+  .options{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .opt{
+    position:relative;
+  }
+  .opt input{
+    position:absolute;
+    opacity:0;
+    width:100%;
+    height:100%;
+    cursor:pointer;
+    margin:0;
+  }
+  .opt label{
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:20px;
+    border:1px solid var(--border);
+    background:var(--panel-light);
+    font-size:0.82rem;
+    cursor:pointer;
+    transition:0.15s;
+    user-select:none;
+  }
+  .opt input:checked + label.yes{background:var(--yes);color:#06230f;border-color:var(--yes);}
+  .opt input:checked + label.no{background:var(--no);color:#2a0404;border-color:var(--no);}
+  .opt input:checked + label.review{background:var(--review);color:#2a1700;border-color:var(--review);}
+  .opt input:focus + label{outline:2px solid var(--accent);}
+
+  .controls{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:16px;
+  }
+  button{
+    border:none;
+    border-radius:8px;
+    padding:12px 20px;
+    font-size:0.95rem;
+    cursor:pointer;
+    font-weight:600;
+    transition:transform 0.1s, opacity 0.2s;
+  }
+  button:active{transform:scale(0.97);}
+  .btn-primary{
+    background:var(--accent);
+    color:#04202e;
+  }
+  .btn-secondary{
+    background:transparent;
+    color:var(--text);
+    border:1px solid var(--border);
+  }
+  .error{
+    color:var(--no);
+    font-size:0.88rem;
+    margin-top:10px;
+    min-height:1.2em;
+  }
+  .results{
+    text-align:center;
+  }
+  .score-display{
+    font-size:3rem;
+    font-weight:700;
+    margin:10px 0 4px;
+  }
+  .score-sub{
+    color:var(--muted);
+    margin-bottom:14px;
+  }
+  .classification{
+    display:inline-block;
+    padding:10px 22px;
+    border-radius:30px;
+    font-weight:700;
+    font-size:1.05rem;
+    letter-spacing:0.4px;
+  }
+  .class-ready{background:rgba(34,197,94,0.15); color:var(--yes); border:1px solid var(--yes);}
+  .class-conditional{background:rgba(245,158,11,0.15); color:var(--review); border:1px solid var(--review);}
+  .class-needs-review{background:rgba(96,165,250,0.15); color:#60a5fa; border:1px solid #60a5fa;}
+  .class-not-ready{background:rgba(239,68,68,0.15); color:var(--no); border:1px solid var(--no);}
+
+  .breakdown{
+    margin-top:18px;
+    text-align:left;
+    font-size:0.85rem;
+    color:var(--muted);
+  }
+  .breakdown span{
+    display:inline-block;
+    margin:3px 8px 3px 0;
+  }
+  .b-yes{color:var(--yes);}
+  .b-no{color:var(--no);}
+  .b-review{color:var(--review);}
+
+  .help ul{
+    margin:0;
+    padding-left:20px;
+    color:var(--muted);
+    font-size:0.88rem;
+    line-height:1.6;
+  }
+  .help li.ok::before{content:"✔ "; color:var(--yes); font-weight:700;}
+  .help li{list-style:none;}
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.78rem;
+    margin-top:24px;
+  }
+
+  @media (max-width:600px){
+    body{padding:12px;}
+    .item{flex-direction:column; align-items:flex-start;}
+    .options{width:100%; justify-content:flex-start;}
+    .score-display{font-size:2.2rem;}
+    .card{padding:14px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>Platform E2E Checker v2</h1>
+    <p>Readiness assessment tool for platform integration testing</p>
+  </header>
+
+  <section class="card" id="checklistCard">
+    <h2>Integration Readiness Checklist</h2>
+    <form id="checklistForm">
+      <div id="itemsContainer"></div>
+    </form>
+    <div class="controls">
+      <button type="button" class="btn-primary" id="calcBtn">Calculate Score</button>
+      <button type="button" class="btn-secondary" id="resetBtn">Reset All</button>
+    </div>
+    <div class="error" id="errorMsg" role="alert"></div>
+  </section>
+
+  <section class="card results" id="resultsCard" style="display:none;">
+    <h2>Result</h2>
+    <div class="score-display" id="scoreDisplay">0 / 100</div>
+    <div class="score-sub" id="scoreSub">Score not calculated yet</div>
+    <div class="classification" id="classification">—</div>
+    <div class="breakdown" id="breakdown"></div>
+  </section>
+
+  <section class="card help">
+    <h2>Verification &amp; Acceptance Checks</h2>
+    <ul>
+      <li class="ok">Every checklist item requires one explicit answer: Yes, No, or Needs Review.</li>
+      <li class="ok">Score is computed on a 100-point scale (10 items × 10 points each).</li>
+      <li class="ok">Yes = 10 pts, Needs Review = 5 pts, No = 0 pts per item.</li>
+      <li class="ok">Validation blocks score calculation until all 10 items are answered, with a visible error message.</li>
+      <li class="ok">Readiness classification bands: Ready (85–100), Conditionally Ready (60–84), Needs Review (35–59), Not Ready (0–34).</li>
+      <li class="ok">Breakdown panel shows count of Yes / No / Needs Review answers used in scoring.</li>
+      <li class="ok">Reset control clears all answers and hides prior results.</li>
+      <li class="ok">Layout is responsive: items and controls stack vertically below 600px viewport width.</li>
+      <li class="ok">No external dependencies, network calls, or deployment — fully self-contained static file.</li>
+    </ul>
+  </section>
+
+  <footer>Platform E2E Checker v2 — runs entirely client-side. Save as index.html and open in any browser.</footer>
+</div>
+
+<script>
+(function(){
+  const items = [
+    "Authentication / SSO integration verified end-to-end",
+    "API endpoints respond within agreed SLA thresholds",
+    "Data schema compatibility confirmed between systems",
+    "Error handling and retry logic tested under failure conditions",
+    "Security and compliance review completed and signed off",
+    "Load / performance testing passed for expected traffic",
+    "Monitoring and alerting configured for integration paths",
+    "Rollback plan documented and validated",
+    "Integration documentation updated and accessible",
+    "Stakeholder sign-off obtained for go-live"
+  ];
+
+  const container = document.getElementById('itemsContainer');
+  const pointsPerItem = 100 / items.length; // 10 points each
+
+  items.forEach((text, idx) => {
+    const name = "item" + idx;
+    const wrap = document.createElement('div');
+    wrap.className = 'item';
+    wrap.innerHTML = `
+      <div class="item-label"><span class="num">${idx + 1}.</span>${text}</div>
+      <div class="options">
+        <span class="opt">
+          <input type="radio" id="${name}-yes" name="${name}" value="yes">
+          <label for="${name}-yes" class="yes">Yes</label>
+        </span>
+        <span class="opt">
+          <input type="radio" id="${name}-no" name="${name}" value="no">
+          <label for="${name}-no" class="no">No</label>
+        </span>
+        <span class="opt">
+          <input type="radio" id="${name}-review" name="${name}" value="review">
+          <label for="${name}-review" class="review">Needs Review</label>
+        </span>
+      </div>
+    `;
+    container.appendChild(wrap);
+  });
+
+  const errorMsg = document.getElementById('errorMsg');
+  const resultsCard = document.getElementById('resultsCard');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const scoreSub = document.getElementById('scoreSub');
+  const classification = document.getElementById('classification');
+  const breakdown = document.getElementById('breakdown');
+
+  function classify(score){
+    if (score >= 85) return { label: "READY FOR INTEGRATION", cls: "class-ready" };
+    if (score >= 60) return { label: "CONDITIONALLY READY", cls: "class-conditional" };
+    if (score >= 35) return { label: "NEEDS REVIEW", cls: "class-needs-review" };
+    return { label: "NOT READY", cls: "class-not-ready" };
+  }
+
+  document.getElementById('calcBtn').addEventListener('click', function(){
+    let answered = 0;
+    let yesCount = 0, noCount = 0, reviewCount = 0;
+    let score = 0;
+
+    items.forEach((_, idx) => {
+      const name = "item" + idx;
+      const selected = document.querySelector(`input[name="${name}"]:checked`);
+      if (selected) {
+        answered++;
+        if (selected.value === 'yes') { score += pointsPerItem; yesCount++; }
+        else if (selected.value === 'review') { score += pointsPerItem / 2; reviewCount++; }
+        else { noCount++; }
+      }
+    });
+
+    if (answered < items.length) {
+      errorMsg.textContent = `Validation failed: ${items.length - answered} item(s) unanswered. Please select Yes, No, or Needs Review for every item before calculating.`;
+      resultsCard.style.display = 'none';
+      return;
+    }
+
+    errorMsg.textContent = '';
+    const finalScore = Math.round(score);
+    const result = classify(finalScore);
+
+    scoreDisplay.textContent = `${finalScore} / 100`;
+    scoreSub.textContent = `Calculated from ${items.length} checklist responses`;
+    classification.textContent = result.label;
+    classification.className = 'classification ' + result.cls;
+
+    breakdown.innerHTML = `
+      <span class="b-yes">● Yes: ${yesCount}</span>
+      <span class="b-review">● Needs Review: ${reviewCount}</span>
+      <span class="b-no">● No: ${noCount}</span>
+    `;
+
+    resultsCard.style.display = 'block';
+    resultsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    document.getElementById('checklistForm').reset();
+    errorMsg.textContent = '';
+    resultsCard.style.display = 'none';
+    scoreDisplay.textContent = '0 / 100';
+    scoreSub.textContent = 'Score not calculated yet';
+    classification.textContent = '—';
+    classification.className = 'classification';
+    breakdown.innerHTML = '';
+  });
+})();
+</script>
+</body>
+</html>
