@@ -22,6 +22,10 @@ on:
 permissions:
   contents: read
 
+env:
+  CONVEX_SITE_URL: ${{ secrets.CONVEX_SITE_URL }}
+  NEXUS_FORGE_DELIVERY_SECRET: ${{ secrets.NEXUS_FORGE_DELIVERY_SECRET }}
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -39,7 +43,27 @@ jobs:
         run: npm run build
       - name: Test
         run: npm test -- --run
+      - name: Persist delivery result to Convex
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          DELIVERY_ID: ${{ inputs.delivery_id }}
+          MISSION_ID: ${{ inputs.mission_id }}
+          CONCLUSION: "success"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          [[ -n "$CONVEX_SITE_URL" ]] || { echo "Missing GitHub Actions secret: CONVEX_SITE_URL"; exit 1; }
+          [[ -n "$NEXUS_FORGE_DELIVERY_SECRET" ]] || { echo "Missing GitHub Actions secret: NEXUS_FORGE_DELIVERY_SECRET"; exit 1; }
+          payload=$(node -e 'console.log(JSON.stringify({deliveryId:process.env.DELIVERY_ID,conclusion:process.env.CONCLUSION,runUrl:process.env.RUN_URL,commitSha:process.env.COMMIT_SHA,summary:`Mission ${process.env.MISSION_ID}; GitHub Actions ${process.env.CONCLUSION}.`}))')
+          STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "$CONVEX_SITE_URL/github-actions/delivery-result" \
+            -H "Authorization: Bearer $NEXUS_FORGE_DELIVERY_SECRET" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+          echo "Convex response ($STATUS): $(cat /tmp/response.json)"
+          [[ "$STATUS" == "200" ]] || { echo "Failed to persist delivery result to Convex"; exit 1; }
       - name: Delivery evidence
+        if: ${{ always() }}
         run: |
           echo "NEXUS FORGE delivery checks completed."
           echo "Commit: $GITHUB_SHA"
@@ -47,44 +71,24 @@ jobs:
           echo "Delivery: ${{ inputs.delivery_id }}"
           echo "Artifact ref: ${{ inputs.artifact_ref }}"
 
-  report-result:
-    needs: build-and-test
+  delivery-failure:
     runs-on: ubuntu-latest
-    if: ${{ always() && github.event_name == 'workflow_dispatch' }}
+    needs: build-and-test
+    if: ${{ failure() && github.event_name == 'workflow_dispatch' }}
     env:
-      CONVEX_SITE_URL: ${{ secrets.CONVEX_SITE_URL }}
-      NEXUS_FORGE_DELIVERY_SECRET: ${{ secrets.NEXUS_FORGE_DELIVERY_SECRET }}
       DELIVERY_ID: ${{ inputs.delivery_id }}
       MISSION_ID: ${{ inputs.mission_id }}
-      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      COMMIT_SHA: ${{ github.sha }}
-      CONCLUSION: ${{ needs.build-and-test.result }}
+      CONCLUSION: "failure"
     steps:
-      - name: Validate callback configuration
-        shell: bash
+      - name: Report failed delivery to Convex
         run: |
-          set -euo pipefail
           [[ -n "$CONVEX_SITE_URL" ]] || { echo "Missing GitHub Actions secret: CONVEX_SITE_URL"; exit 1; }
           [[ -n "$NEXUS_FORGE_DELIVERY_SECRET" ]] || { echo "Missing GitHub Actions secret: NEXUS_FORGE_DELIVERY_SECRET"; exit 1; }
-          [[ -n "$DELIVERY_ID" ]] || { echo "Missing workflow input: delivery_id"; exit 1; }
-
-      - name: Persist delivery result to Convex
-        shell: bash
-        run: |
-          set -euo pipefail
-          payload=$(node -e 'console.log(JSON.stringify({deliveryId:process.env.DELIVERY_ID,conclusion:process.env.CONCLUSION,runUrl:process.env.RUN_URL,commitSha:process.env.COMMIT_SHA,summary:`Mission ${process.env.MISSION_ID}; GitHub Actions ${process.env.CONCLUSION}.`}))')
-          curl --fail-with-body --silent --show-error \
+          payload=$(node -e 'console.log(JSON.stringify({deliveryId:process.env.DELIVERY_ID,conclusion:process.env.CONCLUSION,runUrl:"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",commitSha:"${{ github.sha }}",summary:`Mission ${process.env.MISSION_ID}; GitHub Actions ${process.env.CONCLUSION}.`}))')
+          STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
             -X POST "$CONVEX_SITE_URL/github-actions/delivery-result" \
             -H "Authorization: Bearer $NEXUS_FORGE_DELIVERY_SECRET" \
             -H "Content-Type: application/json" \
-            --data "$payload"
-
-  deploy-note:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.build-and-test.result == 'success' }}
-    steps:
-      - name: Deployment gate
-        run: |
-          echo "Build/test passed. Deployment remains governed by the NEXUS FORGE approval gate."
-          echo "No deployment credential is stored in source control."
+            -d "$payload")
+          echo "Convex response ($STATUS): $(cat /tmp/response.json)"
+          [[ "$STATUS" == "200" ]] || { echo "Failed to persist delivery result to Convex"; exit 1; }
