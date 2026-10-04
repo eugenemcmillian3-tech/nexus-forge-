@@ -1,88 +1,17 @@
 import { v } from "convex/values"
-import { mutation, query } from "./_generated/server"
+import { action, internalMutation, internalQuery, mutation, query } from "./_generated/server"
+import { internal } from "./_generated/api"
+import { requireOperator } from "./permissions"
 
-const stage = v.union(
-  v.literal("prepared"), v.literal("approval"), v.literal("github"),
-  v.literal("build"), v.literal("test"), v.literal("deploy"),
-  v.literal("verified"), v.literal("blocked")
-)
-
-export const list = query({
-  args: { missionId: v.id("missions") },
-  returns: v.array(v.object({
-    _id: v.id("deliveries"), _creationTime: v.number(), missionId: v.id("missions"),
-    artifactId: v.optional(v.id("artifacts")), target: v.string(), branch: v.string(),
-    stage, approved: v.boolean(), status: v.string(), evidence: v.string(), createdAt: v.number(),
-  })),
-  handler: async (ctx, args) => ctx.db.query("deliveries").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").take(20),
-})
-
-export const prepare = mutation({
-  args: { missionId: v.id("missions"), artifactId: v.optional(v.id("artifacts")), target: v.string(), branch: v.string() },
-  returns: v.id("deliveries"),
-  handler: async (ctx, args) => ctx.db.insert("deliveries", {
-    missionId: args.missionId, artifactId: args.artifactId,
-    target: args.target.trim() || "eugenemcmillian3-tech/nexus-forge-", branch: args.branch.trim() || "main",
-    stage: "approval", approved: false, status: "Awaiting human approval",
-    evidence: "No external write has occurred. GitHub Actions is the free delivery executor; Macaly integration is not required.", createdAt: Date.now(),
-  }),
-})
-
-export const approve = mutation({
-  args: { id: v.id("deliveries"), approved: v.boolean() }, returns: v.null(),
-  handler: async (ctx, args) => {
-    const delivery = await ctx.db.get("deliveries", args.id)
-    if (!delivery) throw new Error("Delivery request not found")
-    await ctx.db.patch(args.id, {
-      approved: args.approved,
-      stage: args.approved ? "github" : "blocked",
-      status: args.approved ? "Approved; GitHub Actions may execute" : "Blocked by human decision",
-      evidence: args.approved ? "Human approval recorded. Execute the repository workflow from GitHub Actions; Macaly's paid GitHub connector is not required." : "Human rejected the delivery request.",
-    })
-    return null
-  },
-})
-
-export const advance = mutation({
-  args: { id: v.id("deliveries"), nextStage: stage, evidence: v.string() }, returns: v.null(),
-  handler: async (ctx, args) => {
-    const delivery = await ctx.db.get("deliveries", args.id)
-    if (!delivery) throw new Error("Delivery request not found")
-    if (!delivery.approved) throw new Error("Human approval is required before delivery can advance")
-    const allowed: Record<string, string[]> = {
-      github: ["build", "blocked"], build: ["test", "blocked"], test: ["deploy", "blocked"],
-      deploy: ["verified", "blocked"],
-    }
-    if (!(allowed[delivery.stage] || []).includes(args.nextStage)) throw new Error(`Invalid delivery transition: ${delivery.stage} → ${args.nextStage}`)
-    await ctx.db.patch(args.id, {
-      stage: args.nextStage,
-      status: args.nextStage === "verified" ? "Live outcome verified" : `Stage ${args.nextStage} ready`,
-      evidence: args.evidence,
-    })
-    return null
-  },
-})
-
-export const recordWorkflowResult = mutation({
-  args: {
-    id: v.id("deliveries"),
-    conclusion: v.string(),
-    runUrl: v.string(),
-    commitSha: v.string(),
-    summary: v.string(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const delivery = await ctx.db.get("deliveries", args.id)
-    if (!delivery) throw new Error("Delivery request not found")
-    if (!delivery.approved) throw new Error("Workflow result cannot be recorded before human approval")
-    const normalized = args.conclusion.toLowerCase()
-    const passed = normalized === "success" || normalized === "successful" || normalized === "completed"
-    await ctx.db.patch(args.id, {
-      stage: passed ? "build" : "blocked",
-      status: passed ? "GitHub Actions build/test completed" : `GitHub Actions failed: ${args.conclusion}`,
-      evidence: `GitHub Actions: ${args.runUrl}\nCommit: ${args.commitSha}\nConclusion: ${args.conclusion}\n${args.summary}`,
-    })
-    return null
-  },
-})
+function encodeBase64(value:string){const bytes=new TextEncoder().encode(value);let binary="";for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(binary)}
+const stage=v.union(v.literal("prepared"),v.literal("approval"),v.literal("github"),v.literal("build"),v.literal("test"),v.literal("deploy"),v.literal("verified"),v.literal("blocked"))
+const row=v.object({_id:v.id("deliveries"),_creationTime:v.number(),missionId:v.id("missions"),artifactId:v.optional(v.id("artifacts")),target:v.string(),branch:v.string(),stage,approved:v.boolean(),status:v.string(),evidence:v.string(),createdAt:v.number()})
+export const listInternal=internalQuery({args:{missionId:v.id("missions")},returns:v.array(row),handler:async(ctx,args)=>ctx.db.query("deliveries").withIndex("by_mission",q=>q.eq("missionId",args.missionId)).order("desc").take(20)})
+export const list=query({args:{missionId:v.id("missions")},returns:v.array(row),handler:async(ctx,args)=>ctx.db.query("deliveries").withIndex("by_mission",q=>q.eq("missionId",args.missionId)).order("desc").take(20)})
+export const getInternal=internalQuery({args:{id:v.id("deliveries")},returns:v.union(row,v.null()),handler:async(ctx,args)=>ctx.db.get(args.id)})
+export const prepareInternal=internalMutation({args:{missionId:v.id("missions"),artifactId:v.id("artifacts"),target:v.string(),branch:v.string()},returns:v.id("deliveries"),handler:async(ctx,args)=>{const a=await ctx.db.get("artifacts",args.artifactId);if(!a||a.missionId!==args.missionId||a.status!=="ready")throw new Error("A ready approved artifact is required");const existing=await ctx.db.query("deliveries").withIndex("by_mission",q=>q.eq("missionId",args.missionId)).filter(q=>q.eq(q.field("artifactId"),args.artifactId)).first();if(existing)return existing._id;return await ctx.db.insert("deliveries",{missionId:args.missionId,artifactId:args.artifactId,target:args.target.trim(),branch:args.branch.trim(),stage:"approval",approved:false,status:"Awaiting human approval",evidence:"Prepared by mission governor; no external write occurred.",createdAt:Date.now()})}})
+export const prepare=mutation({args:{missionId:v.id("missions"),artifactId:v.optional(v.id("artifacts")),target:v.string(),branch:v.string()},returns:v.id("deliveries"),handler:async(ctx,args)=>{await requireOperator(ctx);if(args.artifactId){const a=await ctx.db.get("artifacts",args.artifactId);if(!a)throw new Error("Artifact not found");if(a.missionId!==args.missionId)throw new Error("Artifact does not belong to this mission");if(a.status!=="ready")throw new Error("Artifact approval is required before preparing delivery")}return await ctx.db.insert("deliveries",{missionId:args.missionId,artifactId:args.artifactId,target:args.target.trim()||"eugenemcmillian3-tech/nexus-forge-",branch:args.branch.trim()||"main",stage:"approval",approved:false,status:"Awaiting human approval",evidence:"No external write has occurred. Artifact approval and delivery approval are separate human gates.",createdAt:Date.now()})}})
+export const approve=mutation({args:{id:v.id("deliveries"),approved:v.boolean()},returns:v.null(),handler:async(ctx,args)=>{await requireOperator(ctx);const d=await ctx.db.get("deliveries",args.id);if(!d)throw new Error("Delivery request not found");if(args.approved&&d.artifactId){const a=await ctx.db.get("artifacts",d.artifactId);if(!a||a.status!=="ready")throw new Error("Artifact approval is required before delivery approval")}await ctx.db.patch(args.id,{approved:args.approved,stage:args.approved?"github":"blocked",status:args.approved?"Approved; ready to dispatch GitHub Actions":"Blocked by human decision",evidence:args.approved?"Human delivery approval recorded after artifact approval. External GitHub dispatch is a separate execution step.":"Human rejected the delivery request."});await ctx.runMutation(internal.audit.record,{missionId:d.missionId,type:"delivery",action:args.approved?"delivery_approved":"delivery_rejected",status:args.approved?"approved":"blocked",detail:args.approved?"Human approved GitHub delivery; explicit external dispatch may now occur.":"Human rejected GitHub delivery.",deliveryId:d._id});return null}})
+export const markDispatched=internalMutation({args:{id:v.id("deliveries"),evidence:v.string()},returns:v.null(),handler:async(ctx,args)=>{const d=await ctx.db.get("deliveries",args.id);if(!d)throw new Error("Delivery request not found");await ctx.db.patch(args.id,{stage:"github",status:"GitHub Actions dispatched",evidence:args.evidence});return null}})
+export const executeApproved=action({args:{id:v.id("deliveries")},returns:v.object({ok:v.boolean(),workflowUrl:v.string(),artifactPath:v.string()}),handler:async(ctx,args)=>{const operator=await ctx.runQuery(internal.permissions.currentOperator,{});if(!operator)throw new Error("Authenticated operator session required");const d=await ctx.runQuery(internal.delivery.getInternal,{id:args.id});if(!d)throw new Error("Delivery request not found");if(!d.approved||d.stage!=="github")throw new Error("Human delivery approval is required before external execution");const token=process.env.GITHUB_ACCESS_TOKEN;if(!token)throw new Error("GITHUB_ACCESS_TOKEN is not configured in Live Convex");const allowedRepo=process.env.NEXUS_FORGE_GITHUB_REPO||"eugenemcmillian3-tech/nexus-forge-";if(d.target!==allowedRepo)throw new Error(`Delivery target is not allowlisted: ${d.target}`);const artifact=d.artifactId?await ctx.runQuery(internal.artifacts.getInternal,{id:d.artifactId}):null;if(!artifact||artifact.status!=="ready")throw new Error("A ready approved artifact is required before GitHub execution");const [owner,repo]=d.target.split("/");if(!owner||!repo)throw new Error("Invalid GitHub repository target");const artifactPath=`nexus-forge-deliveries/${d._id}/index.html`;const apiBase=`https://api.github.com/repos/${owner}/${repo}`;const headers={Authorization:`Bearer ${token}`,Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","Content-Type":"application/json"};const existing=await fetch(`${apiBase}/contents/${artifactPath}?ref=${encodeURIComponent(d.branch)}`,{headers});let sha:string|undefined;if(existing.ok){const body=await existing.json() as {sha?:string};sha=body.sha}else if(existing.status!==404){throw new Error(`GitHub artifact lookup failed: ${existing.status}`)}const commit=await fetch(`${apiBase}/contents/${artifactPath}`,{method:"PUT",headers,body:JSON.stringify({message:`nexus-forge: deliver ${d._id}`,content:encodeBase64(artifact.content),branch:d.branch,sha})});if(!commit.ok){const text=await commit.text();throw new Error(`GitHub artifact commit failed: ${commit.status} ${text.slice(0,300)}`)}const dispatch=await fetch(`${apiBase}/actions/workflows/nexus-forge-delivery.yml/dispatches`,{method:"POST",headers,body:JSON.stringify({ref:d.branch,inputs:{mission_id:d.missionId,delivery_id:d._id,artifact_ref:artifactPath}})});if(!dispatch.ok){const text=await dispatch.text();throw new Error(`GitHub Actions dispatch failed: ${dispatch.status} ${text.slice(0,300)}`)}const workflowUrl=`https://github.com/${d.target}/actions/workflows/nexus-forge-delivery.yml`;await ctx.runMutation(internal.delivery.markDispatched,{id:d._id,evidence:`Artifact committed to ${artifactPath}. GitHub Actions workflow dispatched for ${d._id}.`});await ctx.runMutation(internal.audit.record,{missionId:d.missionId,type:"delivery",action:"github_dispatched",status:"running",detail:`Artifact delivered to GitHub at ${artifactPath}; workflow dispatched.`,deliveryId:d._id});return {ok:true,workflowUrl,artifactPath}}})
+export const recordWorkflowResult=mutation({args:{id:v.id("deliveries"),conclusion:v.string(),runUrl:v.string(),commitSha:v.string(),summary:v.string()},returns:v.null(),handler:async(ctx,args)=>{const d=await ctx.db.get("deliveries",args.id);if(!d)throw new Error("Delivery request not found");if(!d.approved)throw new Error("Workflow result cannot be recorded before human approval");const normalized=args.conclusion.toLowerCase();const passed=normalized==="success"||normalized==="successful"||normalized==="completed";await ctx.db.patch(args.id,{stage:passed?"test":"blocked",status:passed?"GitHub Actions build and test completed":`GitHub Actions failed: ${args.conclusion}`,evidence:`GitHub Actions: ${args.runUrl}\nCommit: ${args.commitSha}\nConclusion: ${args.conclusion}\n${args.summary}`});await ctx.runMutation(internal.audit.record,{missionId:d.missionId,type:"delivery",action:passed?"github_workflow_succeeded":"github_workflow_failed",status:passed?"test":"blocked",detail:passed?"GitHub Actions build and test completed successfully.":`GitHub Actions workflow failed: ${args.conclusion}`,deliveryId:d._id});return null}})

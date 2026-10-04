@@ -4,19 +4,16 @@ import { authTables } from "@convex-dev/auth/server"
 
 export default defineSchema({
   ...authTables,
-  missions: defineTable({
-    title: v.string(), mission: v.string(), autonomy: v.string(), budget: v.number(),
-    status: v.union(v.literal("draft"), v.literal("running"), v.literal("review"), v.literal("complete")),
-    completion: v.number(), approved: v.boolean(), ownerKey: v.string(),
-  }).index("by_owner", ["ownerKey"]),
+  missions: defineTable({ title: v.string(), mission: v.string(), autonomy: v.string(), budget: v.number(), status: v.union(v.literal("draft"), v.literal("running"), v.literal("review"), v.literal("complete")), completion: v.number(), approved: v.boolean(), ownerKey: v.string() }).index("by_owner", ["ownerKey"]),
+  missionRuns: defineTable({ missionId: v.id("missions"), startedAt: v.number(), deadlineAt: v.number(), maxRetries: v.number(), retries: v.number(), status: v.union(v.literal("running"), v.literal("paused"), v.literal("blocked"), v.literal("complete")), currentStage: v.string(), nextActionAt: v.number(), lastError: v.optional(v.string()) }).index("by_mission", ["missionId"]),
   agentRuns: defineTable({ missionId: v.id("missions"), agent: v.string(), role: v.string(), status: v.string(), progress: v.number(), note: v.string() }).index("by_mission", ["missionId"]),
   evidence: defineTable({ missionId: v.id("missions"), agent: v.string(), message: v.string(), score: v.number(), severity: v.string() }).index("by_mission", ["missionId"]),
   memories: defineTable({ ownerKey: v.string(), missionId: v.optional(v.id("missions")), category: v.string(), key: v.string(), value: v.string(), confidence: v.number(), source: v.string() }).index("by_owner", ["ownerKey"]),
   research: defineTable({ missionId: v.id("missions"), query: v.string(), result: v.string(), citations: v.array(v.string()), createdAt: v.number() }).index("by_mission", ["missionId"]),
   artifacts: defineTable({ missionId: v.id("missions"), type: v.string(), name: v.string(), content: v.string(), status: v.string(), requiresApproval: v.boolean() }).index("by_mission", ["missionId"]),
-  deliveries: defineTable({
-    missionId: v.id("missions"), artifactId: v.optional(v.id("artifacts")), target: v.string(), branch: v.string(),
-    stage: v.union(v.literal("prepared"), v.literal("approval"), v.literal("github"), v.literal("build"), v.literal("test"), v.literal("deploy"), v.literal("verified"), v.literal("blocked")),
-    approved: v.boolean(), status: v.string(), evidence: v.string(), createdAt: v.number(),
-  }).index("by_mission", ["missionId"]),
+  deliveries: defineTable({ missionId: v.id("missions"), artifactId: v.optional(v.id("artifacts")), target: v.string(), branch: v.string(), stage: v.union(v.literal("prepared"), v.literal("approval"), v.literal("github"), v.literal("build"), v.literal("test"), v.literal("deploy"), v.literal("verified"), v.literal("blocked")), approved: v.boolean(), status: v.string(), evidence: v.string(), createdAt: v.number() }).index("by_mission", ["missionId"]),
+  verifications: defineTable({ missionId: v.id("missions"), deliveryId: v.id("deliveries"), passed: v.boolean(), score: v.number(), criteria: v.array(v.string()), evidence: v.array(v.string()), summary: v.string(), createdAt: v.number() }).index("by_mission", ["missionId"]).index("by_delivery", ["deliveryId"]),
+  incidents: defineTable({ missionId: v.id("missions"), runId: v.optional(v.id("missionRuns")), kind: v.string(), stage: v.string(), message: v.string(), attempts: v.number(), status: v.union(v.literal("open"), v.literal("resolved"), v.literal("escalated")), recovery: v.optional(v.string()), lesson: v.optional(v.string()), diagnosis: v.optional(v.string()), proposedRecovery: v.optional(v.string()), diagnosisConfidence: v.optional(v.number()), createdAt: v.number(), resolvedAt: v.optional(v.number()) }).index("by_mission", ["missionId"]).index("by_status", ["status"]),
+  portfolioDecisions: defineTable({ missionId: v.id("missions"), priorityRank: v.number(), action: v.string(), decision: v.union(v.literal("approve"), v.literal("reject"), v.literal("defer"), v.literal("escalate")), note: v.optional(v.string()), createdAt: v.number() }).index("by_mission", ["missionId"]).index("by_decision", ["decision"]),
+  auditEvents: defineTable({ missionId: v.id("missions"), eventType: v.string(), source: v.string(), message: v.string(), runId: v.optional(v.id("missionRuns")), deliveryId: v.optional(v.id("deliveries")), verificationId: v.optional(v.id("verifications")), decisionId: v.optional(v.id("portfolioDecisions")), metadata: v.optional(v.string()), createdAt: v.number() }).index("by_mission", ["missionId"]).index("by_type", ["eventType"]),
 })
