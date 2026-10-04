@@ -60,14 +60,18 @@ jobs:
       COMMIT_SHA: ${{ github.sha }}
       CONCLUSION: ${{ needs.build-and-test.result }}
     steps:
+      - name: Validate callback configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$CONVEX_SITE_URL" ]] || { echo "Missing GitHub Actions secret: CONVEX_SITE_URL"; exit 1; }
+          [[ -n "$NEXUS_FORGE_DELIVERY_SECRET" ]] || { echo "Missing GitHub Actions secret: NEXUS_FORGE_DELIVERY_SECRET"; exit 1; }
+          [[ -n "$DELIVERY_ID" ]] || { echo "Missing workflow input: delivery_id"; exit 1; }
+
       - name: Persist delivery result to Convex
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "$CONVEX_SITE_URL" || -z "$NEXUS_FORGE_DELIVERY_SECRET" ]]; then
-            echo "Convex callback secrets are not configured; leaving CI green but not claiming backend synchronization."
-            exit 0
-          fi
           payload=$(node -e 'console.log(JSON.stringify({deliveryId:process.env.DELIVERY_ID,conclusion:process.env.CONCLUSION,runUrl:process.env.RUN_URL,commitSha:process.env.COMMIT_SHA,summary:`Mission ${process.env.MISSION_ID}; GitHub Actions ${process.env.CONCLUSION}.`}))')
           curl --fail-with-body --silent --show-error \
             -X POST "$CONVEX_SITE_URL/github-actions/delivery-result" \
