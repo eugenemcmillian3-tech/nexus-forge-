@@ -1,0 +1,34 @@
+name: NEXUS FORGE Delivery Loop Diagnostic
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  CONVEX_SITE_URL: ${{ secrets.CONVEX_SITE_URL }}
+  NEXUS_FORGE_DELIVERY_SECRET: ${{ secrets.NEXUS_FORGE_DELIVERY_SECRET }}
+
+jobs:
+  callback-test:
+    if: ${{ contains(github.event.head_commit.message, '[delivery-loop-test]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate secrets are present
+        run: |
+          [[ -n "$CONVEX_SITE_URL" ]] || { echo "Missing CONVEX_SITE_URL"; exit 1; }
+          [[ -n "$NEXUS_FORGE_DELIVERY_SECRET" ]] || { echo "Missing NEXUS_FORGE_DELIVERY_SECRET"; exit 1; }
+      - name: Post delivery evidence to Convex
+        env:
+          DELIVERY_ID: ks70px1k015eh5anybzvrzhwnd8fm5p1
+          MISSION_ID: k9773bvanx0cm7ezgq8a5vrp8d8fnc5k
+          CONCLUSION: success
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          payload=$(node -e 'console.log(JSON.stringify({deliveryId:process.env.DELIVERY_ID,conclusion:process.env.CONCLUSION,runUrl:process.env.RUN_URL,commitSha:process.env.COMMIT_SHA,summary:`Mission ${process.env.MISSION_ID}; diagnostic callback.`}))')
+          STATUS=$(curl -sS -o /tmp/response.json -w "%{http_code}" -X POST "$CONVEX_SITE_URL/github-actions/delivery-result" -H "Authorization: Bearer $NEXUS_FORGE_DELIVERY_SECRET" -H "Content-Type: application/json" -d "$payload")
+          echo "Convex response ($STATUS): $(cat /tmp/response.json)"
+          [[ "$STATUS" == "200" ]] || exit 1
