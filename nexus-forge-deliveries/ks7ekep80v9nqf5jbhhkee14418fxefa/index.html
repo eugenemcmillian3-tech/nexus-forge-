@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Launch Checklist – Post‑Deployment Provider Validation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f5f5f5;color:#333}
+  .container{max-width:900px;margin:auto;padding:20px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  h1{font-size:1.8rem;margin-bottom:.5rem}
+  h2{font-size:1.4rem;margin-top:2rem}
+  .checklist{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .checklist label{display:flex;align-items:center}
+  .checklist input[type=text]{width:100%;padding:4px}
+  .result{font-weight:bold;margin-top:1rem}
+  .pass{color:green}
+  .fail{color:red}
+  button{padding:10px 20px;font-size:1rem;background:#0066cc;color:#fff;border:none;border-radius:4px;cursor:pointer}
+  button:hover{background:#004999}
+  table{width:100%;border-collapse:collapse;margin-top:1rem}
+  th,td{border:1px solid #ddd;padding:8px;text-align:left}
+  th{background:#f0f0f0}
+  @media(max-width:600px){
+    .checklist{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>AI Launch Checklist – Post‑Deployment Provider Validation</h1>
+  <p>Complete the checklist below. Provide brief evidence for each item. Click <strong>Run Validation</strong> to see pass/fail results and overall readiness.</p>
+
+  <form id="checklistForm">
+    <div class="checklist">
+      <label><input type="checkbox" name="item0"> Model version approved</label>
+      <input type="text" name="evidence0" placeholder="Evidence (e.g., version tag)">
+    </div>
+    <div class="checklist">
+      <label><input type="checkbox" name="item1"> Data privacy review completed</label>
+      <input type="text" name="evidence1" placeholder="Evidence (e.g., review report)">
+    </div>
+    <div class="checklist">
+      <label><input type="checkbox" name="item2"> Bias mitigation applied</label>
+      <input type="text" name="evidence2" placeholder="Evidence (e.g., bias report)">
+    </div>
+    <div class="checklist">
+      <label><input type="checkbox" name="item3"> Performance benchmark met</label>
+      <input type="text" name="evidence3" placeholder="Evidence (e.g., benchmark scores)">
+    </div>
+    <div class="checklist">
+      <label><input type="checkbox" name="item4"> Security scan passed</label>
+      <input type="text" name="evidence4" placeholder="Evidence (e.g., scan log)">
+    </div>
+    <div class="checklist">
+      <label><input type="checkbox" name="item5"> Compliance documentation uploaded</label>
+      <input type="text" name="evidence5" placeholder="Evidence (e.g., doc link)">
+    </div>
+    <div class="checklist">
+      <label><input type="checkbox" name="item6"> Rollback plan defined</label>
+      <input type="text" name="evidence6" placeholder="Evidence (e.g., plan summary)">
+    </div>
+    <div class="checklist">
+      <label><input type="checkbox" name="item7"> Monitoring configured</label>
+      <input type="text" name="evidence7" placeholder="Evidence (e.g., dashboard URL)">
+    </div>
+    <div class="checklist">
+      <label><input type="checkbox" name="item8"> User consent obtained</label>
+      <input type="text" name="evidence8" placeholder="Evidence (e.g., consent log)">
+    </div>
+    <div class="checklist">
+      <label><input type="checkbox" name="item9"> Ethics board sign‑off</label>
+      <input type="text" name="evidence9" placeholder="Evidence (e.g., sign‑off memo)">
+    </div>
+    <button type="button" id="validateBtn">Run Validation</button>
+  </form>
+
+  <div id="overallResult" class="result"></div>
+
+  <h2>Verification Section – Test Validation Evidence Audit</h2>
+  <p>The table below records each acceptance check with pass/fail status and the supplied evidence. This serves as audit‑ready documentation.</p>
+  <table id="verificationTable">
+    <thead>
+      <tr><th>Check</th><th>Status</th><th>Evidence</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+document.getElementById('validateBtn').addEventListener('click', function(){
+  const checks = [
+    "Model version approved",
+    "Data privacy review completed",
+    "Bias mitigation applied",
+    "Performance benchmark met",
+    "Security scan passed",
+    "Compliance documentation uploaded",
+    "Rollback plan defined",
+    "Monitoring configured",
+    "User consent obtained",
+    "Ethics board sign‑off"
+  ];
+  const tbody = document.querySelector('#verificationTable tbody');
+  tbody.innerHTML = '';
+  let passCount = 0;
+
+  checks.forEach((label,i)=>{
+    const checked = document.querySelector(`input[name=item${i}]`).checked;
+    const evidence = document.querySelector(`input[name=evidence${i}]`).value.trim();
+    const pass = checked && evidence.length>0;
+    if(pass) passCount++;
+
+    const tr = document.createElement('tr');
+    const tdLabel = document.createElement('td'); tdLabel.textContent = label;
+    const tdStatus = document.createElement('td');
+    tdStatus.textContent = pass ? 'PASS' : 'FAIL';
+    tdStatus.className = pass ? 'pass' : 'fail';
+    const tdEvidence = document.createElement('td');
+    tdEvidence.textContent = evidence || '—';
+    tr.appendChild(tdLabel);
+    tr.appendChild(tdStatus);
+    tr.appendChild(tdEvidence);
+    tbody.appendChild(tr);
+  });
+
+  const overall = document.getElementById('overallResult');
+  if(passCount===checks.length){
+    overall.textContent = `All ${checks.length} checks passed – Launch Ready`;
+    overall.className = 'pass';
+  }else{
+    overall.textContent = `${passCount} of ${checks.length} checks passed – Not Ready`;
+    overall.className = 'fail';
+  }
+});
+</script>
+</body>
+</html>
