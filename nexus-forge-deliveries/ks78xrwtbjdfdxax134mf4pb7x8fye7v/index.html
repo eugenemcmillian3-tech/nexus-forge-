@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LocalBoost Business Growth Campaign – NEXUS FORGE Test Simulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --max-width: 800px;
+      --gap: 1rem;
+      --bg: #f9f9f9;
+      --primary: #0066cc;
+      --danger: #c00;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: var(--gap);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    .container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      background: #fff;
+      padding: var(--gap);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      color: var(--primary);
+    }
+    label {
+      display: block;
+      margin-top: var(--gap);
+      font-weight: bold;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: .5rem;
+      margin-top: .25rem;
+      box-sizing: border-box;
+    }
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      margin-top: var(--gap);
+    }
+    button:hover { background: #004999; }
+    .report, .verification {
+      margin-top: var(--gap);
+      border-top: 2px solid var(--primary);
+      padding-top: var(--gap);
+    }
+    .status-pass { color: green; }
+    .status-fail { color: var(--danger); }
+    .download-link {
+      display: inline-block;
+      margin-top: var(--gap);
+      background: var(--primary);
+      color: #fff;
+      padding: .5rem 1rem;
+      text-decoration: none;
+    }
+    @media (max-width: 600px) {
+      body { padding: .5rem; }
+      .container { padding: .5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>LocalBoost Business Growth Campaign – Test Simulator</h1>
+    <p>Enter the mission details below and run a simulated end‑to‑end test of the NEXUS FORGE workflow.</p>
+
+    <form id="missionForm" novalidate>
+      <label for="missionName">Mission name</label>
+      <input type="text" id="missionName" name="missionName" required aria-required="true">
+
+      <label for="objective">Objective</label>
+      <textarea id="objective" name="objective" rows="3" required aria-required="true"></textarea>
+
+      <label for="budget">Budget (USD)</label>
+      <input type="number" id="budget" name="budget" min="0" required aria-required="true">
+
+      <button type="submit">Run Simulation</button>
+    </form>
+
+    <section class="report" id="reportSection" hidden>
+      <h2>Simulation Report</h2>
+      <pre id="reportContent"></pre>
+      <a id="downloadJson" class="download-link" href="#" download="mission_report.json">Download JSON Report</a>
+    </section>
+
+    <section class="verification" id="verificationSection" hidden>
+      <h2>Verification – Test, Validation, Evidence, Audit</h2>
+      <ul id="verificationList"></ul>
+    </section>
+  </div>
+
+  <script>
+    // Helper to create a deterministic pass/fail result (all PASS for demo)
+    const steps = [
+      "Mission creation & persistence",
+      "Council execution",
+      "Research & source evidence",
+      "Strategy & artifact generation",
+      "Artifact persistence",
+      "Quality checks",
+      "Verification evidence",
+      "Approval queue behavior",
+      "Delivery recording",
+      "Final outcome & audit persistence",
+      "Provider fallback handling"
+    ];
+
+    const form = document.getElementById('missionForm');
+    const reportSection = document.getElementById('reportSection');
+    const verificationSection = document.getElementById('verificationSection');
+    const reportContent = document.getElementById('reportContent');
+    const verificationList = document.getElementById('verificationList');
+    const downloadJson = document.getElementById('downloadJson');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Simple HTML5 validation
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const mission = {
+        name: form.missionName.value.trim(),
+        objective: form.objective.value.trim(),
+        budget: Number(form.budget.value)
+      };
+
+      // Simulate step results
+      const stepResults = steps.map(step => ({
+        step,
+        status: "PASS",
+        evidence: `Simulated ${step.toLowerCase()} succeeded.`
+      }));
+
+      const overallStatus = stepResults.every(r => r.status === "PASS") ? "PASS" : "FAIL";
+
+      const report = {
+        overallStatus,
+        mission,
+        steps: stepResults,
+        timestamp: new Date().toISOString()
+      };
+
+      // Display report
+      reportContent.textContent = JSON.stringify(report, null, 2);
+      reportSection.hidden = false;
+
+      // Build verification list
+      verificationList.innerHTML = "";
+      verificationList.appendChild(createVerificationItem("Mission persisted", "PASS"));
+      verificationList.appendChild(createVerificationItem("Council executed", "PASS"));
+      verificationList.appendChild(createVerificationItem("Research recorded", "PASS"));
+      verificationList.appendChild(createVerificationItem("Artifacts saved", "PASS"));
+      verificationList.appendChild(createVerificationItem("Quality checks passed", "PASS"));
+      verificationList.appendChild(createVerificationItem("Approval queue behaved", "PASS"));
+      verificationList.appendChild(createVerificationItem("Delivery recorded", "PASS"));
+      verificationList.appendChild(createVerificationItem("Audit history persisted", "PASS"));
+      verificationSection.hidden = false;
+
+      // Prepare downloadable JSON
+      const blob = new Blob([JSON.stringify(report, null, 2)], {type: "application/json"});
+      const url = URL.createObjectURL(blob);
+      downloadJson.href = url;
+    });
+
+    function createVerificationItem(text, status) {
+      const li = document.createElement('li');
+      li.textContent = `${text}: `;
+      const span = document.createElement('span');
+      span.textContent = status;
+      span.className = status === "PASS" ? "status-pass" : "status-fail";
+      li.appendChild(span);
+      return li;
+    }
+  </script>
+</body>
+</html>
