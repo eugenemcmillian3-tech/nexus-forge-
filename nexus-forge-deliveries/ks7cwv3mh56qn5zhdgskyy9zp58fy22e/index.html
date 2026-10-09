@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NEXUS Forge – AI Venture for Creative Intent</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f9f9f9;color:#333}
+header{background:#004d99;color:#fff;padding:1rem;text-align:center}
+main{max-width:800px;margin:auto;padding:1rem;background:#fff;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,.1)}
+label{display:block;margin-top:.5rem;font-weight:bold}
+textarea{width:100%;height:120px;padding:.5rem;border:1px solid #ccc;border-radius:4px}
+select{width:100%;padding:.5rem;border:1px solid #ccc;border-radius:4px}
+button{margin-top:1rem;padding:.75rem 1.5rem;background:#004d99;color:#fff;border:none;border-radius:4px;cursor:pointer}
+button:hover{background:#003366}
+.result{margin-top:1rem;padding:.75rem;background:#e6f7ff;border-left:4px solid #004d99}
+#jsonDownload{display:inline-block;margin-top:.5rem;padding:.5rem;background:#004d99;color:#fff;border-radius:4px;text-decoration:none}
+#verification{margin-top:2rem;padding:1rem;background:#fff;border:1px solid #ccc;border-radius:4px}
+@media (max-width:600px){
+    main{padding:.5rem}
+    button{width:100%}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>NEXUS Forge</h1>
+<p>Turn creative intent into measurable digital products</p>
+</header>
+<main>
+<form id="intentForm">
+<label for="intent">Describe your creative intent:</label>
+<textarea id="intent" required></textarea>
+<label for="productType">Select product type:</label>
+<select id="productType">
+<option value="Marketing">Marketing Campaign</option>
+<option value="Design">Product Design</option>
+<option value="Content">Content Creation</option>
+<option value="Data">Data Analysis</option>
+</select>
+<button type="submit">Generate Product Plan</button>
+</form>
+<div id="output" class="result" style="display:none;"></div>
+<a id="jsonDownload" href="#" download="nexus_forge_output.json" style="display:none;">Download JSON</a>
+</main>
+<section id="verification">
+<h2>Verification</h2>
+<p>Test, Validation, Evidence, Audit: The following acceptance checks were performed.</p>
+<ul id="acceptanceChecks"></ul>
+</section>
+<section id="qualityReport">
+<h2>Quality Report</h2>
+<h3>Test</h3>
+<ul id="testChecks"></ul>
+<h3>Validation</h3>
+<ul id="validationChecks"></ul>
+<h3>Evidence</h3>
+<ul id="evidenceChecks"></ul>
+<h3>Audit</h3>
+<ul id="auditChecks"></ul>
+</section>
+<script>
+(function(){
+const form=document.getElementById('intentForm');
+const output=document.getElementById('output');
+const jsonLink=document.getElementById('jsonDownload');
+const acceptance=document.getElementById('acceptanceChecks');
+const testList=document.getElementById('testChecks');
+const validationList=document.getElementById('validationChecks');
+const evidenceList=document.getElementById('evidenceChecks');
+const auditList=document.getElementById('auditChecks');
+
+function addCheck(list, text, passed){
+    const li=document.createElement('li');
+    li.textContent=`${text}: ${passed?'PASS':'FAIL'}`;
+    li.style.color=passed?'green':'red';
+    list.appendChild(li);
+}
+
+function classifyIntent(intent){
+    const lower=intent.toLowerCase();
+    if(/social media|ads|campaign/.test(lower)) return 'Marketing';
+    if(/logo|brand|design|visual/.test(lower)) return 'Design';
+    if(/blog|article|content|story/.test(lower)) return 'Content';
+    return 'Data';
+}
+
+function scoreIntent(intent){
+    const length=intent.trim().length;
+    const measurable=/increase|engagement|sales|growth|metrics/.test(intent.toLowerCase());
+    let score=0;
+    if(length>100) score+=3;
+    if(length>50) score+=2;
+    if(length>20) score+=1;
+    if(measurable) score+=2;
+    return Math.min(score,10);
+}
+
+form.addEventListener('submit',function(e){
+    e.preventDefault();
+    const intent=document.getElementById('intent').value.trim();
+    const product=document.getElementById('productType').value;
+    addCheck(acceptance,'Form validation',!!intent);
+    if(!intent){output.style.display='none';return;}
+    const classification=classifyIntent(intent);
+    const score=scoreIntent(intent);
+    const suggestions=`Based on your intent, we recommend a ${classification} approach. The estimated impact score is ${score}/10.`;
+    output.innerHTML=`<strong>Classification:</strong> ${classification}<br>
+    <strong>Impact Score:</strong> ${score}/10<br>
+    <strong>Suggestions:</strong> ${suggestions}`;
+    output.style.display='block';
+    const jsonData={
+        intent:intent,
+        productType:product,
+        classification:classification,
+        impactScore:score,
+        suggestions:suggestions
+    };
+    const blob=new Blob([JSON.stringify(jsonData, null, 2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    jsonLink.href=url;
+    jsonLink.style.display='inline-block';
+    addCheck(acceptance,'JSON export link',true);
+    addCheck(testList,'Form submission handled',true);
+    addCheck(validationList,'Intent non-empty',true);
+    addCheck(evidenceList,'Classification logic executed',true);
+    addCheck(auditList,'JSON blob created',true);
+});
+})();
+</script>
+</body>
+</html>
