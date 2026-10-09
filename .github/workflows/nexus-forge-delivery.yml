@@ -63,6 +63,24 @@ jobs:
       - name: Test platform
         run: npm test -- --run
 
+      - name: Persist successful build/test result to Convex
+        env:
+          DELIVERY_ID: ${{ inputs.delivery_id }}
+          MISSION_ID: ${{ inputs.mission_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          [[ -n "$CONVEX_SITE_URL" ]] || { echo "Missing GitHub Actions secret: CONVEX_SITE_URL"; exit 1; }
+          [[ -n "$NEXUS_FORGE_DELIVERY_SECRET" ]] || { echo "Missing GitHub Actions secret: NEXUS_FORGE_DELIVERY_SECRET"; exit 1; }
+          payload=$(node -e 'console.log(JSON.stringify({deliveryId:process.env.DELIVERY_ID,conclusion:"success",runUrl:process.env.RUN_URL,commitSha:process.env.COMMIT_SHA,summary:"Mission "+process.env.MISSION_ID+"; delivered artifact validation, platform build, and tests passed."}))')
+          STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "$CONVEX_SITE_URL/github-actions/delivery-result" \
+            -H "Authorization: Bearer $NEXUS_FORGE_DELIVERY_SECRET" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+          echo "Convex response ($STATUS): $(cat /tmp/response.json)"
+          [[ "$STATUS" == "200" ]] || { echo "Failed to persist successful build/test result to Convex"; exit 1; }
+
       - name: Prepare static deployment
         env:
           ARTIFACT_REF: ${{ inputs.artifact_ref }}
