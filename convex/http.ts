@@ -1,7 +1,7 @@
 import { httpRouter } from "convex/server"
 import { httpAction } from "./_generated/server"
 import { auth } from "./auth"
-import { api } from "./_generated/api"
+import { internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
 
 const http = httpRouter()
@@ -44,7 +44,7 @@ http.route({
       })
     }
 
-    await ctx.runMutation(api.delivery.recordWorkflowResult, {
+    await ctx.runMutation(internal.delivery.recordWorkflowResult, {
       id: body.deliveryId as Id<"deliveries">,
       conclusion: body.conclusion,
       runUrl: body.runUrl,
