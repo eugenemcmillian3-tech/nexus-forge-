@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values"
 import { requireOperator } from "./permissions";
+import { internal } from "./_generated/api";
 
 export const decisionSnapshot = query({
   args: {},
@@ -71,9 +72,10 @@ export const executeApprovedMission = mutation({
     const latestDecision = await ctx.db.query("portfolioDecisions").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").first();
     if (!latestDecision || latestDecision.decision !== "approve" || latestDecision.priorityRank !== args.priorityRank || latestDecision.action !== args.action) throw new Error("A matching human approval is required before execution");
     const existing = await ctx.db.query("missionRuns").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").first();
-    if (existing && (existing.status === "running" || existing.status === "paused")) return { runId: existing._id, alreadyRunning: true };
+    if (existing && (existing.status === "running" || existing.status === "paused")) { await ctx.scheduler.runAfter(0, internal.missionRunner.tickInternal, { runId: existing._id }); return { runId: existing._id, alreadyRunning: true }; }
     const now = Date.now();
-    const runId = await ctx.db.insert("missionRuns", { missionId: args.missionId, startedAt: now, deadlineAt: now + 20 * 60 * 1000, maxRetries: 2, retries: 0, status: "running", currentStage: "intent", nextActionAt: now });
+    const runId = await ctx.db.insert("missionRuns", { missionId: args.missionId, startedAt: now, deadlineAt: now + 20 * 60 * 1000, maxRetries: 2, retries: 0, status: "running", currentStage: "orchestration", nextActionAt: now });
+    await ctx.scheduler.runAfter(0, internal.missionRunner.tickInternal, { runId });
     return { runId, alreadyRunning: false };
   },
 });
