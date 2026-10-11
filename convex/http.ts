@@ -76,11 +76,11 @@ http.route({
     site.hash=""
     let response: Response | undefined, current=site.toString()
     try { for(let hop=0;hop<=5;hop++){ response=await fetch(current,{redirect:"manual",signal:AbortSignal.timeout(10000)}); if(![301,302,303,307,308].includes(response.status)) break; const location=response.headers.get("location"); if(!location||hop===5) throw new Error("Redirect limit exceeded"); const next=new URL(location,current); if(!safeHost(next)) throw new Error("Unsafe redirect"); current=next.toString() } } catch { return new Response(JSON.stringify({error:"Deployment readiness probe failed safely"}),{status:409,headers:{"Content-Type":"application/json"}}) }
-    const html=response?await response.text().catch(()=>""):""
-    const checks=[current.startsWith("https://"),!!response?.ok,/<!doctype html/i.test(html)||(/<html/i.test(html)&&/<body/i.test(html)),/<title[^>]*>\s*[^<]+\s*<\/title>/i.test(html),/<meta[^>]+name=["']viewport["'][^>]*>/i.test(html),/<meta[^>]+charset/i.test(html)||/charset=/i.test(JSON.stringify(Object.fromEntries((response?.headers??new Headers()).entries())))]
-    if(!checks[0]||!checks[1]||!checks[2]||!checks[4]) return new Response(JSON.stringify({error:"Deployment failed required readiness checks",passedCount:checks.filter(Boolean).length,totalCount:checks.length}),{status:409,headers:{"Content-Type":"application/json"}})
-    await ctx.runMutation(internal.delivery.recordDeploymentResult,{id:body.deliveryId as Id<"deliveries">,runUrl:body.runUrl,commitSha:body.commitSha,deploymentUrl:current,summary:body.summary??"Deployment readiness probe passed.",readinessPassedCount:checks.filter(Boolean).length,readinessTotalCount:checks.length})
-    return new Response(JSON.stringify({ok:true,verified:true,passedCount:checks.filter(Boolean).length,totalCount:checks.length}),{status:200,headers:{"Content-Type":"application/json"}})
+    const readiness = await ctx.runAction(internal.readiness.runForDelivery, { siteUrl: current, deliveryId: body.deliveryId as Id<"deliveries"> })
+    if (readiness.status !== "pass") return new Response(JSON.stringify({ error: "Deployment failed required readiness checks", runId: readiness.runId, passedCount: readiness.passedCount, totalCount: readiness.totalCount }), { status: 409, headers: { "Content-Type": "application/json" } })
+    const summary = `Readiness: ${readiness.passedCount}/${readiness.totalCount}. ${body.summary ?? "Deployment readiness probe passed."}`
+    await ctx.runMutation(internal.delivery.recordDeploymentResult, { id: body.deliveryId as Id<"deliveries">, runUrl: body.runUrl, commitSha: body.commitSha, deploymentUrl: current, summary, readinessPassedCount: readiness.passedCount, readinessTotalCount: readiness.totalCount })
+    return new Response(JSON.stringify({ ok: true, verified: true, runId: readiness.runId, passedCount: readiness.passedCount, totalCount: readiness.totalCount }), { status: 200, headers: { "Content-Type": "application/json" } })
   }),
 })
 
