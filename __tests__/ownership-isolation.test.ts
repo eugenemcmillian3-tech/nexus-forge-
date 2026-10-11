@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "../convex/schema";
 import { api } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
 
 const modules = import.meta.glob("../convex/**/*.ts");
 
@@ -94,7 +95,7 @@ describe("public mission access isolation", () => {
       budget: 0,
       ownerKey: "owner-a",
     });
-    const mission = await t.run(async (ctx) => ctx.db.get(missionId));
+    const mission = await t.run(async (ctx) => ctx.db.get(missionId as Id<"missions">));
     expect(mission?.ownerKey).toBe("owner-b");
   });
 });
