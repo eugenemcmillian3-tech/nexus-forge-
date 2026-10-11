@@ -128,13 +128,17 @@ export const runForDelivery: any = internalAction({
   args: { siteUrl: v.string(), deliveryId: v.id("deliveries") },
   returns: v.any(),
   handler: async (ctx, args) => {
+    const delivery = await (ctx as any).runQuery((internal as any).delivery.getInternal, { id: args.deliveryId })
+    if (!delivery) throw new Error("Delivery not found for readiness history")
+    const mission = await (ctx as any).runQuery((internal as any).missions.getByIdInternal, { id: delivery.missionId })
+    if (!mission?.ownerKey) throw new Error("Delivery owner not found for readiness history")
     const siteUrl = normalizeUrl(args.siteUrl)
     const results = await runChecks(siteUrl)
     const passedCount = results.filter(r => r.status === "pass").length
     const failedCount = results.length - passedCount
     const status = results.some(r => r.severity === "required" && r.status === "fail") ? "fail" as const : "pass" as const
     return await (ctx as any).runMutation((internal as any).readiness.saveRun, {
-      siteUrl, label: `Delivery ${args.deliveryId}`, status, passedCount, failedCount, totalCount: results.length, operatorId: "delivery-system",
+      siteUrl, label: `Delivery ${args.deliveryId}`, status, passedCount, failedCount, totalCount: results.length, operatorId: mission.ownerKey,
       results: results.map(r => ({ checkKey: r.key, name: r.name, criterion: r.criterion, severity: r.severity, status: r.status, detail: r.detail, evidence: r.evidence })),
     })
   },
