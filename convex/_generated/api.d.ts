@@ -9,7 +9,10 @@
  */
 
 import type * as ResendOTP from "../ResendOTP.js";
+import type * as aiProvider from "../aiProvider.js";
 import type * as artifacts from "../artifacts.js";
+import type * as manifestIntelligence from "../manifestIntelligence.js";
+import type * as manifestStrategyParser from "../manifestStrategyParser.js";
 import type * as audit from "../audit.js";
 import type * as auth from "../auth.js";
 import type * as delivery from "../delivery.js";
@@ -30,6 +33,7 @@ import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server
 
 declare const fullApi: ApiFromModules<{
   ResendOTP: typeof ResendOTP;
+  aiProvider: typeof aiProvider;
   artifacts: typeof artifacts;
   audit: typeof audit;
   auth: typeof auth;
@@ -38,6 +42,8 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   incidents: typeof incidents;
   macaly: typeof macaly;
+  manifestIntelligence: typeof manifestIntelligence;
+  manifestStrategyParser: typeof manifestStrategyParser;
   memory: typeof memory;
   missionRunner: typeof missionRunner;
   missions: typeof missions;
