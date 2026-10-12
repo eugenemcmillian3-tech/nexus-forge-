@@ -21,13 +21,13 @@ const MAX_SEARCH_HTML = 300_000
 function isSafeResearchUrl(value: string): boolean {
   try {
     const url = new URL(value)
-    const host = url.hostname.toLowerCase().replace(/\\.$/, "")
+    const host = url.hostname.toLowerCase().replace(/\.$/, "")
     if (url.protocol !== "https:" || url.username || url.password) return false
     if (!host || host === "localhost" || host === "metadata" || host === "metadata.google.internal") return false
     if (host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal") || host.endsWith(".test")) return false
     if (host.includes(":") || /^\\d+(?:\\.\\d+){0,3}$/.test(host) || /^0x[\\da-f]+$/i.test(host)) return false
     if (url.port && url.port !== "443") return false
-    if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/i.test(host)) return false
+    if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(host)) return false
     return true
   } catch {
     return false
