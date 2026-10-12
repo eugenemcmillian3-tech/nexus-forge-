@@ -18,5 +18,9 @@
   "/readiness": {
     "title": "Launch Readiness — NEXUS FORGE",
     "description": "Run auditable production readiness checks and inspect the evidence behind every result."
+  },
+  "/orchestrator": {
+    "title": "Intelligence Orchestrator — NEXUS FORGE",
+    "description": "Compile mission intent into measurable criteria, competing strategies, and a governed draft."
   }
 }
