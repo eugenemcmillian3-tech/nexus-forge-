@@ -17,7 +17,6 @@ const researchValidator = v.object({
 type WebSource = { title: string; url: string; snippet: string }
 const MAX_QUERY_LENGTH = 500
 const MAX_SEARCH_HTML = 300_000
-const MAX_SEARCH_HTML = 300_000
 
 function isSafeResearchUrl(value: string): boolean {
   try {
