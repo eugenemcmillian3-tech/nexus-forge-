@@ -66,15 +66,15 @@ async function readTextBounded(response: Response, maxBytes: number): Promise<st
 
 function cleanHtml(html: string): string {
   return html
-    .replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
-    .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
-    .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
-    .replace(/\\s+/g, " ")
+    .replace(/\s+/g, " ")
     .trim()
 }
 
@@ -88,7 +88,7 @@ async function discoverWebSources(queryText: string, limit: number): Promise<Web
   if (!response.ok) throw new Error(`Web search failed (${response.status}).`)
   const html = await readTextBounded(response, MAX_SEARCH_HTML)
   const sources: WebSource[] = []
-  const pattern = /<a[^>]+class=["']result__a["'][^>]+href=["']([^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>/gi
+  const pattern = /<a[^>]+class=["']result__a["'][^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
   let match: RegExpExecArray | null
   while ((match = pattern.exec(html)) && sources.length < limit) {
     try {
@@ -99,7 +99,7 @@ async function discoverWebSources(queryText: string, limit: number): Promise<Web
       const url = decodeURIComponent(target)
       if (isSafeResearchUrl(url) && !sources.some(source => source.url === url)) {
         const after = html.slice(pattern.lastIndex, pattern.lastIndex + 2500)
-        const snippetMatch = after.match(/class=["']result__snippet["'][^>]*>([\\s\\S]*?)<\\/div>/i)
+        const snippetMatch = after.match(/class=["']result__snippet["'][^>]*>([\s\S]*?)<\/div>/i)
         sources.push({
           title: cleanHtml(match[2]).slice(0, 300),
           url,
