@@ -3,6 +3,10 @@
     "title": "NEXUS FORGE — Governed Intelligence OS",
     "description": "A governed AI workspace for research, creation, verification and measured outcomes."
   },
+  "/mission": {
+    "title": "Mission Console — NEXUS FORGE",
+    "description": "Define, review, and explicitly approve a mission contract before execution."
+  },
   "/manifest": {
     "title": "Manifest Intelligence — NEXUS FORGE",
     "description": "Translate intent into testable blueprints and evidence-backed strategies."
