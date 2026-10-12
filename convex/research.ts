@@ -171,12 +171,12 @@ export const search = action({
     try {
       data = JSON.parse(responseText) as { result?: unknown; citations?: unknown }
     } catch {
-      data = { result: responseText, citations: sources.map(source => source.url) }
+      data = { result: responseText, citations: [] }
     }
     const result = typeof data.result === "string" && data.result.trim() ? data.result.trim().slice(0, 20_000) : responseText.slice(0, 20_000)
     const citations = Array.isArray(data.citations)
       ? data.citations.filter((item): item is string => typeof item === "string" && sources.some(source => source.url === item))
-      : sources.map(source => source.url)
+      : []
     await ctx.runMutation(internal.research.save, { missionId: args.missionId, query: queryText, result, citations })
     return { ok: true, result, citations }
   },
