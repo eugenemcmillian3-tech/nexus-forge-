@@ -2,9 +2,9 @@ import { Link, useRouterState } from '@tanstack/react-router'
 import { AuthWrapper } from './auth-wrapper'
 
 const sections = [
-  { label: 'WORKFLOW', items: [{ to: '/', title: 'Overview', icon: '⌂' }, { to: '/council', title: 'AI Council', icon: '◈' }, { to: '/manifest', title: 'Manifest Intelligence', icon: '✧' }, { to: '/readiness', title: 'Launch Readiness', icon: '✓' }, { to: '/roadmap', title: 'Master Roadmap', icon: '☷' }] },
+  { label: 'WORKFLOW', items: [{ to: '/', title: 'Overview', icon: '⌂' }, { to: '/mission', title: 'Mission Console', icon: '◎' }, { to: '/council', title: 'AI Council', icon: '◈' }, { to: '/manifest', title: 'Manifest Intelligence', icon: '✧' }, { to: '/readiness', title: 'Launch Readiness', icon: '✓' }, { to: '/roadmap', title: 'Master Roadmap', icon: '☷' }] },
 ]
-const planned = ['Mission Console', 'Intelligence Orchestrator', 'Verified Learning Engine', 'Research & Memory', 'Artifact Forge', 'Delivery Pipeline', 'Portfolio Intelligence', 'Incident Center', 'Capability & Reliability', 'Autonomous Workflow', 'AI Providers']
+const planned = ['Intelligence Orchestrator', 'Verified Learning Engine', 'Research & Memory', 'Artifact Forge', 'Delivery Pipeline', 'Portfolio Intelligence', 'Incident Center', 'Capability & Reliability', 'Autonomous Workflow', 'AI Providers']
 
 export function WorkspaceLayout({ title, eyebrow, children }: { title: string; eyebrow: string; children: React.ReactNode }) {
   const pathname = useRouterState({ select: state => state.location.pathname })
