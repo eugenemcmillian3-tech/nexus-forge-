@@ -9,8 +9,8 @@ const steps = [
   { state: 'DONE', title: 'Incident recovery safeguards', detail: 'Completed missions stay terminal; escalated incidents require documented review before autonomous restart.' },
   { state: 'DONE', title: 'Dedicated roadmap route', detail: 'The route is registered in the generated TanStack route tree and the PR CI workflow passed.' },
   { state: 'DONE', title: 'Shared governed workspace shell', detail: 'Responsive shared layout, Overview and Roadmap navigation are live; unported destinations are clearly marked as queued.' },
-  { state: 'IN PROGRESS', title: 'Manifest Intelligence route', detail: 'Porting the intent compiler, provider-backed synthesis, private blueprint history, strategy ledger and evidence-backed outcome capture.' },
-  { state: 'QUEUED', title: 'Provider-backed strategy persistence', detail: 'Verify strategy output is produced by a healthy provider, saved with operator scope, and tied to outcome evidence.' },
+  { state: 'DONE', title: 'Manifest Intelligence route', detail: 'Dedicated route merged in PR #25. PR CI run 38201352002 passed install, automated tests and production build; route is wired into workspace navigation and page metadata.' },
+  { state: 'IN PROGRESS', title: 'Provider-backed strategy persistence', detail: 'Validate structured strategy output and owner-scoped persistence against real provider responses; distinguish proposals from measured outcomes.' },
   { state: 'QUEUED', title: 'End-to-end delivery evidence', detail: 'After route parity, run the full build/test/deployment/smoke-evidence loop and record verified outcomes.' },
 ]
 
