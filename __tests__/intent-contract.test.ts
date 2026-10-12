@@ -17,7 +17,7 @@ const validContract = {
 
 describe("mission intent contract parser", () => {
   it("parses fenced JSON and preserves competing strategies", () => {
-    const result = parseMissionSpecification("\`\`\`json\n" + JSON.stringify(validContract) + "\n\`\`\`");
+    const result = parseMissionSpecification("```json\n" + JSON.stringify(validContract) + "\n```");
     expect(result.objective).toContain("customer onboarding");
     expect(result.acceptanceCriteria).toHaveLength(2);
     expect(result.strategies).toHaveLength(2);
