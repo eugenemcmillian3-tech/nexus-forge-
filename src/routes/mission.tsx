@@ -1,0 +1,79 @@
+import { createFileRoute, Link, useRouterState } from '@tanstack/react-router'
+import { useMutation, useQuery } from 'convex/react'
+import { useEffect, useState } from 'react'
+import { api } from '../../convex/_generated/api'
+import { WorkspaceLayout } from '../components/workspace-layout'
+import { useActiveMission } from '../hooks/use-active-mission'
+
+export const Route = createFileRoute('/mission')({ component: MissionPage })
+
+function MissionPage() {
+  const pathname = useRouterState({ select: state => state.location.pathname })
+  const { missionId, setMissionId, mission: activeMission } = useActiveMission()
+  const missions = useQuery(api.missions.list, { ownerKey: 'local-workspace', paginationOpts: { numItems: 30, cursor: null } })
+  const createMission = useMutation(api.missions.create)
+  const approveMission = useMutation(api.missions.approve)
+  const [title, setTitle] = useState('NEXUS Forge Mission')
+  const [description, setDescription] = useState('Create a new AI venture that turns creative intent into measurable digital products.')
+  const [autonomy, setAutonomy] = useState('Approval required')
+  const [budget, setBudget] = useState(100)
+  const [busy, setBusy] = useState(false)
+  const [receipt, setReceipt] = useState('')
+  const [error, setError] = useState('')
+  useEffect(() => {
+    const raw = window.sessionStorage.getItem('nexus-forge-manifest-handoff')
+    if (!raw) return
+    try {
+      const handoff = JSON.parse(raw) as { intent?: string; domain?: string; budget?: number; horizon?: string; constraints?: string; acceptanceCriteria?: string; blueprint?: string }
+      const intent = handoff.intent?.trim() || 'Review Manifest Intelligence proposal'
+      const blueprint = handoff.blueprint?.trim() || ''
+      setTitle(`Manifest: ${intent.slice(0, 56)}`)
+      setDescription(`Desired outcome: ${intent}\nDomain: ${handoff.domain || 'General'}\nTime horizon: ${handoff.horizon || 'Not specified'}\nConstraints and assumptions: ${handoff.constraints || 'Not specified'}\nAcceptance criteria: ${handoff.acceptanceCriteria || 'Review and define measurable criteria'}\n\nBlueprint proposal — unverified, review before approval:\n${blueprint.slice(0, 7000)}`)
+      setBudget(Math.max(0, Math.min(500, Number(handoff.budget ?? 25))))
+      setReceipt('Manifest blueprint loaded into a draft contract. Review the proposal and constraints before creating or approving the mission.')
+      setError('')
+    } catch {
+      setError('Could not load the Manifest blueprint. Return to Manifest Intelligence and try again.')
+      window.sessionStorage.removeItem('nexus-forge-manifest-handoff')
+    }
+  }, [pathname])
+  const rows = missions?.page ?? []
+  const create = async () => {
+    if (!title.trim() || !description.trim()) { setError('A title and mission outcome are required.'); return }
+    setBusy(true); setError(''); setReceipt('')
+    try {
+      const id = await createMission({ title: title.trim(), mission: description.trim(), autonomy, budget, ownerKey: 'local-workspace' })
+      setMissionId(id)
+      window.sessionStorage.removeItem('nexus-forge-manifest-handoff')
+      setReceipt('Draft created and selected. The Manifest handoff is now safely consumed. Review the mission contract, then explicitly approve it before Council execution.')
+    } catch (e) { setError(e instanceof Error ? e.message : 'Mission creation failed.') } finally { setBusy(false) }
+  }
+  const approve = async () => {
+    if (!missionId) return
+    setBusy(true); setError(''); setReceipt('')
+    try { await approveMission({ id: missionId, approved: true }); setReceipt('Mission approval recorded. Council execution is a separate action on the AI Council page.') }
+    catch (e) { setError(e instanceof Error ? e.message : 'Mission approval failed.') } finally { setBusy(false) }
+  }
+  return <WorkspaceLayout title="Mission Console" eyebrow="STAGE 01 / INTENT & AUTHORITY">
+    <section className="workspace"><div className="console-grid">
+      <div id="mission-contract" className="glass-card research-card"><div className="panel-title"><span>MISSION CONTRACT</span><span className="live-pill">HUMAN CONTROL</span></div>
+        <label htmlFor="mission-title">MISSION TITLE</label><input id="mission-title" value={title} onChange={e => setTitle(e.target.value)} />
+        <label htmlFor="mission-description">DESIRED OUTCOME</label><textarea id="mission-description" rows={5} value={description} onChange={e => setDescription(e.target.value)} />
+        <div className="field-grid"><div><label htmlFor="mission-autonomy">AUTHORITY LEVEL</label><select id="mission-autonomy" value={autonomy} onChange={e => setAutonomy(e.target.value)}><option>Draft only</option><option>Approval required</option><option>Narrow auto-execution</option></select></div><div><label htmlFor="mission-budget">SPEND CAP · USD</label><input id="mission-budget" type="number" min={0} max={500} value={budget} onChange={e => setBudget(Math.max(0, Math.min(500, Number(e.target.value))))} /></div></div>
+        <button className="primary-button" disabled={busy} onClick={() => void create()}>{busy ? 'Creating…' : 'Create new draft mission ↗'}</button>
+      </div>
+      <div id="active-mission-contract" className="glass-card research-card"><div className="panel-title"><span>ACTIVE MISSION</span><span className="live-pill">{activeMission ? activeMission.status.toUpperCase() : 'NOT SELECTED'}</span></div>
+        {activeMission ? <><h3>{activeMission.title}</h3><p>{activeMission.mission}</p><div className="decision-line"><span>AUTHORITY</span><strong>{activeMission.autonomy}</strong></div><div className="decision-line"><span>SPEND CAP</span><strong>${activeMission.budget}</strong></div><div className="decision-line"><span>MISSION APPROVAL</span><strong>{activeMission.approved ? 'APPROVED' : 'PENDING'}</strong></div>
+          {!activeMission.approved && <button className="secondary-button" disabled={busy} onClick={() => void approve()}>Approve mission contract</button>}
+          {activeMission.approved && <p className="receipt">Approved. Continue to the AI Council page to explicitly start planning.</p>}
+        </> : <p>Create a draft mission to begin. Existing missions can be selected below.</p>}
+      </div>
+    </div>
+    {error && <p className="warning" role="alert">{error}</p>}{receipt && <p className="receipt" role="status">{receipt}</p>}
+    <div className="glass-card research-card" data-testid="mission-next-step"><div className="panel-title"><span>GUIDED NEXT STEP</span><span className="live-pill">{activeMission ? (activeMission.approved ? 'READY FOR COUNCIL' : 'REVIEW REQUIRED') : 'START HERE'}</span></div>{activeMission ? activeMission.approved ? <><p>The selected mission contract is approved. Continue to AI Council when you are ready to explicitly start planning.</p><Link className="primary-button inline-flex" to="/council">Continue to AI Council →</Link></> : <><p>Review the active mission title, desired outcome, authority and spend cap. Then use the existing approval control above; approval does not start execution.</p><a className="secondary-button inline-flex" href="#active-mission-contract">Review active mission contract ↑</a></> : <><p>Start by defining a clear outcome and budget. Creating a draft does not approve it or start execution.</p><a className="primary-button inline-flex" href="#mission-contract">Define mission contract ↓</a></>}</div>
+    <div className="glass-card research-card"><div className="panel-title"><span>MISSION HISTORY</span><span className="live-pill">{rows.length} SHOWN</span></div>
+      {rows.length === 0 ? <p>No saved missions yet.</p> : rows.map(row => <button key={row._id} className="portfolio-row" onClick={() => { setMissionId(row._id); setReceipt(`Selected ${row.title}. Confirm its approval state before continuing.`); setError('') }}><div className="portfolio-main"><strong>{row.title}</strong><p>{row.mission}</p></div><div className="portfolio-cell"><small>STATUS</small><b>{row.status.toUpperCase()}</b></div><div className="portfolio-cell"><small>APPROVAL</small><b>{row.approved ? 'APPROVED' : 'PENDING'}</b></div></button>)}
+    </div>
+    <div className="hero-actions"><Link className="secondary-button" to="/council">Continue to AI Council →</Link></div></section>
+  </WorkspaceLayout>
+}
