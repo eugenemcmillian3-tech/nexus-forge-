@@ -10,7 +10,8 @@ const steps = [
   { state: 'DONE', title: 'Dedicated roadmap route', detail: 'The route is registered in the generated TanStack route tree and the PR CI workflow passed.' },
   { state: 'DONE', title: 'Shared governed workspace shell', detail: 'Responsive shared layout, Overview and Roadmap navigation are live; unported destinations are clearly marked as queued.' },
   { state: 'DONE', title: 'Manifest Intelligence route', detail: 'Dedicated route merged in PR #25. PR CI run 38201352002 passed install, automated tests and production build; route is wired into workspace navigation and page metadata.' },
-  { state: 'IN PROGRESS', title: 'Provider-backed strategy persistence', detail: 'Validate structured strategy output and owner-scoped persistence against real provider responses; distinguish proposals from measured outcomes.' },
+  { state: 'IN PROGRESS', title: 'Provider-backed strategy persistence', detail: 'PR #27 is merged and the live UI reports structured strategy count and parse status. Remaining gate: a real authenticated provider run must confirm records appear in the operator-scoped ledger; source and CI success alone are not runtime proof.' },
+  { state: 'QUEUED', title: 'Dedicated route parity', detail: 'Complete remaining queued destinations as dedicated pages with ordered next steps, preserving the shared governed shell and existing approval controls.' },
   { state: 'QUEUED', title: 'End-to-end delivery evidence', detail: 'After route parity, run the full build/test/deployment/smoke-evidence loop and record verified outcomes.' },
 ]
 
@@ -25,6 +26,6 @@ function RoadmapPage() {
         <span className="workflow-step-state text-[10px] font-bold tracking-wider whitespace-nowrap">{step.state}</span>
       </article>)}
     </div>
-    <div className="glass-card research-card p-5 mt-6"><div className="section-kicker">NEXT BUILD PRIORITY</div><h2 className="text-2xl font-bold mt-2">Finish and validate the Manifest Intelligence route</h2><p className="hero-text">The route uses the existing authenticated Convex actions and operator-scoped history. Keep changes on feature branches until route generation, tests and production build pass.</p><a className="ghost-button inline-flex mt-3" href="https://github.com/eugenemcmillian3-tech/nexus-forge-/actions" target="_blank" rel="noreferrer">View GitHub Actions ↗</a></div>
+    <div className="glass-card research-card p-5 mt-6"><div className="section-kicker">NEXT BUILD PRIORITY</div><h2 className="text-2xl font-bold mt-2">Verify a real Manifest provider-to-ledger run</h2><p className="hero-text">The route and persistence receipt are merged and live. Next, run synthesis in an authenticated operator session and verify structured strategy records appear in that operator’s private ledger. Do not mark runtime persistence verified from a build or parser test alone. Then continue dedicated route parity.</p><a className="ghost-button inline-flex mt-3" href="https://github.com/eugenemcmillian3-tech/nexus-forge-/actions" target="_blank" rel="noreferrer">View GitHub Actions ↗</a></div>
   </WorkspaceLayout>
 }
