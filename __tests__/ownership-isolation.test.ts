@@ -27,6 +27,16 @@ async function seedMission(t: ReturnType<typeof convexTest>, ownerKey = "owner-a
   }));
 }
 
+async function seedResearch(t: ReturnType<typeof convexTest>, missionId: any) {
+  return t.run(async (ctx) => ctx.db.insert("research", {
+    missionId,
+    query: "private research query",
+    result: "private research result",
+    citations: ["https://example.com/source"],
+    createdAt: 1,
+  }));
+}
+
 async function seedRun(t: ReturnType<typeof convexTest>, missionId: any) {
   return t.run(async (ctx) => ctx.db.insert("missionRuns", {
     missionId,
@@ -97,5 +107,38 @@ describe("public mission access isolation", () => {
     });
     const mission = await t.run(async (ctx) => ctx.db.get(missionId as Id<"missions">));
     expect(mission?.ownerKey).toBe("owner-b");
+  });
+  it("rejects anonymous research history reads", async () => {
+    const t = convexTest(schema, modules);
+    const missionId = await seedMission(t, "owner-a");
+    await seedResearch(t, missionId);
+    await expect(t.query(api.research.list, { missionId })).rejects.toThrow();
+  });
+
+  it("rejects cross-owner research history reads", async () => {
+    const t = convexTest(schema, modules);
+    const missionId = await seedMission(t, "owner-a");
+    await seedResearch(t, missionId);
+    await expect(t.withIdentity(identity("owner-b")).query(api.research.list, { missionId }))
+      .rejects.toThrow(/not found or access denied/i);
+  });
+
+  it("rejects cross-owner research searches before calling the provider", async () => {
+    const t = convexTest(schema, modules);
+    const missionId = await seedMission(t, "owner-a");
+    await expect(t.withIdentity(identity("owner-b")).action(api.research.search, {
+      missionId,
+      query: "private mission research",
+      deepResearch: false,
+    })).rejects.toThrow(/not found or access denied/i);
+  });
+
+  it("rejects synthesis when the supplied owner differs from the authenticated mission owner", async () => {
+    const t = convexTest(schema, modules);
+    const missionId = await seedMission(t, "owner-a");
+    await expect(t.withIdentity(identity("owner-b")).action(api.research.synthesize, {
+      missionId,
+      ownerKey: "owner-b",
+    })).rejects.toThrow(/not found or access denied/i);
   });
 });
