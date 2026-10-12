@@ -12,6 +12,7 @@ import type * as ResendOTP from "../ResendOTP.js";
 import type * as aiProvider from "../aiProvider.js";
 import type * as artifacts from "../artifacts.js";
 import type * as manifestIntelligence from "../manifestIntelligence.js";
+import type * as learningEngine from "../learningEngine.js";
 import type * as manifestStrategyParser from "../manifestStrategyParser.js";
 import type * as audit from "../audit.js";
 import type * as auth from "../auth.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   intentContract: typeof intentContract;
   macaly: typeof macaly;
   manifestIntelligence: typeof manifestIntelligence;
+  learningEngine: typeof learningEngine;
   manifestStrategyParser: typeof manifestStrategyParser;
   memory: typeof memory;
   missionRunner: typeof missionRunner;
