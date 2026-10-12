@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
 import { Route as OrchestratorRouteImport } from './routes/orchestrator'
+import { Route as LearningRouteImport } from './routes/learning'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -31,33 +32,43 @@ const OrchestratorRoute = OrchestratorRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 
+const LearningRoute = LearningRouteImport.update({
+  id: '/learning',
+  path: '/learning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/roadmap': typeof RoadmapRoute
   '/orchestrator': typeof OrchestratorRoute
+  '/learning': typeof LearningRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/roadmap': typeof RoadmapRoute
   '/orchestrator': typeof OrchestratorRoute
+  '/learning': typeof LearningRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/roadmap': typeof RoadmapRoute
   '/orchestrator': typeof OrchestratorRoute
+  '/learning': typeof LearningRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/roadmap' | '/orchestrator'
+  fullPaths: '/' | '/roadmap' | '/orchestrator' | '/learning'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/roadmap' | '/orchestrator'
-  id: '__root__' | '/' | '/roadmap' | '/orchestrator'
+  to: '/' | '/roadmap' | '/orchestrator' | '/learning'
+  id: '__root__' | '/' | '/roadmap' | '/orchestrator' | '/learning'
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RoadmapRoute: typeof RoadmapRoute
   OrchestratorRoute: typeof OrchestratorRoute
+  LearningRoute: typeof LearningRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -90,6 +101,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RoadmapRoute: RoadmapRoute,
   OrchestratorRoute: OrchestratorRoute,
+  LearningRoute: LearningRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
