@@ -1,5 +1,6 @@
 import { v } from "convex/values"
-import { action, internalMutation, query } from "./_generated/server"
+import { action, internalMutation, internalQuery, query } from "./_generated/server"
+import { requireOwnedMission } from "./permissions"
 import { internal } from "./_generated/api"
 import { callMacalyJson } from "./macaly"
 
@@ -8,7 +9,10 @@ const researchValidator = v.object({ _id: v.id("research"), _creationTime: v.num
 export const list = query({
   args: { missionId: v.id("missions") },
   returns: v.array(researchValidator),
-  handler: async (ctx, args) => ctx.db.query("research").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").take(20),
+  handler: async (ctx, args) => {
+    await requireOwnedMission(ctx, args.missionId)
+    return ctx.db.query("research").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").take(20)
+  },
 })
 
 export const save = internalMutation({
@@ -37,6 +41,8 @@ export const search = action({
   handler: async (ctx, args) => {
     const operator = await ctx.runQuery(internal.permissions.currentOperator, {})
     if (!operator) throw new Error("Authenticated operator session required")
+    const mission = await ctx.runQuery(internal.missions.getByIdInternal, { id: args.missionId })
+    if (!mission || mission.ownerKey !== operator) throw new Error("Mission not found or access denied")
     const data = await callMacalyJson("/api/client-app/internet-search", { query: args.query, deepResearch: args.deepResearch }) as { result?: unknown; citations?: unknown }
     const result = typeof data.result === "string" ? data.result : "No research result returned."
     const citations = Array.isArray(data.citations) ? data.citations.filter((x): x is string => typeof x === "string") : []
@@ -49,6 +55,10 @@ export const synthesize = action({
   args: { missionId: v.id("missions"), ownerKey: v.string() },
   returns: v.object({ ok: v.boolean(), synthesis: v.string(), sourceCount: v.number() }),
   handler: async (ctx, args) => {
+    const operator = await ctx.runQuery(internal.permissions.currentOperator, {})
+    if (!operator) throw new Error("Authenticated operator session required")
+    const mission = await ctx.runQuery(internal.missions.getByIdInternal, { id: args.missionId })
+    if (!mission || mission.ownerKey !== operator) throw new Error("Mission not found or access denied")
     const rows = await ctx.runQuery(internal.research.listForSynthesis, { missionId: args.missionId })
     if (!rows.length) throw new Error("Run at least one research query before synthesis.")
     const sourceText = rows.map((row, index) => `SOURCE ${index + 1}\nQuery: ${row.query}\nResult: ${row.result}\nCitations: ${row.citations.join(", ")}`).join("\n\n")
@@ -69,12 +79,12 @@ export const synthesize = action({
     if (!response.ok) throw new Error(`Research synthesis AI gateway failed: ${response.status}`)
     const data = await response.json() as { text?: unknown }
     const synthesis = typeof data.text === "string" && data.text.trim() ? data.text.trim() : "Research synthesis unavailable."
-    await ctx.runMutation(internal.research.saveSynthesisMemory, { missionId: args.missionId, ownerKey: args.ownerKey, value: synthesis })
+    await ctx.runMutation(internal.research.saveSynthesisMemory, { missionId: args.missionId, ownerKey: mission.ownerKey, value: synthesis })
     return { ok: true, synthesis, sourceCount: rows.length }
   },
 })
 
-export const listForSynthesis = query({
+export const listForSynthesis = internalQuery({
   args: { missionId: v.id("missions") },
   returns: v.array(researchValidator),
   handler: async (ctx, args) => ctx.db.query("research").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").take(10),
