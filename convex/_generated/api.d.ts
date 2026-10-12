@@ -25,6 +25,7 @@ import type * as missionRunner from "../missionRunner.js";
 import type * as missions from "../missions.js";
 import type * as permissions from "../permissions.js";
 import type * as portfolio from "../portfolio.js";
+import type * as readiness from "../readiness.js";
 import type * as research from "../research.js";
 import type * as users from "../users.js";
 import type * as verification from "../verification.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   missions: typeof missions;
   permissions: typeof permissions;
   portfolio: typeof portfolio;
+  readiness: typeof readiness;
   research: typeof research;
   users: typeof users;
   verification: typeof verification;
