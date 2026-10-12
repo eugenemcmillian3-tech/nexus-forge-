@@ -124,7 +124,7 @@ export const synthesize = action({
     constraints: v.optional(v.string()),
     acceptanceCriteria: v.optional(v.string()),
   },
-  returns: v.object({ blueprint: v.string(), saved: v.boolean() }),
+  returns: v.object({ blueprint: v.string(), saved: v.boolean(), strategyCount: v.number(), strategyBlockValid: v.boolean() }),
   handler: async (ctx, args) => {
     const operatorId = await getAuthUserId(ctx);
     if (!operatorId) throw new Error("Authenticated operator session required");
@@ -187,6 +187,6 @@ Write specific, realistic guidance tailored to the intent. Do not describe the b
       blueprint,
     });
     if (strategies.length > 0) await ctx.runMutation(internal.manifestIntelligence.saveStrategies, { ownerKey: operatorId, blueprintKey, strategies });
-    return { blueprint, saved: true };
+    return { blueprint, saved: true, strategyCount: strategies.length, strategyBlockValid: extraction.validJson };
   },
 });

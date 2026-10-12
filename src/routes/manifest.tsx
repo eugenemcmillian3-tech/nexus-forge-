@@ -41,7 +41,7 @@ function ManifestIntelligencePage() {
     try {
       const result = await synthesize({ intent: intent.trim(), domain, budget, horizon, constraints: constraints.trim(), acceptanceCriteria: acceptanceCriteria.trim() })
       setBlueprint(result.blueprint)
-      setNotice(result.saved ? 'Blueprint generated and saved to your private operator memory. It is a proposal, not an executed result.' : 'Blueprint generated.')
+      setNotice(result.saved ? result.strategyCount > 0 ? `Blueprint saved privately; ${result.strategyCount} structured strateg${result.strategyCount === 1 ? 'y' : 'ies'} saved to the strategy ledger. This is a proposal, not an executed result.` : 'Blueprint saved privately, but the provider did not return a valid structured strategy block. The blueprint is available; no strategy records were added. Retry synthesis or inspect provider output before treating the ledger as populated.' : 'Blueprint generated.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Manifest synthesis failed. Check provider health and try again.') }
     finally { setBusy(false) }
   }
@@ -106,7 +106,7 @@ function ManifestIntelligencePage() {
     <div className="glass-card research-card mt-8">
       <div className="panel-title"><span>STRATEGY & OUTCOME LEDGER</span><span className="live-pill">{strategies.length} RECORDS</span></div>
       <p className="muted-copy">Record observed results only after an experiment runs. Attach a measurement source; estimated value is not actual value.</p>
-      {strategyRows === undefined ? <p>Loading private strategy history…</p> : strategies.length === 0 ? <p className="empty-state">No structured strategies saved yet. Generate a blueprint; the ledger populates when the provider returns valid structured strategy data.</p> : strategies.map(row => {
+      {strategyRows === undefined ? <p>Loading private strategy history…</p> : strategies.length === 0 ? <p className="empty-state">No structured strategies saved yet. A blueprint save does not guarantee strategy persistence: each synthesis receipt now reports whether valid machine-readable strategies were returned and saved.</p> : strategies.map(row => {
         const item = parseRecord(row.value)
         return <article className="workflow-step flex gap-4 py-4 border-b border-slate-800/10" key={row._id}>
           <span className="workflow-step-mark">↗</span><span className="workflow-step-copy flex-1"><strong>{String(item.name ?? 'Candidate strategy')}</strong><small>{String(item.mechanism ?? '')}</small><small>Evidence horizon: {String(item.timeToEvidence ?? 'Not specified')} · Outcome: {String(item.outcomeStatus ?? 'not_measured')}</small>{item.actualResult ? <small>Observed: {String(item.actualResult)} · Evidence: {String(item.evidence ?? 'Not supplied')} · Actual cost: {item.actualCost == null ? 'Not recorded' : '$' + String(item.actualCost)}</small> : null}</span>
