@@ -1,5 +1,6 @@
 import { v } from "convex/values"
 import { internalMutation, query } from "./_generated/server"
+import { requireOwnedMission } from "./permissions"
 
 const event = v.object({_id:v.id("auditEvents"),_creationTime:v.number(),missionId:v.id("missions"),eventType:v.string(),source:v.string(),message:v.string(),runId:v.optional(v.id("missionRuns")),deliveryId:v.optional(v.id("deliveries")),verificationId:v.optional(v.id("verifications")),decisionId:v.optional(v.id("portfolioDecisions")),metadata:v.optional(v.string()),createdAt:v.number()})
 
@@ -12,5 +13,8 @@ export const record = internalMutation({
 export const list = query({
   args:{missionId:v.id("missions")},
   returns:v.array(event),
-  handler:async(ctx,args)=>ctx.db.query("auditEvents").withIndex("by_mission",q=>q.eq("missionId",args.missionId)).order("desc").take(100),
+  handler:async(ctx,args)=>{
+    await requireOwnedMission(ctx,args.missionId)
+    return await ctx.db.query("auditEvents").withIndex("by_mission",q=>q.eq("missionId",args.missionId)).order("desc").take(100)
+  },
 })
