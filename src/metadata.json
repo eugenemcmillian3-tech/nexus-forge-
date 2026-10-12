@@ -22,5 +22,9 @@
   "/orchestrator": {
     "title": "Intelligence Orchestrator — NEXUS FORGE",
     "description": "Compile mission intent into measurable criteria, competing strategies, and a governed draft."
+  },
+  "/learning": {
+    "title": "Verified Learning Engine — NEXUS FORGE",
+    "description": "Compare strategies using measured metrics, evidence references, and safety gates."
   }
 }
