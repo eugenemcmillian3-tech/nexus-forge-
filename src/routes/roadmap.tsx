@@ -8,8 +8,8 @@ const steps = [
   { state: 'DONE', title: 'Manifest backend foundation', detail: 'Provider routing, strategy parsing and Manifest persistence foundation are in the source repository with regression tests.' },
   { state: 'DONE', title: 'Incident recovery safeguards', detail: 'Completed missions stay terminal; escalated incidents require documented review before autonomous restart.' },
   { state: 'DONE', title: 'Dedicated roadmap route', detail: 'The route is registered in the generated TanStack route tree and the PR CI workflow passed.' },
-  { state: 'IN PROGRESS', title: 'Shared governed workspace shell', detail: 'Introduce a common layout and honest navigation state; routes not yet ported are shown as queued, not linked to broken pages.' },
-  { state: 'NEXT', title: 'Port dedicated feature routes', detail: 'Add Mission Console, Council, Manifest Intelligence, Evidence, Artifact Forge, Delivery, Portfolio, Incidents, Providers, Readiness and Workflow with their required APIs.' },
+  { state: 'DONE', title: 'Shared governed workspace shell', detail: 'Responsive shared layout, Overview and Roadmap navigation are live; unported destinations are clearly marked as queued.' },
+  { state: 'IN PROGRESS', title: 'Manifest Intelligence route', detail: 'Porting the intent compiler, provider-backed synthesis, private blueprint history, strategy ledger and evidence-backed outcome capture.' },
   { state: 'QUEUED', title: 'Provider-backed strategy persistence', detail: 'Verify strategy output is produced by a healthy provider, saved with operator scope, and tied to outcome evidence.' },
   { state: 'QUEUED', title: 'End-to-end delivery evidence', detail: 'After route parity, run the full build/test/deployment/smoke-evidence loop and record verified outcomes.' },
 ]
@@ -25,6 +25,6 @@ function RoadmapPage() {
         <span className="workflow-step-state text-[10px] font-bold tracking-wider whitespace-nowrap">{step.state}</span>
       </article>)}
     </div>
-    <div className="glass-card research-card p-5 mt-6"><div className="section-kicker">NEXT BUILD PRIORITY</div><h2 className="text-2xl font-bold mt-2">Port the first dependency-complete feature route</h2><p className="hero-text">The shared shell now separates available routes from queued work. Next, bring over one page and its API dependencies per tested slice; keep changes on feature branches until CI passes.</p><a className="ghost-button inline-flex mt-3" href="https://github.com/eugenemcmillian3-tech/nexus-forge-/actions" target="_blank" rel="noreferrer">View GitHub Actions ↗</a></div>
+    <div className="glass-card research-card p-5 mt-6"><div className="section-kicker">NEXT BUILD PRIORITY</div><h2 className="text-2xl font-bold mt-2">Finish and validate the Manifest Intelligence route</h2><p className="hero-text">The route uses the existing authenticated Convex actions and operator-scoped history. Keep changes on feature branches until route generation, tests and production build pass.</p><a className="ghost-button inline-flex mt-3" href="https://github.com/eugenemcmillian3-tech/nexus-forge-/actions" target="_blank" rel="noreferrer">View GitHub Actions ↗</a></div>
   </WorkspaceLayout>
 }
