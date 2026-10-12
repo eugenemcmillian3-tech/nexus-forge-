@@ -141,4 +141,44 @@ describe("public mission access isolation", () => {
       ownerKey: "owner-b",
     })).rejects.toThrow(/not found or access denied/i);
   });
+
+  it("rejects anonymous audit history reads", async () => {
+    const t = convexTest(schema, modules);
+    const missionId = await seedMission(t, "owner-a");
+    await t.run(async (ctx) => ctx.db.insert("auditEvents", {
+      missionId, eventType: "mission:test", source: "test", message: "private audit event", createdAt: 1,
+    }));
+    await expect(t.query(api.audit.list, { missionId })).rejects.toThrow();
+  });
+
+  it("rejects cross-owner audit history reads", async () => {
+    const t = convexTest(schema, modules);
+    const missionId = await seedMission(t, "owner-a");
+    await t.run(async (ctx) => ctx.db.insert("auditEvents", {
+      missionId, eventType: "mission:test", source: "test", message: "private audit event", createdAt: 1,
+    }));
+    await expect(t.withIdentity(identity("owner-b")).query(api.audit.list, { missionId }))
+      .rejects.toThrow(/not found or access denied/i);
+  });
+
+  it("rejects anonymous incident history reads", async () => {
+    const t = convexTest(schema, modules);
+    const missionId = await seedMission(t, "owner-a");
+    await t.run(async (ctx) => ctx.db.insert("incidents", {
+      missionId, kind: "test", stage: "test", message: "private incident", attempts: 1,
+      status: "open", createdAt: 1,
+    }));
+    await expect(t.query(api.incidents.list, { missionId })).rejects.toThrow();
+  });
+
+  it("rejects cross-owner incident history reads", async () => {
+    const t = convexTest(schema, modules);
+    const missionId = await seedMission(t, "owner-a");
+    await t.run(async (ctx) => ctx.db.insert("incidents", {
+      missionId, kind: "test", stage: "test", message: "private incident", attempts: 1,
+      status: "open", createdAt: 1,
+    }));
+    await expect(t.withIdentity(identity("owner-b")).query(api.incidents.list, { missionId }))
+      .rejects.toThrow(/not found or access denied/i);
+  });
 });
