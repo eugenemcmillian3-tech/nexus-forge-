@@ -7,7 +7,8 @@ export const decisionSnapshot = query({
   args: {},
   returns: v.object({ totalMissions: v.number(), completed: v.number(), active: v.number(), blocked: v.number(), completionRate: v.number(), recommendation: v.union(v.literal("continue"), v.literal("prioritize"), v.literal("review")), rationale: v.array(v.string()), priorities: v.array(v.object({ rank: v.number(), action: v.string(), reason: v.string() })) }),
   handler: async (ctx) => {
-    const missions = await ctx.db.query("missions").order("desc").take(100);
+    const ownerKey = await requireOperator(ctx);
+    const missions = await ctx.db.query("missions").withIndex("by_owner", q => q.eq("ownerKey", ownerKey)).order("desc").take(100);
     const completed = missions.filter(m => m.status === "complete").length;
     const blocked = missions.filter(m => m.status === "review").length;
     const active = missions.filter(m => m.status !== "complete" && m.status !== "review").length;
@@ -29,10 +30,18 @@ export const learningSnapshot = query({
   args: {},
   returns: v.object({ missionsObserved: v.number(), verifiedOutcomes: v.number(), passedOutcomes: v.number(), failedOutcomes: v.number(), lessonsCaptured: v.number(), successRate: v.number(), patterns: v.array(v.object({ label: v.string(), count: v.number(), implication: v.string() })), lessons: v.array(v.object({ value: v.string(), confidence: v.number(), source: v.string() })), prioritySignals: v.array(v.object({ signal: v.string(), weight: v.number(), implication: v.string() })) }),
   handler: async (ctx) => {
-    const missions = await ctx.db.query("missions").order("desc").take(100);
-    const verifications = await ctx.db.query("verifications").order("desc").take(100);
-    const incidents = await ctx.db.query("incidents").order("desc").take(100);
-    const memories = await ctx.db.query("memories").order("desc").take(100);
+    const ownerKey = await requireOperator(ctx);
+    const missions = await ctx.db.query("missions").withIndex("by_owner", q => q.eq("ownerKey", ownerKey)).order("desc").take(100);
+    const missionRows = await Promise.all(missions.map(async mission => {
+      const [verifications, incidents] = await Promise.all([
+        ctx.db.query("verifications").withIndex("by_mission", q => q.eq("missionId", mission._id)).collect(),
+        ctx.db.query("incidents").withIndex("by_mission", q => q.eq("missionId", mission._id)).collect(),
+      ]);
+      return { verifications, incidents };
+    }));
+    const verifications = missionRows.flatMap(row => row.verifications);
+    const incidents = missionRows.flatMap(row => row.incidents);
+    const memories = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", ownerKey)).order("desc").take(100);
     const passed = verifications.filter(vr => vr.passed).length;
     const failed = verifications.length - passed;
     const lessons = memories.filter(m => m.category === "learning-lesson").slice(0, 12).map(m => ({ value: m.value, confidence: m.confidence, source: m.source }));
@@ -83,5 +92,13 @@ export const executeApprovedMission = mutation({
 export const listDecisions = query({
   args: { missionId: v.optional(v.id("missions")) },
   returns: v.array(v.object({ _id: v.id("portfolioDecisions"), _creationTime: v.number(), missionId: v.id("missions"), priorityRank: v.number(), action: v.string(), decision: v.union(v.literal("approve"), v.literal("reject"), v.literal("defer"), v.literal("escalate")), note: v.optional(v.string()), createdAt: v.number() })),
-  handler: async (ctx, args) => args.missionId ? ctx.db.query("portfolioDecisions").withIndex("by_mission", q => q.eq("missionId", args.missionId!)).order("desc").take(50) : ctx.db.query("portfolioDecisions").order("desc").take(50),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx);
+    if (args.missionId) {
+      await requireOwnedMission(ctx, args.missionId);
+      return ctx.db.query("portfolioDecisions").withIndex("by_mission", q => q.eq("missionId", args.missionId!)).order("desc").take(50);
+    }
+    const missions = await ctx.db.query("missions").withIndex("by_owner", q => q.eq("ownerKey", ownerKey)).order("desc").take(100);
+    return (await Promise.all(missions.map(mission => ctx.db.query("portfolioDecisions").withIndex("by_mission", q => q.eq("missionId", mission._id)).collect()))).flat().sort((a, b) => b.createdAt - a.createdAt).slice(0, 50);
+  },
 });
