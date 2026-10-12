@@ -1,13 +1,20 @@
 import { paginationOptsValidator, paginationResultValidator } from "convex/server"
 import { v } from "convex/values"
 import { mutation, query, internalQuery, internalMutation } from "./_generated/server"
+import { getAuthUserId } from "@convex-dev/auth/server"
+import { ConvexError } from "convex/values"
+import { requireOperator, requireOwnedMission } from "./permissions"
 
 const memoryValidator = v.object({ _id: v.id("memories"), _creationTime: v.number(), ownerKey: v.string(), missionId: v.optional(v.id("missions")), category: v.string(), key: v.string(), value: v.string(), confidence: v.number(), source: v.string() })
 
 export const list = query({
-  args: { ownerKey: v.string(), paginationOpts: paginationOptsValidator },
+  args: { ownerKey: v.optional(v.string()), paginationOpts: paginationOptsValidator },
   returns: paginationResultValidator(memoryValidator),
-  handler: async (ctx, args) => ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", args.ownerKey)).order("desc").paginate(args.paginationOpts),
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx)
+    if (!userId) throw new ConvexError("Authenticated operator session required")
+    return ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", userId)).order("desc").paginate(args.paginationOpts)
+  },
 })
 
 export const getMissionSynthesis = internalQuery({
@@ -35,7 +42,12 @@ export const getLearningContext = internalQuery({
 export const remember = mutation({
   args: { ownerKey: v.string(), missionId: v.optional(v.id("missions")), category: v.string(), key: v.string(), value: v.string(), confidence: v.number(), source: v.string() },
   returns: v.id("memories"),
-  handler: async (ctx, args) => ctx.db.insert("memories", { ...args, confidence: Math.max(0, Math.min(1, args.confidence)) }),
+  handler: async (ctx, args) => {
+    const userId = await requireOperator(ctx)
+    const mission = args.missionId ? await requireOwnedMission(ctx, args.missionId) : null
+    const ownerKey = mission?.ownerKey ?? userId
+    return ctx.db.insert("memories", { ...args, ownerKey, confidence: Math.max(0, Math.min(1, args.confidence)) })
+  },
 })
 
 export const rememberInternal = internalMutation({
