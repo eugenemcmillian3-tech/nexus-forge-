@@ -10,5 +10,9 @@
   "/roadmap": {
     "title": "Master Roadmap — NEXUS FORGE",
     "description": "Verified build progress, current priorities and queued route parity work."
+  },
+  "/readiness": {
+    "title": "Launch Readiness — NEXUS FORGE",
+    "description": "Run auditable production readiness checks and inspect the evidence behind every result."
   }
 }
