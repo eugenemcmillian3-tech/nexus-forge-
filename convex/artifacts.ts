@@ -7,7 +7,7 @@ import { requireOperator } from "./permissions"
 const artifactValidator = v.object({ _id: v.id("artifacts"), _creationTime: v.number(), missionId: v.id("missions"), type: v.string(), name: v.string(), content: v.string(), status: v.string(), requiresApproval: v.boolean() })
 
 export const getInternal = internalQuery({ args: { id: v.id("artifacts") }, returns: v.union(artifactValidator, v.null()), handler: async (ctx, args) => ctx.db.get(args.id) })
-export const list = query({ args: { missionId: v.id("missions") }, returns: v.array(artifactValidator), handler: async (ctx, args) => ctx.db.query("artifacts").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").take(20) })
+export const list = query({ args: { missionId: v.id("missions") }, returns: v.array(artifactValidator), handler: async (ctx, args) => { await requireOwnedMission(ctx, args.missionId); return ctx.db.query("artifacts").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").take(20) } })
 export const save = internalMutation({ args: { missionId: v.id("missions"), type: v.string(), name: v.string(), content: v.string(), requiresApproval: v.boolean() }, returns: v.id("artifacts"), handler: async (ctx, args) => ctx.db.insert("artifacts", { ...args, status: args.requiresApproval ? "awaiting_approval" : "ready" }) })
 
 export const approve = mutation({
