@@ -19,6 +19,8 @@ import type * as delivery from "../delivery.js";
 import type * as forge from "../forge.js";
 import type * as http from "../http.js";
 import type * as incidents from "../incidents.js";
+import type * as intelligenceOrchestrator from "../intelligenceOrchestrator.js";
+import type * as intentContract from "../intentContract.js";
 import type * as macaly from "../macaly.js";
 import type * as memory from "../memory.js";
 import type * as missionRunner from "../missionRunner.js";
@@ -42,6 +44,8 @@ declare const fullApi: ApiFromModules<{
   forge: typeof forge;
   http: typeof http;
   incidents: typeof incidents;
+  intelligenceOrchestrator: typeof intelligenceOrchestrator;
+  intentContract: typeof intentContract;
   macaly: typeof macaly;
   manifestIntelligence: typeof manifestIntelligence;
   manifestStrategyParser: typeof manifestStrategyParser;
