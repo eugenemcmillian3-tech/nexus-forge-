@@ -1,6 +1,14 @@
 {
   "/": {
-    "title": "Template Starter",
-    "description": "An empty website template"
+    "title": "NEXUS FORGE — Governed Intelligence OS",
+    "description": "A governed AI workspace for research, creation, verification and measured outcomes."
+  },
+  "/manifest": {
+    "title": "Manifest Intelligence — NEXUS FORGE",
+    "description": "Translate intent into testable blueprints and evidence-backed strategies."
+  },
+  "/roadmap": {
+    "title": "Master Roadmap — NEXUS FORGE",
+    "description": "Verified build progress, current priorities and queued route parity work."
   }
 }
