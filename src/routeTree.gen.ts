@@ -10,65 +10,232 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as RoadmapRouteImport } from './routes/roadmap'
-import { Route as OrchestratorRouteImport } from './routes/orchestrator'
+import { Route as ArtifactsRouteImport } from './routes/artifacts'
+import { Route as CapabilitiesRouteImport } from './routes/capabilities'
+import { Route as CouncilRouteImport } from './routes/council'
+import { Route as DeliveryRouteImport } from './routes/delivery'
+import { Route as EvidenceRouteImport } from './routes/evidence'
+import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as LearningRouteImport } from './routes/learning'
+import { Route as ManifestRouteImport } from './routes/manifest'
+import { Route as MissionRouteImport } from './routes/mission'
+import { Route as OrchestratorRouteImport } from './routes/orchestrator'
+import { Route as PortfolioRouteImport } from './routes/portfolio'
+import { Route as ProvidersRouteImport } from './routes/providers'
+import { Route as ReadinessRouteImport } from './routes/readiness'
+import { Route as RoadmapRouteImport } from './routes/roadmap'
+import { Route as WorkflowRouteImport } from './routes/workflow'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-
-const RoadmapRoute = RoadmapRouteImport.update({
-  id: '/roadmap',
-  path: '/roadmap',
+const ArtifactsRoute = ArtifactsRouteImport.update({
+  id: '/artifacts',
+  path: '/artifacts',
   getParentRoute: () => rootRouteImport,
 } as any)
-
-const OrchestratorRoute = OrchestratorRouteImport.update({
-  id: '/orchestrator',
-  path: '/orchestrator',
+const CapabilitiesRoute = CapabilitiesRouteImport.update({
+  id: '/capabilities',
+  path: '/capabilities',
   getParentRoute: () => rootRouteImport,
 } as any)
-
+const CouncilRoute = CouncilRouteImport.update({
+  id: '/council',
+  path: '/council',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeliveryRoute = DeliveryRouteImport.update({
+  id: '/delivery',
+  path: '/delivery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EvidenceRoute = EvidenceRouteImport.update({
+  id: '/evidence',
+  path: '/evidence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IncidentsRoute = IncidentsRouteImport.update({
+  id: '/incidents',
+  path: '/incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LearningRoute = LearningRouteImport.update({
   id: '/learning',
   path: '/learning',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManifestRoute = ManifestRouteImport.update({
+  id: '/manifest',
+  path: '/manifest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MissionRoute = MissionRouteImport.update({
+  id: '/mission',
+  path: '/mission',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrchestratorRoute = OrchestratorRouteImport.update({
+  id: '/orchestrator',
+  path: '/orchestrator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortfolioRoute = PortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProvidersRoute = ProvidersRouteImport.update({
+  id: '/providers',
+  path: '/providers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReadinessRoute = ReadinessRouteImport.update({
+  id: '/readiness',
+  path: '/readiness',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoadmapRoute = RoadmapRouteImport.update({
+  id: '/roadmap',
+  path: '/roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkflowRoute = WorkflowRouteImport.update({
+  id: '/workflow',
+  path: '/workflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/roadmap': typeof RoadmapRoute
-  '/orchestrator': typeof OrchestratorRoute
+  '/artifacts': typeof ArtifactsRoute
+  '/capabilities': typeof CapabilitiesRoute
+  '/council': typeof CouncilRoute
+  '/delivery': typeof DeliveryRoute
+  '/evidence': typeof EvidenceRoute
+  '/incidents': typeof IncidentsRoute
   '/learning': typeof LearningRoute
+  '/manifest': typeof ManifestRoute
+  '/mission': typeof MissionRoute
+  '/orchestrator': typeof OrchestratorRoute
+  '/portfolio': typeof PortfolioRoute
+  '/providers': typeof ProvidersRoute
+  '/readiness': typeof ReadinessRoute
+  '/roadmap': typeof RoadmapRoute
+  '/workflow': typeof WorkflowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/roadmap': typeof RoadmapRoute
-  '/orchestrator': typeof OrchestratorRoute
+  '/artifacts': typeof ArtifactsRoute
+  '/capabilities': typeof CapabilitiesRoute
+  '/council': typeof CouncilRoute
+  '/delivery': typeof DeliveryRoute
+  '/evidence': typeof EvidenceRoute
+  '/incidents': typeof IncidentsRoute
   '/learning': typeof LearningRoute
+  '/manifest': typeof ManifestRoute
+  '/mission': typeof MissionRoute
+  '/orchestrator': typeof OrchestratorRoute
+  '/portfolio': typeof PortfolioRoute
+  '/providers': typeof ProvidersRoute
+  '/readiness': typeof ReadinessRoute
+  '/roadmap': typeof RoadmapRoute
+  '/workflow': typeof WorkflowRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/roadmap': typeof RoadmapRoute
-  '/orchestrator': typeof OrchestratorRoute
+  '/artifacts': typeof ArtifactsRoute
+  '/capabilities': typeof CapabilitiesRoute
+  '/council': typeof CouncilRoute
+  '/delivery': typeof DeliveryRoute
+  '/evidence': typeof EvidenceRoute
+  '/incidents': typeof IncidentsRoute
   '/learning': typeof LearningRoute
+  '/manifest': typeof ManifestRoute
+  '/mission': typeof MissionRoute
+  '/orchestrator': typeof OrchestratorRoute
+  '/portfolio': typeof PortfolioRoute
+  '/providers': typeof ProvidersRoute
+  '/readiness': typeof ReadinessRoute
+  '/roadmap': typeof RoadmapRoute
+  '/workflow': typeof WorkflowRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/roadmap' | '/orchestrator' | '/learning'
+  fullPaths:
+    | '/'
+    | '/artifacts'
+    | '/capabilities'
+    | '/council'
+    | '/delivery'
+    | '/evidence'
+    | '/incidents'
+    | '/learning'
+    | '/manifest'
+    | '/mission'
+    | '/orchestrator'
+    | '/portfolio'
+    | '/providers'
+    | '/readiness'
+    | '/roadmap'
+    | '/workflow'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/roadmap' | '/orchestrator' | '/learning'
-  id: '__root__' | '/' | '/roadmap' | '/orchestrator' | '/learning'
+  to:
+    | '/'
+    | '/artifacts'
+    | '/capabilities'
+    | '/council'
+    | '/delivery'
+    | '/evidence'
+    | '/incidents'
+    | '/learning'
+    | '/manifest'
+    | '/mission'
+    | '/orchestrator'
+    | '/portfolio'
+    | '/providers'
+    | '/readiness'
+    | '/roadmap'
+    | '/workflow'
+  id:
+    | '__root__'
+    | '/'
+    | '/artifacts'
+    | '/capabilities'
+    | '/council'
+    | '/delivery'
+    | '/evidence'
+    | '/incidents'
+    | '/learning'
+    | '/manifest'
+    | '/mission'
+    | '/orchestrator'
+    | '/portfolio'
+    | '/providers'
+    | '/readiness'
+    | '/roadmap'
+    | '/workflow'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  RoadmapRoute: typeof RoadmapRoute
-  OrchestratorRoute: typeof OrchestratorRoute
+  ArtifactsRoute: typeof ArtifactsRoute
+  CapabilitiesRoute: typeof CapabilitiesRoute
+  CouncilRoute: typeof CouncilRoute
+  DeliveryRoute: typeof DeliveryRoute
+  EvidenceRoute: typeof EvidenceRoute
+  IncidentsRoute: typeof IncidentsRoute
   LearningRoute: typeof LearningRoute
+  ManifestRoute: typeof ManifestRoute
+  MissionRoute: typeof MissionRoute
+  OrchestratorRoute: typeof OrchestratorRoute
+  PortfolioRoute: typeof PortfolioRoute
+  ProvidersRoute: typeof ProvidersRoute
+  ReadinessRoute: typeof ReadinessRoute
+  RoadmapRoute: typeof RoadmapRoute
+  WorkflowRoute: typeof WorkflowRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -80,18 +247,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/roadmap': {
-      id: '/roadmap'
-      path: '/roadmap'
-      fullPath: '/roadmap'
-      preLoaderRoute: typeof RoadmapRouteImport
+    '/artifacts': {
+      id: '/artifacts'
+      path: '/artifacts'
+      fullPath: '/artifacts'
+      preLoaderRoute: typeof ArtifactsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/orchestrator': {
-      id: '/orchestrator'
-      path: '/orchestrator'
-      fullPath: '/orchestrator'
-      preLoaderRoute: typeof OrchestratorRouteImport
+    '/capabilities': {
+      id: '/capabilities'
+      path: '/capabilities'
+      fullPath: '/capabilities'
+      preLoaderRoute: typeof CapabilitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/council': {
+      id: '/council'
+      path: '/council'
+      fullPath: '/council'
+      preLoaderRoute: typeof CouncilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delivery': {
+      id: '/delivery'
+      path: '/delivery'
+      fullPath: '/delivery'
+      preLoaderRoute: typeof DeliveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/evidence': {
+      id: '/evidence'
+      path: '/evidence'
+      fullPath: '/evidence'
+      preLoaderRoute: typeof EvidenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/incidents': {
+      id: '/incidents'
+      path: '/incidents'
+      fullPath: '/incidents'
+      preLoaderRoute: typeof IncidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/learning': {
@@ -101,14 +296,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearningRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/manifest': {
+      id: '/manifest'
+      path: '/manifest'
+      fullPath: '/manifest'
+      preLoaderRoute: typeof ManifestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mission': {
+      id: '/mission'
+      path: '/mission'
+      fullPath: '/mission'
+      preLoaderRoute: typeof MissionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orchestrator': {
+      id: '/orchestrator'
+      path: '/orchestrator'
+      fullPath: '/orchestrator'
+      preLoaderRoute: typeof OrchestratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portfolio': {
+      id: '/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof PortfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/providers': {
+      id: '/providers'
+      path: '/providers'
+      fullPath: '/providers'
+      preLoaderRoute: typeof ProvidersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/readiness': {
+      id: '/readiness'
+      path: '/readiness'
+      fullPath: '/readiness'
+      preLoaderRoute: typeof ReadinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roadmap': {
+      id: '/roadmap'
+      path: '/roadmap'
+      fullPath: '/roadmap'
+      preLoaderRoute: typeof RoadmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workflow': {
+      id: '/workflow'
+      path: '/workflow'
+      fullPath: '/workflow'
+      preLoaderRoute: typeof WorkflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  RoadmapRoute: RoadmapRoute,
-  OrchestratorRoute: OrchestratorRoute,
+  ArtifactsRoute: ArtifactsRoute,
+  CapabilitiesRoute: CapabilitiesRoute,
+  CouncilRoute: CouncilRoute,
+  DeliveryRoute: DeliveryRoute,
+  EvidenceRoute: EvidenceRoute,
+  IncidentsRoute: IncidentsRoute,
   LearningRoute: LearningRoute,
+  ManifestRoute: ManifestRoute,
+  MissionRoute: MissionRoute,
+  OrchestratorRoute: OrchestratorRoute,
+  PortfolioRoute: PortfolioRoute,
+  ProvidersRoute: ProvidersRoute,
+  ReadinessRoute: ReadinessRoute,
+  RoadmapRoute: RoadmapRoute,
+  WorkflowRoute: WorkflowRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

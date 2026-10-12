@@ -7,24 +7,60 @@
     "title": "Mission Console — NEXUS FORGE",
     "description": "Define, review, and explicitly approve a mission contract before execution."
   },
+  "/council": {
+    "title": "AI Council — NEXUS FORGE",
+    "description": "Coordinate specialist agents and review governed mission plans."
+  },
   "/manifest": {
     "title": "Manifest Intelligence — NEXUS FORGE",
     "description": "Translate intent into testable blueprints and evidence-backed strategies."
-  },
-  "/roadmap": {
-    "title": "Master Roadmap — NEXUS FORGE",
-    "description": "Verified build progress, current priorities and queued route parity work."
-  },
-  "/readiness": {
-    "title": "Launch Readiness — NEXUS FORGE",
-    "description": "Run auditable production readiness checks and inspect the evidence behind every result."
   },
   "/orchestrator": {
     "title": "Intelligence Orchestrator — NEXUS FORGE",
     "description": "Compile mission intent into measurable criteria, competing strategies, and a governed draft."
   },
+  "/evidence": {
+    "title": "Research & Memory — NEXUS FORGE",
+    "description": "Gather cited research and inspect mission-scoped evidence and reusable memory."
+  },
   "/learning": {
     "title": "Verified Learning Engine — NEXUS FORGE",
     "description": "Compare strategies using measured metrics, evidence references, and safety gates."
+  },
+  "/artifacts": {
+    "title": "Artifact Forge — NEXUS FORGE",
+    "description": "Generate, inspect, verify, and govern artifacts before delivery."
+  },
+  "/delivery": {
+    "title": "Delivery Pipeline — NEXUS FORGE",
+    "description": "Track governed workflow, deployment, and readiness evidence."
+  },
+  "/portfolio": {
+    "title": "Portfolio Intelligence — NEXUS FORGE",
+    "description": "Prioritize opportunities and review evidence-backed portfolio decisions."
+  },
+  "/workflow": {
+    "title": "Autonomous Workflow — NEXUS FORGE",
+    "description": "Follow the ordered mission lifecycle and identify the next verified step."
+  },
+  "/providers": {
+    "title": "AI Providers — NEXUS FORGE",
+    "description": "Inspect configured provider health and routing status."
+  },
+  "/readiness": {
+    "title": "Launch Readiness — NEXUS FORGE",
+    "description": "Run auditable production readiness checks and inspect the evidence behind every result."
+  },
+  "/incidents": {
+    "title": "Incident Center — NEXUS FORGE",
+    "description": "Review blocked runs, diagnosis, bounded recovery, and operational lessons."
+  },
+  "/capabilities": {
+    "title": "Capability & Reliability — NEXUS FORGE",
+    "description": "Inspect capability coverage, reliability signals, and benchmark gaps."
+  },
+  "/roadmap": {
+    "title": "Master Roadmap — NEXUS FORGE",
+    "description": "Verified build progress, current priorities and queued route parity work."
   }
 }
