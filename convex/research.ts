@@ -17,20 +17,18 @@ const researchValidator = v.object({
 type WebSource = { title: string; url: string; snippet: string }
 const MAX_QUERY_LENGTH = 500
 const MAX_SEARCH_HTML = 300_000
-const MAX_PAGE_HTML = 120_000
-const MAX_SOURCE_TEXT = 4_000
+const MAX_SEARCH_HTML = 300_000
 
 function isSafeResearchUrl(value: string): boolean {
   try {
     const url = new URL(value)
-    const host = url.hostname.toLowerCase().replace(/\.$/, "")
+    const host = url.hostname.toLowerCase().replace(/\\.$/, "")
     if (url.protocol !== "https:" || url.username || url.password) return false
     if (!host || host === "localhost" || host === "metadata" || host === "metadata.google.internal") return false
     if (host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal") || host.endsWith(".test")) return false
-    // Disallow IP literals and non-DNS numeric host forms; sources must use HTTPS DNS names.
-    if (host.includes(":") || /^\d+(?:\.\d+){0,3}$/.test(host) || /^0x[\da-f]+$/i.test(host)) return false
+    if (host.includes(":") || /^\\d+(?:\\.\\d+){0,3}$/.test(host) || /^0x[\\da-f]+$/i.test(host)) return false
     if (url.port && url.port !== "443") return false
-    if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(host)) return false
+    if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/i.test(host)) return false
     return true
   } catch {
     return false
@@ -66,47 +64,31 @@ async function readTextBounded(response: Response, maxBytes: number): Promise<st
   return new TextDecoder().decode(merged)
 }
 
-async function fetchResearchPage(value: string): Promise<Response> {
-  let current = value
-  for (let hop = 0; hop <= 4; hop++) {
-    if (!isSafeResearchUrl(current)) throw new Error("Research source URL is not allowed")
-    const response = await fetch(current, {
-      redirect: "manual",
-      headers: { "User-Agent": "NEXUS-FORGE-Research/1.0" },
-      signal: AbortSignal.timeout(10_000),
-    })
-    if (![301, 302, 303, 307, 308].includes(response.status)) return response
-    const location = response.headers.get("location")
-    if (!location || hop === 4) throw new Error("Research source redirect limit exceeded")
-    current = new URL(location, current).toString()
-  }
-  throw new Error("Research source redirect limit exceeded")
-}
-
 function cleanHtml(html: string): string {
   return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
+    .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
+    .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, " ")
+    .replace(/\\s+/g, " ")
     .trim()
 }
 
 async function discoverWebSources(queryText: string, limit: number): Promise<WebSource[]> {
   const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(queryText)}`
   const response = await fetch(searchUrl, {
+    redirect: "error",
     headers: { "User-Agent": "NEXUS-FORGE-Research/1.0" },
     signal: AbortSignal.timeout(10_000),
   })
   if (!response.ok) throw new Error(`Web search failed (${response.status}).`)
   const html = await readTextBounded(response, MAX_SEARCH_HTML)
   const sources: WebSource[] = []
-  const pattern = /<a[^>]+class=["']result__a["'][^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
+  const pattern = /<a[^>]+class=["']result__a["'][^>]+href=["']([^"']+)["'][^>]*>([\\s\\S]*?)<\\/a>/gi
   let match: RegExpExecArray | null
   while ((match = pattern.exec(html)) && sources.length < limit) {
     try {
@@ -116,23 +98,20 @@ async function discoverWebSources(queryText: string, limit: number): Promise<Web
       if (!target) continue
       const url = decodeURIComponent(target)
       if (isSafeResearchUrl(url) && !sources.some(source => source.url === url)) {
-        sources.push({ title: cleanHtml(match[2]).slice(0, 300), url, snippet: "" })
+        const after = html.slice(pattern.lastIndex, pattern.lastIndex + 2500)
+        const snippetMatch = after.match(/class=["']result__snippet["'][^>]*>([\\s\\S]*?)<\\/div>/i)
+        sources.push({
+          title: cleanHtml(match[2]).slice(0, 300),
+          url,
+          snippet: snippetMatch ? cleanHtml(snippetMatch[1]).slice(0, 1200) : "",
+        })
       }
     } catch {
       // Ignore malformed result URLs.
     }
   }
   if (!sources.length) throw new Error("Web search returned no usable sources.")
-  return Promise.all(sources.map(async source => {
-    try {
-      const page = await fetchResearchPage(source.url)
-      if (!page.ok) return source
-      const html = await readTextBounded(page, MAX_PAGE_HTML)
-      return { ...source, snippet: cleanHtml(html).slice(0, MAX_SOURCE_TEXT) }
-    } catch {
-      return source
-    }
-  }))
+  return sources
 }
 
 export const list = query({
