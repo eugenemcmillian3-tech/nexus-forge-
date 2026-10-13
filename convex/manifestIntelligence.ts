@@ -85,6 +85,48 @@ export const recordStrategyOutcome = mutation({
   },
 });
 
+export const listProviderUsage = query({
+  args: {},
+  returns: v.array(v.object({
+    _id: v.id("memories"),
+    provider: v.string(),
+    model: v.string(),
+    promptTokens: v.union(v.number(), v.null()),
+    completionTokens: v.union(v.number(), v.null()),
+    totalTokens: v.union(v.number(), v.null()),
+    reportedCostUsd: v.union(v.number(), v.null()),
+    costStatus: v.string(),
+    capturedAt: v.number(),
+  })),
+  handler: async (ctx) => {
+    const operatorId = await getAuthUserId(ctx);
+    if (!operatorId) return [];
+    const rows = await ctx.db.query("memories")
+      .withIndex("by_owner", q => q.eq("ownerKey", operatorId))
+      .order("desc")
+      .take(200);
+    return rows.filter(row => row.category === "manifest-provider-usage").slice(0, 30).flatMap(row => {
+      try {
+        const parsed = JSON.parse(row.value) as Record<string, unknown>;
+        const numberOrNull = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value : null;
+        return [{
+          _id: row._id,
+          provider: typeof parsed.provider === "string" ? parsed.provider : "Unknown provider",
+          model: typeof parsed.model === "string" ? parsed.model : "Unknown model",
+          promptTokens: numberOrNull(parsed.promptTokens),
+          completionTokens: numberOrNull(parsed.completionTokens),
+          totalTokens: numberOrNull(parsed.totalTokens),
+          reportedCostUsd: numberOrNull(parsed.reportedCostUsd),
+          costStatus: parsed.costStatus === "provider-reported" ? "provider-reported" : "not-reported-by-provider",
+          capturedAt: typeof parsed.capturedAt === "number" && Number.isFinite(parsed.capturedAt) ? parsed.capturedAt : row._creationTime,
+        }];
+      } catch {
+        return [];
+      }
+    });
+  },
+});
+
 export const recordProviderUsageInternal = internalMutation({
   args: {
     ownerKey: v.string(),
