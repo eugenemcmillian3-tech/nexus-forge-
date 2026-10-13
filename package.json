@@ -29,6 +29,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
+    "jsonrepair": "^3.15.0",
     "lucide-react": "^0.577.0",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
@@ -66,5 +67,6 @@
     "vite": "^8.1.5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.2"
-  }
+  },
+  "packageManager": "pnpm@12.10.1+sha512.ba40a37eb1a370d60fea8c4cf1d364c13bcccef518e98ad2bcee954f539d38da37458e58261a3fa55e06523450ea0ffff9f497b135be41f2c15c1642bacace6c"
 }
