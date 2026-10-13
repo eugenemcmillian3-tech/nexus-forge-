@@ -71,6 +71,48 @@ describe("Manifest provider-to-ledger persistence", () => {
     expect(ids.ownedMission).not.toBe(ids.foreignMission);
   });
 
+  it("attaches classified assumption evidence only to the owning strategy", async () => {
+    const t = convexTest(schema, modules);
+    vi.stubEnv("GROQ_API_KEY", "test-provider-key");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(
+      JSON.stringify({ choices: [{ message: { content: generated } }] }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    )));
+    const operator = t.withIdentity(identity("assumption-evidence-owner"));
+    await operator.action(api.manifestIntelligence.synthesize, {
+      intent: "Create a measurable product experiment for a new digital workflow.",
+      domain: "AI product / venture",
+      budget: 25,
+      horizon: "14 days",
+    });
+    const strategy = (await operator.query(api.manifestIntelligence.listStrategies, {}))[0];
+    await operator.mutation(api.manifestIntelligence.attachAssumptionEvidence, {
+      strategyId: strategy._id,
+      evidenceType: "contradicts",
+      url: "https://example.com/market-study",
+      note: "The study reports lower repeat usage than the assumption predicts.",
+    });
+    const saved = (await operator.query(api.manifestIntelligence.listStrategies, {})).find(row => row._id === strategy._id)!;
+    expect(JSON.parse(saved.value).assumptionEvidence).toMatchObject([{
+      evidenceType: "contradicts",
+      url: "https://example.com/market-study",
+      note: "The study reports lower repeat usage than the assumption predicts.",
+    }]);
+    await expect(operator.mutation(api.manifestIntelligence.attachAssumptionEvidence, {
+      strategyId: strategy._id,
+      evidenceType: "supports",
+      url: "http://example.com/not-https",
+      note: "Should be rejected",
+    })).rejects.toThrow(/HTTPS/i);
+    await expect(t.withIdentity(identity("different-assumption-owner")).mutation(api.manifestIntelligence.attachAssumptionEvidence, {
+      strategyId: strategy._id,
+      evidenceType: "supports",
+      url: "https://example.com/other",
+      note: "Cross-owner write must fail",
+    })).rejects.toThrow(/access denied/i);
+    expect(JSON.parse((await operator.query(api.manifestIntelligence.listStrategies, {})).find(row => row._id === strategy._id)!.value).assumptionEvidence).toHaveLength(1);
+  });
+
   it("assigns unique receipt keys to rapidly persisted blueprints", async () => {
     const t = convexTest(schema, modules);
     const save = (intent: string) => t.mutation(internal.manifestIntelligence.saveBlueprint, {
