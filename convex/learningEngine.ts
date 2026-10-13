@@ -39,6 +39,7 @@ export const recordExperiment = mutation({
   args: {
     name: v.string(),
     hypothesis: v.string(),
+    manifestStrategyId: v.optional(v.id("memories")),
     baselineLabel: v.string(),
     candidateLabel: v.string(),
     metrics: v.array(metric),
@@ -59,6 +60,16 @@ export const recordExperiment = mutation({
     if (!ownerKey) throw new Error("Authenticated operator session required.");
     const name = args.name.trim().slice(0, 120);
     const hypothesis = args.hypothesis.trim().slice(0, 1200);
+    let linkedManifestStrategy: { id: string; name: string } | null = null;
+    if (args.manifestStrategyId) {
+      const strategy = await ctx.db.get(args.manifestStrategyId);
+      if (!strategy || strategy.ownerKey !== ownerKey || strategy.category !== "manifest-strategy") {
+        throw new Error("Selected Manifest strategy was not found in your private strategy ledger.");
+      }
+      let parsed: { name?: string } = {};
+      try { parsed = JSON.parse(strategy.value) as { name?: string }; } catch { /* Keep the ledger key as a safe fallback. */ }
+      linkedManifestStrategy = { id: strategy._id, name: typeof parsed.name === "string" && parsed.name.trim() ? parsed.name.trim().slice(0, 160) : strategy.key.slice(0, 160) };
+    }
     if (name.length < 3) throw new Error("Experiment name must contain at least 3 characters.");
     if (hypothesis.length < 8) throw new Error("Enter a testable hypothesis.");
     if (args.metrics.length < 2 || args.metrics.length > 8) throw new Error("Record 2–8 comparable metrics.");
@@ -94,6 +105,7 @@ export const recordExperiment = mutation({
     const record = {
       name,
       hypothesis,
+      linkedManifestStrategy,
       baselineLabel: args.baselineLabel.trim().slice(0, 100),
       candidateLabel: args.candidateLabel.trim().slice(0, 100),
       metrics: results,
