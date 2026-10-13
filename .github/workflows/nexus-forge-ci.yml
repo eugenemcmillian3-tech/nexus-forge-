@@ -23,14 +23,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup pinned pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.10.1
+          run_install: false
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-      - name: Enable pinned package manager
-        run: corepack enable
-      - name: Install dependencies from pnpm lockfile
+      - name: Install dependencies from canonical lockfile
         run: pnpm install --frozen-lockfile
       - name: Production dependency security audit
         run: pnpm audit --prod
@@ -38,7 +41,7 @@ jobs:
         run: pnpm audit
         continue-on-error: true
       - name: Run test suite
-        run: pnpm test -- --run
+        run: pnpm test
       - name: TypeScript check
         run: pnpm exec tsc --noEmit
       - name: Production build
