@@ -72,6 +72,54 @@ describe("Manifest provider-to-ledger persistence", () => {
     expect(otherOwnerStrategies).toEqual([]);
   });
 
+  it("persists measured outcomes and prevents another operator from changing them", async () => {
+    const t = convexTest(schema, modules);
+    vi.stubEnv("GROQ_API_KEY", "test-provider-key");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(
+      JSON.stringify({ choices: [{ message: { content: generated } }] }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    )));
+
+    const operator = t.withIdentity(identity("manifest-outcome-owner"));
+    await operator.action(api.manifestIntelligence.synthesize, {
+      intent: "Create a measurable product experiment for a new digital workflow.",
+      domain: "AI product / venture",
+      budget: 25,
+      horizon: "14 days",
+    });
+    const strategies = await operator.query(api.manifestIntelligence.listStrategies, {});
+    const strategy = strategies[0];
+
+    await operator.mutation(api.manifestIntelligence.recordStrategyOutcome, {
+      strategyId: strategy._id,
+      outcomeStatus: "partial",
+      actualResult: "Pilot reached 4 of 6 target users.",
+      evidence: "Pilot interview log, 2026-10-12",
+      actualCost: 12,
+    });
+
+    const updated = await operator.query(api.manifestIntelligence.listStrategies, {});
+    const saved = updated.find(row => row._id === strategy._id);
+    expect(JSON.parse(saved!.value)).toMatchObject({
+      outcomeStatus: "partial",
+      actualResult: "Pilot reached 4 of 6 target users.",
+      evidence: "Pilot interview log, 2026-10-12",
+      actualCost: 12,
+    });
+    expect(saved!.source).toBe("manifest-intelligence-operator-measured-outcome");
+
+    await expect(t.withIdentity(identity("manifest-outcome-owner-b"))
+      .mutation(api.manifestIntelligence.recordStrategyOutcome, {
+        strategyId: strategy._id,
+        outcomeStatus: "succeeded",
+        actualResult: "Unauthorized overwrite attempt",
+        evidence: "Not owned by this operator",
+      })).rejects.toThrow(/not found or access denied/i);
+
+    const afterAttempt = await operator.query(api.manifestIntelligence.listStrategies, {});
+    expect(JSON.parse(afterAttempt.find(row => row._id === strategy._id)!.value).outcomeStatus).toBe("partial");
+  });
+
   it("rejects anonymous synthesis before invoking the provider", async () => {
     const t = convexTest(schema, modules);
     const fetchMock = vi.fn();
