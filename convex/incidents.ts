@@ -1,7 +1,9 @@
 import { v } from "convex/values"
-import { action, internalMutation, internalQuery, query } from "./_generated/server"
+import { action, internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server"
 import { internal } from "./_generated/api"
-import { requireOwnedMission } from "./permissions"
+import { parseIncidentDiagnosis } from "./incidentParser"
+import { requireOperator, requireOwnedMission } from "./permissions"
+import { callAiProvider } from "./aiProvider"
 
 const incident = v.object({
   _id: v.id("incidents"), _creationTime: v.number(), missionId: v.id("missions"), runId: v.optional(v.id("missionRuns")),
@@ -16,7 +18,7 @@ export const list = query({
   args: { missionId: v.id("missions") }, returns: v.array(incident),
   handler: async (ctx, args) => {
     await requireOwnedMission(ctx, args.missionId)
-    return await ctx.db.query("incidents").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").take(50)
+    return ctx.db.query("incidents").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").take(50)
   },
 })
 
@@ -51,6 +53,31 @@ export const resolve = internalMutation({
   },
 })
 
+export const reviewEscalated = mutation({
+  args: { incidentId: v.id("incidents"), recovery: v.string(), lesson: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await requireOperator(ctx)
+    const row = await ctx.db.get(args.incidentId)
+    if (!row) throw new Error("Incident not found")
+    await requireOwnedMission(ctx, row.missionId)
+    if (row.status !== "escalated") throw new Error("Only an escalated incident can be reviewed here")
+    const recovery = args.recovery.trim()
+    const lesson = args.lesson.trim()
+    if (recovery.length < 12 || lesson.length < 12) throw new Error("Document the recovery and lesson in at least 12 characters each")
+    await ctx.db.patch(args.incidentId, { status: "resolved", recovery, lesson, resolvedAt: Date.now() })
+    await ctx.runMutation(internal.audit.record, {
+      missionId: row.missionId,
+      type: "incident",
+      action: "human_review_resolved",
+      status: "resolved",
+      detail: `Human reviewed escalation. Recovery: ${recovery}. Lesson: ${lesson}. Workflow was not resumed automatically.`,
+      runId: row.runId,
+    })
+    return null
+  },
+})
+
 export const getOperationalLearning = internalQuery({
   args: { missionId: v.id("missions") },
   returns: v.array(v.object({ stage: v.string(), message: v.string(), status: v.union(v.literal("open"), v.literal("resolved"), v.literal("escalated")), recovery: v.optional(v.string()), lesson: v.optional(v.string()), diagnosis: v.optional(v.string()), proposedRecovery: v.optional(v.string()), diagnosisConfidence: v.optional(v.number()) })),
@@ -70,20 +97,23 @@ export const getOpenForRun = internalQuery({
 export const diagnose = action({
   args: { incidentId: v.id("incidents") }, returns: v.null(),
   handler: async (ctx, args) => {
+    const operator = await ctx.runQuery(internal.permissions.currentOperator, {})
+    if (!operator) throw new Error("Authenticated operator session required")
+    const row = await ctx.runQuery(internal.incidents.getById, { incidentId: args.incidentId })
+    if (!row) throw new Error("Incident not found")
+    const mission = await ctx.runQuery(internal.missions.getByIdInternal, { id: row.missionId })
+    if (!mission || mission.ownerKey !== operator) throw new Error("Incident not found or access denied")
+    return ctx.runAction(internal.incidents.diagnoseInternal, args)
+  },
+})
+
+export const diagnoseInternal = internalAction({
+  args: { incidentId: v.id("incidents") }, returns: v.null(),
+  handler: async (ctx, args) => {
     const incident = await ctx.runQuery(internal.incidents.getById, { incidentId: args.incidentId })
     if (!incident || incident.status === "resolved") return null
-    const response = await fetch(`${process.env.MACALY_BASE_URL}/api/client-app/llm-usage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.MACALY_API_TOKEN}` },
-      body: JSON.stringify({ chatId: process.env.MACALY_CHAT_ID, preset: "FAST", messages: [{ role: "system", content: `You are the NEXUS FORGE Incident Diagnostician. Analyze one autonomous execution failure using only the supplied facts. Do not invent logs or root causes. Return exactly three labeled sections: DIAGNOSIS, PROPOSED RECOVERY, CONFIDENCE. The recovery must be a safe, bounded next action; never recommend bypassing human approval, security controls, tests, or deployment gates. If evidence is insufficient, say so and recommend human investigation.\\n\\nMission: ${incident.missionId}\\nStage: ${incident.stage}\\nFailure: ${incident.message}\\nAttempts: ${incident.attempts}` }], maxTokens: 500, temperature: 0.1 }),
-    })
-    if (!response.ok) throw new Error(`Incident diagnosis gateway failed: ${response.status}`)
-    const data = await response.json() as { text?: string }
-    const text = data.text?.trim() || "DIAGNOSIS\\nInsufficient evidence.\\nPROPOSED RECOVERY\\nHuman investigation required.\\nCONFIDENCE\\n0"
-    const confidenceMatch = text.match(/CONFIDENCE\\s*[:\\n]\\s*(0(?:\\.\\d+)?|1(?:\\.0+)?)/i)
-    const confidence = confidenceMatch ? Number(confidenceMatch[1]) : 0
-    const diagnosis = text.match(/DIAGNOSIS\\s*[:\\n]\\s*([\\s\\S]*?)(?=\\n\\s*PROPOSED RECOVERY|$)/i)?.[1]?.trim() || "Insufficient evidence."
-    const proposedRecovery = text.match(/PROPOSED RECOVERY\\s*[:\\n]\\s*([\\s\\S]*?)(?=\\n\\s*CONFIDENCE|$)/i)?.[1]?.trim() || "Human investigation required."
+    const text = (await callAiProvider("critic", `You are the NEXUS FORGE Incident Diagnostician. Analyze one autonomous execution failure using only the supplied facts. Do not invent logs or root causes. Return exactly three labeled sections: DIAGNOSIS, PROPOSED RECOVERY, CONFIDENCE. The recovery must be a safe, bounded next action; never recommend bypassing human approval, security controls, tests, or deployment gates. If evidence is insufficient, say so and recommend human investigation.\n\nMission: ${incident.missionId}\nStage: ${incident.stage}\nFailure: ${incident.message}\nAttempts: ${incident.attempts}`, 500)).trim() || "DIAGNOSIS\nInsufficient evidence.\nPROPOSED RECOVERY\nHuman investigation required.\nCONFIDENCE\n0"
+    const { diagnosis, proposedRecovery, confidence } = parseIncidentDiagnosis(text)
     await ctx.runMutation(internal.incidents.markDiagnosis, { incidentId: args.incidentId, diagnosis, proposedRecovery, confidence })
     return null
   },

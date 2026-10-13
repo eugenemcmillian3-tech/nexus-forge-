@@ -1,0 +1,8 @@
+# pnpm build-script approvals. pnpm blocks dependency install scripts by
+# default; esbuild and @parcel/watcher need theirs to provide the native
+# binaries Vite and the TanStack dev server rely on. Keep this in sync with
+# `pnpm approve-builds` when adding dependencies that ship build scripts,
+# otherwise `pnpm install` fails with ERR_PNPM_IGNORED_BUILDS.
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true

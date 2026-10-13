@@ -115,11 +115,13 @@ export const run = action({
     const passedCount = results.filter(r => r.status === "pass").length
     const failedCount = results.length - passedCount
     const status = results.some(r => r.severity === "required" && r.status === "fail") ? "fail" as const : "pass" as const
-    return await (ctx as any).runMutation((internal as any).readiness.saveRun, {
+    const saveRunRef: any = (internal as any).readiness.saveRun
+    const saved = await (ctx as any).runMutation(saveRunRef, {
       siteUrl, label: args.label?.trim() || new URL(siteUrl).hostname,
       status, passedCount, failedCount, totalCount: results.length, operatorId,
       results: results.map(r => ({ checkKey: r.key, name: r.name, criterion: r.criterion, severity: r.severity, status: r.status, detail: r.detail, evidence: r.evidence })),
     })
+    return saved as any
   },
 })
 
@@ -137,10 +139,11 @@ export const runForDelivery: any = internalAction({
     const passedCount = results.filter(r => r.status === "pass").length
     const failedCount = results.length - passedCount
     const status = results.some(r => r.severity === "required" && r.status === "fail") ? "fail" as const : "pass" as const
-    return await (ctx as any).runMutation((internal as any).readiness.saveRun, {
+    const saved = await (ctx as any).runMutation((internal as any).readiness.saveRun, {
       siteUrl, label: `Delivery ${args.deliveryId}`, status, passedCount, failedCount, totalCount: results.length, operatorId: mission.ownerKey,
       results: results.map(r => ({ checkKey: r.key, name: r.name, criterion: r.criterion, severity: r.severity, status: r.status, detail: r.detail, evidence: r.evidence })),
     })
+    return saved as any
   },
 })
 

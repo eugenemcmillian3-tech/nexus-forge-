@@ -1,6 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { MacalyBridge } from '@macaly/bridge'
 import AppConvexProvider from '@/components/convex-client-provider'
+import { AuthWrapper } from '@/components/auth-wrapper'
 import '../styles.css'
 import siteMetadata from '../metadata.json'
 
@@ -13,6 +14,19 @@ export const Route = createRootRoute({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: rootMeta.title },
       { name: 'description', content: rootMeta.description },
+      { property: 'og:title', content: rootMeta.title },
+      { name: 'og:description', content: rootMeta.description },
+      {
+        property: 'og:image',
+        content: siteMetadata.default?.openGraph?.images ?? '',
+      },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: rootMeta.title },
+      { name: 'twitter:description', content: rootMeta.description },
+      {
+        name: 'twitter:image',
+        content: siteMetadata.default?.openGraph?.images ?? '',
+      },
     ],
     links: [
       { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
@@ -28,7 +42,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head><HeadContent /></head>
       <MacalyBridge>
         <body>
-          <AppConvexProvider>{children}</AppConvexProvider>
+          <AppConvexProvider><AuthWrapper>{children}</AuthWrapper></AppConvexProvider>
           <Scripts />
         </body>
       </MacalyBridge>

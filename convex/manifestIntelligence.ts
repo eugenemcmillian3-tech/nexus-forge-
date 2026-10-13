@@ -39,6 +39,7 @@ const strategyShape = v.object({
   failureMode: v.string(), unverifiedAssumptions: v.string(),
 });
 
+
 export const listStrategies = query({
   args: {},
   returns: v.array(v.object({ _id: v.id("memories"), _creationTime: v.number(), key: v.string(), value: v.string(), confidence: v.number(), source: v.string() })),
@@ -175,18 +176,33 @@ Write specific, realistic guidance tailored to the intent. Do not describe the b
     const generated = await callAiProvider("planner", structuredPrompt, 2400);
     const extraction = extractManifestStrategies(generated);
     const blueprint = extraction.blueprint;
-    const strategies = extraction.strategies;
+    let strategies = extraction.strategies;
+    let strategyBlockValid = extraction.validJson;
+
+    // Providers sometimes honor the blueprint request but omit the optional fenced
+    // payload. Make one small, bounded structured-only retry; never let its failure
+    // discard the readable blueprint or persist incomplete candidate objects.
+    if (strategies.length === 0) {
+      const strategyPrompt = `Extract exactly three distinct candidate strategies from the blueprint below. Return ONLY a JSON array, with no Markdown fences or commentary. Each object must contain non-empty string fields: name, mechanism, prerequisites, timeToEvidence, expectedValue, reversibility, failureMode, unverifiedAssumptions. Do not invent claims of execution, measured outcomes, verified costs, or available integrations. Preserve uncertainty in unverifiedAssumptions. If three genuinely distinct strategies cannot be supported by the blueprint, return an empty JSON array.\n\nUSER INTENT: ${intent}\nDOMAIN: ${domain}\nBUDGET CAP: $${budget} USD\nTIME HORIZON: ${horizon}\nCONSTRAINTS: ${constraints || 'Not supplied; identify unknowns.'}\nACCEPTANCE CRITERIA: ${acceptanceCriteria || 'Not supplied; label proposed criteria.'}\n\nBLUEPRINT:\n${blueprint.slice(0, 9000)}`;
+      try {
+        const structuredResponse = await callAiProvider("planner", strategyPrompt, 1400);
+        const retry = extractManifestStrategies(structuredResponse);
+        if (retry.validJson && retry.strategies.length > 0) {
+          strategies = retry.strategies;
+          strategyBlockValid = true;
+        }
+      } catch (error) {
+        console.warn("Manifest strategy structured retry failed; preserving blueprint without ledger records.", error instanceof Error ? error.message : String(error));
+      }
+    }
+
     const blueprintKey = await ctx.runMutation(internal.manifestIntelligence.saveBlueprint, {
-      ownerKey: operatorId,
-      intent,
-      domain,
-      budget,
-      horizon,
-      constraints,
-      acceptanceCriteria,
-      blueprint,
+      ownerKey: operatorId, intent, domain, budget, horizon, constraints,
+      acceptanceCriteria, blueprint,
     });
-    if (strategies.length > 0) await ctx.runMutation(internal.manifestIntelligence.saveStrategies, { ownerKey: operatorId, blueprintKey, strategies });
-    return { blueprint, saved: true, strategyCount: strategies.length, strategyBlockValid: extraction.validJson };
+    if (strategies.length > 0) {
+      await ctx.runMutation(internal.manifestIntelligence.saveStrategies, { ownerKey: operatorId, blueprintKey, strategies });
+    }
+    return { blueprint, saved: true, strategyCount: strategies.length, strategyBlockValid };
   },
 });
