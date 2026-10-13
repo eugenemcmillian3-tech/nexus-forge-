@@ -51,6 +51,44 @@ export const listStrategies = query({
   },
 });
 
+// Reuse Research Oracle's existing saved records as source-backed context.
+// Ownership is resolved through the mission owner index; no cross-operator
+// research rows are returned and no generated summary is relabeled as a source.
+export const listResearchEvidence = query({
+  args: {},
+  returns: v.array(v.object({
+    _id: v.id("research"),
+    missionTitle: v.string(),
+    query: v.string(),
+    result: v.string(),
+    citations: v.array(v.string()),
+    createdAt: v.number(),
+  })),
+  handler: async (ctx) => {
+    const operatorId = await getAuthUserId(ctx);
+    if (!operatorId) return [];
+    const missions = await ctx.db.query("missions")
+      .withIndex("by_owner", q => q.eq("ownerKey", operatorId))
+      .order("desc")
+      .take(30);
+    const records = await Promise.all(missions.map(async mission => {
+      const rows = await ctx.db.query("research")
+        .withIndex("by_mission", q => q.eq("missionId", mission._id))
+        .order("desc")
+        .take(5);
+      return rows.map(row => ({
+        _id: row._id,
+        missionTitle: mission.title,
+        query: row.query,
+        result: row.result,
+        citations: row.citations.filter(url => /^https:\/\//i.test(url)),
+        createdAt: row.createdAt,
+      }));
+    }));
+    return records.flat().sort((a, b) => b.createdAt - a.createdAt).slice(0, 30);
+  },
+});
+
 export const saveStrategies = internalMutation({
   args: { ownerKey: v.string(), blueprintKey: v.string(), strategies: v.array(strategyShape) },
   returns: v.null(),

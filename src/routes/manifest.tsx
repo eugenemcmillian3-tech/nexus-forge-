@@ -27,6 +27,7 @@ function ManifestIntelligencePage() {
   const synthesize = useAction(api.manifestIntelligence.synthesize)
   const savedRows = useQuery(api.manifestIntelligence.listBlueprints, {})
   const strategyRows = useQuery(api.manifestIntelligence.listStrategies, {})
+  const researchEvidenceRows = useQuery(api.manifestIntelligence.listResearchEvidence, {})
   const providerUsageRows = useQuery(api.manifestIntelligence.listProviderUsage, {})
   const experimentRows = useQuery(api.learningEngine.listExperiments, {})
   const recordOutcome = useMutation(api.manifestIntelligence.recordStrategyOutcome)
@@ -213,6 +214,16 @@ function ManifestIntelligencePage() {
             ['6 · Research frontier', 'Evaluate transfer to unfamiliar tasks using reproducible benchmarks; general intelligence remains a research goal, not a product claim.'],
           ].map(([title, detail]) => <article className="workflow-step" key={title}><span className="workflow-step-mark">→</span><span className="workflow-step-copy"><strong>{title}</strong><small>{detail}</small></span></article>)}
         </div>
+      </div>
+
+      <div className="glass-card research-card" aria-labelledby="manifest-source-evidence-title">
+        <div className="panel-title"><span id="manifest-source-evidence-title">SOURCE-BACKED RESEARCH CONTEXT</span><span className="live-pill">{researchEvidenceRows?.length ?? 0} RECORDS</span></div>
+        <p className="muted-copy">Research Oracle results saved to missions you own, with retrieved citation URLs and mission provenance. AI summaries are interpretations of the listed sources, not primary sources themselves. Only HTTPS citation URLs are shown; check source content and dates before relying on them.</p>
+        {researchEvidenceRows === undefined ? <p>Loading your saved research evidence…</p> : researchEvidenceRows.length === 0 ? <p className="empty-state">No saved Research Oracle records are available for your missions yet. Use Research & Memory to collect source-backed research; results will appear here when saved to an owned mission.</p> : researchEvidenceRows.map(row => <article className="workflow-step" key={row._id}>
+          <span className="workflow-step-mark">R</span>
+          <span className="workflow-step-copy"><strong>{row.query}</strong><small>Mission: {row.missionTitle} · Saved {new Date(row.createdAt).toLocaleString()}</small><small>{row.result}</small><small>Retrieved source references: {row.citations.length ? row.citations.join(' · ') : 'No valid HTTPS citations were saved with this record.'}</small></span>
+          <span className="workflow-step-state">{row.citations.length} SOURCE URL{row.citations.length === 1 ? '' : 'S'}</span>
+        </article>)}
       </div>
 
       <div className="glass-card research-card" aria-labelledby="manifest-context-register-title">
