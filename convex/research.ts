@@ -32,7 +32,7 @@ export function extractResearchTarget(rawUrl: string, searchUrl = "https://html.
   }
 }
 
-function isSafeResearchUrl(value: string): boolean {
+export function isSafeResearchUrl(value: string): boolean {
   try {
     const url = new URL(value)
     const host = url.hostname.toLowerCase().replace(/\.$/, "")
