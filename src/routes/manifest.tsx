@@ -42,6 +42,7 @@ function ManifestIntelligencePage() {
   const [acceptanceCriteria, setAcceptanceCriteria] = useState('Deliverable is usable, key claims are supported by evidence, tests pass, and success can be measured against the stated goal.')
   const [blueprint, setBlueprint] = useState('')
   const [busy, setBusy] = useState(false)
+  const [outcomeBusy, setOutcomeBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -69,13 +70,28 @@ function ManifestIntelligencePage() {
   const saveOutcome = async () => {
     setError('')
     setNotice('')
+    if (!selectedStrategyId) {
+      setError('Select a strategy before recording its outcome.')
+      return
+    }
+    if (actualResult.trim().length < 3 || outcomeEvidence.trim().length < 3) {
+      setError('Enter the observed result and a concrete evidence reference before saving.')
+      return
+    }
+    const cost = actualCost.trim() ? Number(actualCost) : undefined
+    if (cost !== undefined && (!Number.isFinite(cost) || cost < 0 || cost > 1000000)) {
+      setError('Actual cost must be a measured number between $0 and $1,000,000, or left blank.')
+      return
+    }
+    setOutcomeBusy(true)
     try {
-      await recordOutcome({ strategyId: selectedStrategyId as any, outcomeStatus, actualResult, evidence: outcomeEvidence, ...(actualCost.trim() ? { actualCost: Number(actualCost) } : {}) })
+      await recordOutcome({ strategyId: selectedStrategyId as any, outcomeStatus, actualResult: actualResult.trim(), evidence: outcomeEvidence.trim(), ...(cost === undefined ? {} : { actualCost: cost }) })
       setNotice('Observed outcome saved with its evidence. This updates the record; it does not automatically prove the strategy caused the result.')
       setActualResult('')
       setOutcomeEvidence('')
       setActualCost('')
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not save strategy outcome.') }
+    finally { setOutcomeBusy(false) }
   }
 
   return <WorkspaceLayout title="Manifest Intelligence" eyebrow="RESEARCH FRONTIER / INTENT → POSSIBILITY">
@@ -201,7 +217,7 @@ function ManifestIntelligencePage() {
           <div><label htmlFor="strategy-outcome-evidence">EVIDENCE SOURCE</label><textarea id="strategy-outcome-evidence" rows={2} value={outcomeEvidence} onChange={e => setOutcomeEvidence(e.target.value)} maxLength={3000} placeholder="Test run, analytics report, URL, measurement ID, or reproducible notes…" /></div>
           <div><label htmlFor="strategy-actual-cost">ACTUAL COST · USD (OPTIONAL)</label><input id="strategy-actual-cost" type="number" min={0} max={1000000} value={actualCost} onChange={e => setActualCost(e.target.value)} placeholder="Only enter measured spend" /></div>
         </div> : null}
-        {strategies.length > 0 ? <button className="primary-button" disabled={!selectedStrategyId || actualResult.trim().length < 3 || outcomeEvidence.trim().length < 3} onClick={() => void saveOutcome()}>Save measured outcome</button> : null}
+        {strategies.length > 0 ? <button className="primary-button" disabled={outcomeBusy || !selectedStrategyId || actualResult.trim().length < 3 || outcomeEvidence.trim().length < 3 || (actualCost.trim() !== '' && (!Number.isFinite(Number(actualCost)) || Number(actualCost) < 0 || Number(actualCost) > 1000000))} onClick={() => void saveOutcome()}>{outcomeBusy ? 'Saving measured outcome…' : 'Save measured outcome'}</button> : null}
       </div>
 
       <div className="glass-card research-card">
