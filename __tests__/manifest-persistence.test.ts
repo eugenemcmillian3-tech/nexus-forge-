@@ -187,6 +187,26 @@ describe("Manifest provider-to-ledger persistence", () => {
     expect(JSON.parse(afterAttempt.find(row => row._id === strategy._id)!.value).outcomeStatus).toBe("partial");
   });
 
+  it("does not persist a blueprint or strategy records when every provider attempt fails", async () => {
+    const t = convexTest(schema, modules);
+    vi.stubEnv("GROQ_API_KEY", "test-provider-key");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(
+      JSON.stringify({ error: { message: "provider temporarily unavailable" } }),
+      { status: 503, headers: { "content-type": "application/json" } },
+    )));
+
+    const operator = t.withIdentity(identity("manifest-provider-failure-owner"));
+    await expect(operator.action(api.manifestIntelligence.synthesize, {
+      intent: "Create a measurable product experiment for a new digital workflow.",
+      domain: "AI product / venture",
+      budget: 25,
+      horizon: "14 days",
+    })).rejects.toThrow(/failed \(503, retryable\)/i);
+
+    expect(await operator.query(api.manifestIntelligence.listBlueprints, {})).toEqual([]);
+    expect(await operator.query(api.manifestIntelligence.listStrategies, {})).toEqual([]);
+  });
+
   it("rejects anonymous synthesis before invoking the provider", async () => {
     const t = convexTest(schema, modules);
     const fetchMock = vi.fn();
