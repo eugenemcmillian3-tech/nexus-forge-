@@ -231,10 +231,25 @@ function ManifestIntelligencePage() {
           const linked = item.linkedManifestStrategy && typeof item.linkedManifestStrategy === 'object' ? item.linkedManifestStrategy as Record<string, unknown> : {}
           const metrics = Array.isArray(item.metrics) ? item.metrics as Array<Record<string, unknown>> : []
           const counts = item.counts && typeof item.counts === 'object' ? item.counts as Record<string, unknown> : {}
+          const linkedStrategy = strategies.find(strategy => strategy._id === linked.id)
+          let linkedOutcome: Record<string, unknown> = {}
+          if (linkedStrategy) {
+            try { linkedOutcome = JSON.parse(linkedStrategy.value) as Record<string, unknown> } catch { linkedOutcome = {} }
+          }
+          const outcomeStatus = typeof linkedOutcome.outcomeStatus === 'string' ? linkedOutcome.outcomeStatus : 'not_measured'
+          const hasObservedOutcome = typeof linkedOutcome.actualResult === 'string' && linkedOutcome.actualResult.trim().length > 0
+          const experimentDecision = typeof item.decision === 'string' ? item.decision : 'inconclusive'
+          const reviewCue = !linkedStrategy
+            ? 'Linked strategy record is unavailable in this private ledger; check the reference before drawing conclusions.'
+            : !hasObservedOutcome
+              ? 'Comparison is recorded, but no separate strategy outcome has been recorded yet.'
+              : (experimentDecision === 'do-not-promote' && outcomeStatus === 'succeeded') || (experimentDecision === 'human-review-recommended' && outcomeStatus === 'failed')
+                ? 'Cross-ledger review needed: the comparison recommendation and recorded strategy outcome point in different directions. Inspect the underlying evidence; neither record overrides the other.'
+                : 'Both records are present. Review the metric evidence and observed outcome together; linkage alone does not establish causation or independent verification.'
           return <article className="workflow-step" key={row._id}>
             <span className="workflow-step-mark">↔</span>
-            <span className="workflow-step-copy"><strong>{String(item.name ?? row.key)}</strong><small>Strategy: {String(linked.name ?? 'Linked Manifest strategy')} · Decision: {String(item.decision ?? 'inconclusive')}</small><small>Metrics: {metrics.map(metric => `${String(metric.label ?? metric.key ?? 'metric')}: ${String(metric.status ?? 'unrated')} (${String(metric.baseline ?? '?')} → ${String(metric.candidate ?? '?')} ${String(metric.unit ?? '')})`).join(' · ') || 'No metric details stored'}</small><small>Improved: {String(counts.improved ?? 0)} · Regressed: {String(counts.regressed ?? 0)} · Unchanged: {String(counts.unchanged ?? 0)}</small><small>Evidence: {metrics.map(metric => String(metric.evidence ?? '')).filter(Boolean).join(' · ') || 'No evidence references stored'} · {new Date(row._creationTime).toLocaleString()}</small></span>
-            <span className="workflow-step-state">{String(item.evidenceStatus ?? 'OPERATOR EVIDENCE').toUpperCase()}</span>
+            <span className="workflow-step-copy"><strong>{String(item.name ?? row.key)}</strong><small>Strategy: {String(linked.name ?? 'Linked Manifest strategy')} · Comparison decision: {experimentDecision}</small><small>Metrics: {metrics.map(metric => `${String(metric.label ?? metric.key ?? 'metric')}: ${String(metric.status ?? 'unrated')} (${String(metric.baseline ?? '?')} → ${String(metric.candidate ?? '?')} ${String(metric.unit ?? '')})`).join(' · ') || 'No metric details stored'}</small><small>Improved: {String(counts.improved ?? 0)} · Regressed: {String(counts.regressed ?? 0)} · Unchanged: {String(counts.unchanged ?? 0)}</small><small>Strategy outcome: {outcomeStatus.replaceAll('_', ' ')}{hasObservedOutcome ? ` · Observed: ${String(linkedOutcome.actualResult)} · Outcome evidence: ${String(linkedOutcome.evidence ?? 'Not supplied')}` : ''}</small><small>Cross-ledger review: {reviewCue}</small><small>Experiment evidence: {metrics.map(metric => String(metric.evidence ?? '')).filter(Boolean).join(' · ') || 'No evidence references stored'} · {new Date(row._creationTime).toLocaleString()}</small></span>
+            <span className="workflow-step-state">{reviewCue.startsWith('Cross-ledger review needed') ? 'REVIEW NEEDED' : hasObservedOutcome ? 'OUTCOME LINKED' : 'OUTCOME PENDING'}</span>
           </article>
         })}
         <div className="hero-actions"><Link className="secondary-button" to="/learning">Open Verified Learning Engine →</Link></div>
