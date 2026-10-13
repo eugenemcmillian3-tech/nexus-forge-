@@ -105,21 +105,23 @@ async function runChecks(url: string): Promise<CheckResult[]> {
   })
 }
 
-export const run = action({
+export const run: any = (action as any)({
   args: { siteUrl: v.string(), label: v.optional(v.string()) },
   returns: v.object({ runId: v.id("readinessRuns"), status: v.union(v.literal("pass"), v.literal("fail")), passedCount: v.number(), failedCount: v.number(), totalCount: v.number() }),
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const operatorId = await requireOperator(ctx)
     const siteUrl = normalizeUrl(args.siteUrl)
     const results = await runChecks(siteUrl)
     const passedCount = results.filter(r => r.status === "pass").length
     const failedCount = results.length - passedCount
     const status = results.some(r => r.severity === "required" && r.status === "fail") ? "fail" as const : "pass" as const
-    return await (ctx as any).runMutation((internal as any).readiness.saveRun, {
+    const saveRunRef: any = (internal as any).readiness.saveRun
+    const saved = await (ctx as any).runMutation(saveRunRef, {
       siteUrl, label: args.label?.trim() || new URL(siteUrl).hostname,
       status, passedCount, failedCount, totalCount: results.length, operatorId,
       results: results.map(r => ({ checkKey: r.key, name: r.name, criterion: r.criterion, severity: r.severity, status: r.status, detail: r.detail, evidence: r.evidence })),
     })
+    return saved as any
   },
 })
 
@@ -137,10 +139,11 @@ export const runForDelivery: any = internalAction({
     const passedCount = results.filter(r => r.status === "pass").length
     const failedCount = results.length - passedCount
     const status = results.some(r => r.severity === "required" && r.status === "fail") ? "fail" as const : "pass" as const
-    return await (ctx as any).runMutation((internal as any).readiness.saveRun, {
+    const saved = await (ctx as any).runMutation((internal as any).readiness.saveRun, {
       siteUrl, label: `Delivery ${args.deliveryId}`, status, passedCount, failedCount, totalCount: results.length, operatorId: mission.ownerKey,
       results: results.map(r => ({ checkKey: r.key, name: r.name, criterion: r.criterion, severity: r.severity, status: r.status, detail: r.detail, evidence: r.evidence })),
     })
+    return saved as any
   },
 })
 
@@ -159,23 +162,23 @@ export const saveRun: any = internalMutation({
   },
 })
 
-export const listRuns = query({
+export const listRuns: any = (query as any)({
   args: {},
   returns: v.any(),
-  handler: async (ctx) => { const operatorId = await requireOperator(ctx); const runs = await (ctx as any).db.query("readinessRuns").withIndex("by_operator_ranAt", (q: any) => q.eq("operatorId", operatorId)).order("desc").take(25); return runs.map((run: any) => ({ _id: run._id, siteUrl: run.siteUrl, label: run.label, status: run.status, passedCount: run.passedCount, failedCount: run.failedCount, totalCount: run.totalCount, ranAt: run.ranAt })); },
+  handler: async (ctx: any) => { const operatorId = await requireOperator(ctx); const runs = await (ctx as any).db.query("readinessRuns").withIndex("by_operator_ranAt", (q: any) => q.eq("operatorId", operatorId)).order("desc").take(25); return runs.map((run: any) => ({ _id: run._id, siteUrl: run.siteUrl, label: run.label, status: run.status, passedCount: run.passedCount, failedCount: run.failedCount, totalCount: run.totalCount, ranAt: run.ranAt })); },
 })
 
-export const getRun = query({
+export const getRun: any = (query as any)({
   args: { runId: v.id("readinessRuns") },
   returns: v.any(),
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const operatorId = await requireOperator(ctx)
     const run = await (ctx as any).db.get(args.runId)
     if (!run || run.operatorId !== operatorId) throw new Error("Readiness run not found or access denied")
     const checks = await (ctx as any).db.query("readinessChecks").withIndex("by_run", (q: any) => q.eq("runId", args.runId)).order("asc").collect()
     return {
       run: { _id: run._id, siteUrl: run.siteUrl, label: run.label, status: run.status, passedCount: run.passedCount, failedCount: run.failedCount, totalCount: run.totalCount, ranAt: run.ranAt },
-      checks: checks.map(c => ({ _id: c._id, checkKey: c.checkKey, name: c.name, criterion: c.criterion, severity: c.severity, status: c.status, detail: c.detail, evidence: c.evidence })),
+      checks: checks.map((c: any) => ({ _id: c._id, checkKey: c.checkKey, name: c.name, criterion: c.criterion, severity: c.severity, status: c.status, detail: c.detail, evidence: c.evidence })),
     }
   },
 })
