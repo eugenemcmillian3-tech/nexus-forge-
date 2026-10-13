@@ -28,6 +28,7 @@ const initialMetrics: MetricDraft[] = [
 function LearningEnginePage() {
   const recordExperiment = useMutation(api.learningEngine.recordExperiment);
   const savedRows = useQuery(api.learningEngine.listExperiments, {});
+  const manifestRows = useQuery(api.manifestIntelligence.listStrategies, {});
   const [name, setName] = useState("Strategy comparison");
   const [hypothesis, setHypothesis] = useState("The candidate strategy improves output quality and completion without increasing runtime or cost.");
   const [baselineLabel, setBaselineLabel] = useState("Current baseline");
@@ -111,6 +112,39 @@ function LearningEnginePage() {
         <button className="primary-button" disabled={busy} onClick={() => void submit()}>{busy ? "Recording experiment…" : "Record comparison ↗"}</button>
         {error && <p className="warning" role="alert">{error}</p>}
         {receipt && <div className="glass-card research-card" role="status"><div className="panel-title"><span>COMPARISON RECEIPT</span><span className="live-pill">{receipt.decision.toUpperCase()}</span></div><p>{receipt.rationale}</p><p>Improved: {receipt.improved} · Regressed: {receipt.regressed} · Unchanged: {receipt.unchanged}</p><strong>Saved to private learning memory. No strategy was promoted.</strong></div>}
+      </div>
+
+      <div className="glass-card research-card">
+        <div className="panel-title"><span>MANIFEST OUTCOME SIGNALS</span><span className="live-pill">{(manifestRows ?? []).filter(row => { try { const record = JSON.parse(row.value); return Array.isArray(record.outcomeHistory) && record.outcomeHistory.length > 0 || typeof record.recordedAt === "number" && typeof record.actualResult === "string" && record.actualResult.length > 0; } catch { return false; } }).length} MEASURED STRATEGIES</span></div>
+        <p className="muted-copy">This panel reads your private Manifest strategy ledger. Only recorded observations are counted; generated expectations are not treated as results.</p>
+        {manifestRows === undefined ? <p>Loading Manifest outcome signals…</p> : (() => {
+          const measured = manifestRows.flatMap(row => {
+            try {
+              const record = JSON.parse(row.value) as { name?: string; outcomeStatus?: string; actualResult?: string; evidence?: string; actualCost?: number | null; recordedAt?: number | null; outcomeHistory?: Array<{ outcomeStatus?: string; actualResult?: string; evidence?: string; actualCost?: number | null; recordedAt?: number }>; };
+              const history = Array.isArray(record.outcomeHistory) ? record.outcomeHistory : [];
+              const latest = history.length ? history[history.length - 1] : record;
+              if (typeof latest.actualResult !== "string" || latest.actualResult.trim().length === 0) return [];
+              return [{ id: row._id, name: record.name ?? row.key, status: latest.outcomeStatus ?? "inconclusive", result: latest.actualResult, evidence: latest.evidence ?? "Evidence not recorded", cost: latest.actualCost, recordedAt: latest.recordedAt }];
+            } catch { return []; }
+          });
+          const succeeded = measured.filter(item => item.status === "succeeded").length;
+          const partial = measured.filter(item => item.status === "partial").length;
+          const failed = measured.filter(item => item.status === "failed").length;
+          const inconclusive = measured.filter(item => item.status === "inconclusive").length;
+          return measured.length === 0
+            ? <div className="empty-state"><h3>No measured Manifest outcomes yet</h3><p>Record an observed result and evidence in Manifest Intelligence. Those records will appear here automatically.</p><Link className="secondary-button" to="/manifest">Open Manifest Intelligence →</Link></div>
+            : <>
+              <div className="field-grid">
+                <div className="decision-line"><span>✓</span><strong>{succeeded} succeeded</strong></div>
+                <div className="decision-line"><span>↗</span><strong>{partial} partial</strong></div>
+                <div className="decision-line"><span>!</span><strong>{failed} failed</strong></div>
+                <div className="decision-line"><span>…</span><strong>{inconclusive} inconclusive</strong></div>
+              </div>
+              {failed > 0 ? <p className="warning">Learning signal: review failed strategies and their recorded failure evidence before repeating them. This is a review cue, not an automatic strategy change.</p> : succeeded > 0 && failed === 0 && inconclusive === 0 ? <p className="muted-copy">Learning signal: recorded successes are available for comparison. Confirm the evidence and compare against a baseline before reuse.</p> : <p className="muted-copy">Learning signal: collect additional comparable measurements before drawing a strong conclusion.</p>}
+              {measured.slice(0, 8).map(item => <article className="portfolio-row" key={item.id}><div className="portfolio-main"><strong>{item.name}</strong><p>{item.result}</p><small>Status: {item.status} · Evidence: {item.evidence}{item.cost == null ? "" : ` · Actual cost: ${item.cost}`}</small></div><div className="portfolio-cell"><small>RECORDED</small><b>{typeof item.recordedAt === "number" ? new Date(item.recordedAt).toLocaleDateString() : "DATE N/A"}</b></div></article>)}
+              <Link className="secondary-button" to="/manifest">Review strategy ledger →</Link>
+            </>;
+        })()}
       </div>
 
       <div className="glass-card research-card">
