@@ -279,6 +279,26 @@ describe("Manifest provider-to-ledger persistence", () => {
     expect(rows[0]).toMatchObject({ provider: "groq", model: "test-model", totalTokens: 42, reportedCostUsd: 0.001 });
   });
 
+  it("rejects non-finite budgets before invoking the provider or writing ledger records", async () => {
+    const t = convexTest(schema, modules);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const operator = t.withIdentity(identity("manifest-invalid-budget-owner"));
+
+    for (const budget of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      await expect(operator.action(api.manifestIntelligence.synthesize, {
+        intent: "Create a measurable product experiment for a new digital workflow.",
+        domain: "AI product / venture",
+        budget,
+        horizon: "14 days",
+      })).rejects.toThrow(/budget cap must be a finite number/i);
+    }
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await operator.query(api.manifestIntelligence.listBlueprints, {})).toEqual([]);
+    expect(await operator.query(api.manifestIntelligence.listStrategies, {})).toEqual([]);
+  });
+
   it("rejects anonymous synthesis before invoking the provider", async () => {
     const t = convexTest(schema, modules);
     const fetchMock = vi.fn();

@@ -231,6 +231,7 @@ export const synthesize = action({
     if (!operatorId) throw new Error("Authenticated operator session required");
     const intent = args.intent.trim().slice(0, 3000);
     if (intent.length < 12) throw new Error("Describe the outcome in at least 12 characters.");
+    if (!Number.isFinite(args.budget)) throw new Error("Budget cap must be a finite number.");
     const budget = Math.max(0, Math.min(500, Math.round(args.budget)));
     const horizon = args.horizon.slice(0, 80);
     const domain = args.domain.slice(0, 100);
