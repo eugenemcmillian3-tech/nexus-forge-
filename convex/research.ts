@@ -18,6 +18,19 @@ type WebSource = { title: string; url: string; snippet: string }
 const MAX_QUERY_LENGTH = 500
 const MAX_SEARCH_HTML = 300_000
 
+export function extractResearchTarget(rawUrl: string, searchUrl = "https://html.duckduckgo.com/html/"): string | null {
+  try {
+    const parsed = new URL(rawUrl, searchUrl)
+    if (parsed.hostname !== "html.duckduckgo.com" && parsed.hostname !== "duckduckgo.com") return null
+    const target = parsed.searchParams.get("uddg")
+    if (!target) return null
+    const url = decodeURIComponent(target)
+    return isSafeResearchUrl(url) ? url : null
+  } catch {
+    return null
+  }
+}
+
 function isSafeResearchUrl(value: string): boolean {
   try {
     const url = new URL(value)
@@ -90,23 +103,15 @@ async function discoverWebSources(queryText: string, limit: number): Promise<Web
   const pattern = /<a[^>]+class=["']result__a["'][^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
   let match: RegExpExecArray | null
   while ((match = pattern.exec(html)) && sources.length < limit) {
-    try {
-      const parsed = new URL(match[1], searchUrl)
-      if (parsed.hostname !== "html.duckduckgo.com" && parsed.hostname !== "duckduckgo.com") continue
-      const target = parsed.searchParams.get("uddg")
-      if (!target) continue
-      const url = decodeURIComponent(target)
-      if (isSafeResearchUrl(url) && !sources.some(source => source.url === url)) {
-        const after = html.slice(pattern.lastIndex, pattern.lastIndex + 2500)
-        const snippetMatch = after.match(/class=["']result__snippet["'][^>]*>([\s\S]*?)<\/div>/i)
-        sources.push({
-          title: cleanHtml(match[2]).slice(0, 300),
-          url,
-          snippet: snippetMatch ? cleanHtml(snippetMatch[1]).slice(0, 1200) : "",
-        })
-      }
-    } catch {
-      // Ignore malformed result URLs.
+    const url = extractResearchTarget(match[1], searchUrl)
+    if (url && !sources.some(source => source.url === url)) {
+      const after = html.slice(pattern.lastIndex, pattern.lastIndex + 2500)
+      const snippetMatch = after.match(/class=["']result__snippet["'][^>]*>([\s\S]*?)<\/div>/i)
+      sources.push({
+        title: cleanHtml(match[2]).slice(0, 300),
+        url,
+        snippet: snippetMatch ? cleanHtml(snippetMatch[1]).slice(0, 1200) : "",
+      })
     }
   }
   if (!sources.length) throw new Error("Web search returned no usable sources.")
