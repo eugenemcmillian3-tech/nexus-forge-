@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values"
-import { requireOperator } from "./permissions";
+import { requireOperator, requireOwnedMission } from "./permissions";
+import { unresolvedEscalationBlock } from "./incidentSafety";
 import { internal } from "./_generated/api";
 
 export const decisionSnapshot = query({
@@ -66,24 +67,64 @@ export const learningSnapshot = query({
 export const recordDecision = mutation({
   args: { missionId: v.id("missions"), priorityRank: v.number(), action: v.string(), decision: v.union(v.literal("approve"), v.literal("reject"), v.literal("defer"), v.literal("escalate")), note: v.optional(v.string()) },
   returns: v.id("portfolioDecisions"),
-  handler: async (ctx, args) => { await requireOperator(ctx); return ctx.db.insert("portfolioDecisions", { missionId: args.missionId, priorityRank: args.priorityRank, action: args.action, decision: args.decision, note: args.note, createdAt: Date.now() }); },
+  handler: async (ctx, args) => { await requireOwnedMission(ctx, args.missionId); return ctx.db.insert("portfolioDecisions", { missionId: args.missionId, priorityRank: args.priorityRank, action: args.action, decision: args.decision, note: args.note, createdAt: Date.now() }); },
 });
 
 export const executeApprovedMission = mutation({
   args: { missionId: v.id("missions"), priorityRank: v.number(), action: v.string() },
   returns: v.object({ runId: v.id("missionRuns"), alreadyRunning: v.boolean() }),
   handler: async (ctx, args) => {
-    await requireOperator(ctx)
-    const mission = await ctx.db.get(args.missionId);
-    if (!mission) throw new Error("Mission not found");
+    const mission = await requireOwnedMission(ctx, args.missionId);
     if (!mission.approved) throw new Error("Mission requires approval before execution");
     if (mission.status === "complete") throw new Error("Mission is already complete");
     const latestDecision = await ctx.db.query("portfolioDecisions").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").first();
     if (!latestDecision || latestDecision.decision !== "approve" || latestDecision.priorityRank !== args.priorityRank || latestDecision.action !== args.action) throw new Error("A matching human approval is required before execution");
+
+    const dependencies = await ctx.db.query("missionDependencies").withIndex("by_mission", q => q.eq("missionId", args.missionId)).collect();
+    for (const dep of dependencies) {
+      if (dep.kind !== "blocks") continue;
+      const prerequisite = await ctx.db.get(dep.dependsOnMissionId);
+      if (!prerequisite || prerequisite.status !== "complete") throw new Error(`Execution blocked by prerequisite mission ${dep.dependsOnMissionId}`);
+    }
+
+    const resources = await ctx.db.query("missionResources").withIndex("by_mission", q => q.eq("missionId", args.missionId)).collect();
+    for (const resource of resources) {
+      const holders = await ctx.db.query("missionResources").withIndex("by_resource", q => q.eq("resourceKey", resource.resourceKey)).collect();
+      const conflict = holders.find(h => h.missionId !== args.missionId && h.status === "held" && (h.mode === "exclusive" || resource.mode === "exclusive"));
+      if (conflict) throw new Error(`Execution blocked by resource conflict: ${resource.resourceKey}`);
+    }
+
+    const missionIncidents = await ctx.db.query("incidents").withIndex("by_mission", q => q.eq("missionId", args.missionId)).collect();
+    const restartBlock = unresolvedEscalationBlock(missionIncidents);
+    if (restartBlock) throw new Error(restartBlock);
+
     const existing = await ctx.db.query("missionRuns").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").first();
-    if (existing && (existing.status === "running" || existing.status === "paused")) { await ctx.scheduler.runAfter(0, internal.missionRunner.tickInternal, { runId: existing._id }); return { runId: existing._id, alreadyRunning: true }; }
+    if (existing && (existing.status === "running" || existing.status === "paused")) {
+      await ctx.scheduler.runAfter(0, internal.missionRunner.tickInternal, { runId: existing._id });
+      return { runId: existing._id, alreadyRunning: true };
+    }
+
     const now = Date.now();
-    const runId = await ctx.db.insert("missionRuns", { missionId: args.missionId, startedAt: now, deadlineAt: now + 20 * 60 * 1000, maxRetries: 2, retries: 0, status: "running", currentStage: "orchestration", nextActionAt: now });
+    for (const resource of resources) {
+      if (resource.status !== "held") await ctx.db.patch(resource._id, { status: "held", heldAt: now });
+    }
+    const runId = await ctx.db.insert("missionRuns", {
+      missionId: args.missionId,
+      startedAt: now,
+      deadlineAt: now + 20 * 60 * 1000,
+      maxRetries: 2,
+      retries: 0,
+      status: "running",
+      currentStage: "orchestration",
+      nextActionAt: now,
+    });
+    await ctx.runMutation(internal.audit.record, {
+      missionId: args.missionId,
+      type: "orchestration",
+      action: "execution_preflight_passed",
+      status: "ready",
+      detail: `${dependencies.filter(d => d.kind === "blocks").length} blocking dependencies satisfied; ${resources.length} resource reservation(s) held.`,
+    });
     await ctx.scheduler.runAfter(0, internal.missionRunner.tickInternal, { runId });
     return { runId, alreadyRunning: false };
   },
