@@ -72,6 +72,38 @@ describe("Manifest provider-to-ledger persistence", () => {
     expect(otherOwnerStrategies).toEqual([]);
   });
 
+  it("retries structured extraction and persists strategies when the first blueprint omits its block", async () => {
+    const t = convexTest(schema, modules);
+    vi.stubEnv("GROQ_API_KEY", "test-provider-key");
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(
+        JSON.stringify({ choices: [{ message: { content: "## Manifest\\nA readable blueprint with three distinct strategy ideas." } }] }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ))
+      .mockResolvedValueOnce(new Response(
+        JSON.stringify({ choices: [{ message: { content: JSON.stringify(candidates) } }] }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const operator = t.withIdentity(identity("manifest-retry-owner"));
+    const result = await operator.action(api.manifestIntelligence.synthesize, {
+      intent: "Create a measurable product experiment for a new digital workflow.",
+      domain: "AI product / venture",
+      budget: 25,
+      horizon: "14 days",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result).toMatchObject({ saved: true, strategyCount: 3, strategyBlockValid: true });
+    expect(result.blueprint).toContain("readable blueprint");
+    const strategies = await operator.query(api.manifestIntelligence.listStrategies, {});
+    expect(strategies).toHaveLength(3);
+    expect(strategies.map(row => JSON.parse(row.value).name).sort()).toEqual([
+      "Manual concierge", "Small pilot", "Workflow prototype",
+    ]);
+  });
+
   it("persists measured outcomes and prevents another operator from changing them", async () => {
     const t = convexTest(schema, modules);
     vi.stubEnv("GROQ_API_KEY", "test-provider-key");
