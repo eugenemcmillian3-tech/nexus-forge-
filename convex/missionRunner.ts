@@ -3,6 +3,7 @@ import { ConvexError } from "convex/values"
 import { v } from "convex/values"
 import { action, internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server"
 import { api, internal } from "./_generated/api"
+import { directStartBlock, missionIsAlreadyComplete } from "./incidentSafety"
 const WINDOW=20*60*1000, RETRIES=2
 const shape=v.object({_id:v.id("missionRuns"),_creationTime:v.number(),missionId:v.id("missions"),startedAt:v.number(),deadlineAt:v.number(),maxRetries:v.number(),retries:v.number(),status:v.union(v.literal("running"),v.literal("paused"),v.literal("blocked"),v.literal("complete")),currentStage:v.string(),nextActionAt:v.number(),lastError:v.optional(v.string())})
 const audit=async(c:any,missionId:any,type:any,action:string,status:string,detail?:string,runId?:any)=>c.runMutation(internal.audit.record,{missionId,type,action,status,detail:detail??action,runId})
