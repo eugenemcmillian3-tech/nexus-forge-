@@ -108,6 +108,45 @@ describe("Research Oracle persistence", () => {
     expect(result.citations).toEqual([target]);
   });
 
+  it("stops after the redirect-hop limit and never fetches the next destination", async () => {
+    const t = convexTest(schema, modules);
+    const owner = "research-redirect-cap-owner";
+    const missionId = await t.run(async (ctx) => ctx.db.insert("missions", {
+      title: "Redirect cap test",
+      mission: "Verify redirect chains have a strict hop limit",
+      autonomy: "guided",
+      budget: 0,
+      status: "draft",
+      completion: 0,
+      approved: false,
+      ownerKey: owner,
+    }));
+    const target = "https://example.com/research";
+    const wrapped = "https://html.duckduckgo.com/html/?uddg=" + encodeURIComponent(target);
+    const html = `<a class="result__a" href="${wrapped}">Example research</a>`;
+    const providerResult = JSON.stringify({ result: "Result based only on available source metadata.", citations: [] });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(html, { status: 200, headers: { "content-type": "text/html" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/research?hop=1" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/research?hop=2" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/research?hop=3" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/research?hop=4" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/research?hop=5" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [{ message: { content: providerResult } }] }), { status: 200, headers: { "content-type": "application/json" } }));
+    vi.stubEnv("GROQ_API_KEY", "test-provider-key");
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await t.withIdentity(identity(owner)).action(api.research.search, {
+      missionId,
+      query: "test redirect chain limit",
+      deepResearch: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(7);
+    expect(fetchMock.mock.calls.some(call => String(call[0]).includes("hop=5"))).toBe(false);
+  });
+
   it("rejects anonymous research before making external requests", async () => {
     const t = convexTest(schema, modules);
     const missionId = await t.run(async (ctx) => ctx.db.insert("missions", {
