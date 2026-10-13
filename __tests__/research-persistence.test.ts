@@ -70,6 +70,44 @@ describe("Research Oracle persistence", () => {
       .rejects.toThrow(/access denied|not found/i);
   });
 
+  it("does not follow a source redirect to a private or local destination", async () => {
+    const t = convexTest(schema, modules);
+    const owner = "research-redirect-owner";
+    const missionId = await t.run(async (ctx) => ctx.db.insert("missions", {
+      title: "Redirect safety test",
+      mission: "Verify unsafe source redirects are not followed",
+      autonomy: "guided",
+      budget: 0,
+      status: "draft",
+      completion: 0,
+      approved: false,
+      ownerKey: owner,
+    }));
+    const target = "https://example.com/research";
+    const wrapped = "https://html.duckduckgo.com/html/?uddg=" + encodeURIComponent(target);
+    const html = `<a class="result__a" href="${wrapped}">Example research</a>`;
+    const providerResult = JSON.stringify({ result: "A cautious result based on the available source metadata.", citations: [target] });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(html, { status: 200, headers: { "content-type": "text/html" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "http://127.0.0.1/admin" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [{ message: { content: providerResult } }] }), { status: 200, headers: { "content-type": "application/json" } }));
+    vi.stubEnv("GROQ_API_KEY", "test-provider-key");
+    vi.stubGlobal("fetch", fetchMock);
+
+    const operator = t.withIdentity(identity(owner));
+    const result = await operator.action(api.research.search, {
+      missionId,
+      query: "test unsafe redirect handling",
+      deepResearch: false,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[1][0]).toBe(target);
+    expect(fetchMock.mock.calls.some(call => String(call[0]).includes("127.0.0.1"))).toBe(false);
+    expect(result.citations).toEqual([target]);
+  });
+
   it("rejects anonymous research before making external requests", async () => {
     const t = convexTest(schema, modules);
     const missionId = await t.run(async (ctx) => ctx.db.insert("missions", {
