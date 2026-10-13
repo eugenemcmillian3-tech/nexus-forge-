@@ -31,7 +31,12 @@ function ManifestIntelligencePage() {
   const providerUsageRows = useQuery(api.manifestIntelligence.listProviderUsage, {})
   const experimentRows = useQuery(api.learningEngine.listExperiments, {})
   const recordOutcome = useMutation(api.manifestIntelligence.recordStrategyOutcome)
+  const attachAssumptionEvidence = useMutation(api.manifestIntelligence.attachAssumptionEvidence)
   const [selectedStrategyId, setSelectedStrategyId] = useState('')
+  const [assumptionEvidenceType, setAssumptionEvidenceType] = useState<'supports' | 'contradicts' | 'inconclusive'>('supports')
+  const [assumptionEvidenceUrl, setAssumptionEvidenceUrl] = useState('')
+  const [assumptionEvidenceNote, setAssumptionEvidenceNote] = useState('')
+  const [assumptionEvidenceBusy, setAssumptionEvidenceBusy] = useState(false)
   const [outcomeStatus, setOutcomeStatus] = useState<'succeeded' | 'partial' | 'failed' | 'inconclusive'>('succeeded')
   const [actualResult, setActualResult] = useState('')
   const [outcomeEvidence, setOutcomeEvidence] = useState('')
@@ -83,10 +88,45 @@ function ManifestIntelligencePage() {
       prerequisites: String(item.prerequisites ?? '').trim(),
       assumptions: String(item.unverifiedAssumptions ?? '').trim(),
       failureMode: String(item.failureMode ?? '').trim(),
+      evidence: Array.isArray(item.assumptionEvidence) ? item.assumptionEvidence.filter((entry): entry is Record<string, unknown> => Boolean(entry && typeof entry === 'object')) : [],
       measured: typeof item.actualResult === 'string' && item.actualResult.trim().length > 0 && typeof item.evidence === 'string' && item.evidence.trim().length > 0,
     }
   })
   const unresolvedAssumptionCount = strategyContext.filter(item => item.assumptions && !item.measured).length
+  const saveAssumptionEvidence = async () => {
+    setError('')
+    setNotice('')
+    if (!selectedStrategyId) {
+      setError('Select a strategy before attaching assumption evidence.')
+      return
+    }
+    if (assumptionEvidenceNote.trim().length < 3) {
+      setError('Explain how the source relates to the assumption.')
+      return
+    }
+    try {
+      const parsedUrl = new URL(assumptionEvidenceUrl.trim())
+      if (parsedUrl.protocol !== 'https:' || !parsedUrl.hostname || parsedUrl.username || parsedUrl.password) {
+        setError('Use a public HTTPS source URL without embedded credentials.')
+        return
+      }
+    } catch {
+      setError('Enter a valid HTTPS source URL.')
+      return
+    }
+    setAssumptionEvidenceBusy(true)
+    try {
+      await attachAssumptionEvidence({ strategyId: selectedStrategyId as any, evidenceType: assumptionEvidenceType, url: assumptionEvidenceUrl.trim(), note: assumptionEvidenceNote.trim() })
+      setNotice('Source reference attached to the selected strategy assumption. Its classification is an operator assessment, not independent fact verification.')
+      setAssumptionEvidenceUrl('')
+      setAssumptionEvidenceNote('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not attach assumption evidence.')
+    } finally {
+      setAssumptionEvidenceBusy(false)
+    }
+  }
+
   const saveOutcome = async () => {
     setError('')
     setNotice('')
@@ -231,10 +271,19 @@ function ManifestIntelligencePage() {
         <p className="muted-copy">This register organizes prerequisites, unverified assumptions, and failure modes already present in saved candidate strategies. Generated statements remain hypotheses until an operator attaches a concrete evidence reference and records an observed result; this is not independent web research or automatic fact verification.</p>
         {strategies.length === 0 ? <p className="empty-state">No structured strategies are available to build the context register. Synthesize a blueprint with valid strategy records first.</p> : strategyContext.map(item => <article className="workflow-step" key={item.id}>
           <span className="workflow-step-mark">{item.measured ? 'E' : '?'}</span>
-          <span className="workflow-step-copy"><strong>{item.name}</strong><small>Prerequisites: {item.prerequisites || 'Not specified by the strategy proposal.'}</small><small>Unverified assumptions: {item.assumptions || 'None supplied; review the plan for missing assumptions.'}</small><small>Primary failure mode: {item.failureMode || 'Not specified by the strategy proposal.'}</small></span>
-          <span className="workflow-step-state">{item.measured ? 'OUTCOME EVIDENCE ENTERED' : 'HYPOTHESIS · VERIFY'}</span>
+          <span className="workflow-step-copy"><strong>{item.name}</strong><small>Prerequisites: {item.prerequisites || 'Not specified by the strategy proposal.'}</small><small>Unverified assumptions: {item.assumptions || 'None supplied; review the plan for missing assumptions.'}</small><small>Primary failure mode: {item.failureMode || 'Not specified by the strategy proposal.'}</small>
+            {item.evidence.length ? item.evidence.map((entry, index) => <small key={index}>Assumption evidence · {String(entry.evidenceType ?? 'inconclusive').toUpperCase()}: <a href={String(entry.url ?? '')} target="_blank" rel="noreferrer noopener">{String(entry.url ?? 'Source')}</a> — {String(entry.note ?? '')} · {typeof entry.addedAt === 'number' ? new Date(entry.addedAt).toLocaleDateString() : 'date not recorded'}</small>) : <small>No source references attached to this strategy yet.</small>}
+          </span>
+          <span className="workflow-step-state">{item.evidence.length ? `${item.evidence.length} SOURCE REFERENCE${item.evidence.length === 1 ? '' : 'S'}` : item.measured ? 'OUTCOME EVIDENCE ENTERED' : 'HYPOTHESIS · VERIFY'}</span>
         </article>)}
-        <p className="muted-copy">Evidence rule: recording an outcome with a reference indicates operator-entered evidence, not proof of causality or independent validation. Use Research & Memory to gather source-backed context before relying on important external claims.</p>
+        <div className="field-grid">
+          <div><label htmlFor="assumption-evidence-target">ASSUMPTION / STRATEGY</label><select id="assumption-evidence-target" value={selectedStrategyId} onChange={e => setSelectedStrategyId(e.target.value)}><option value="">Select a candidate strategy</option>{strategies.map(row => { let item: Record<string, unknown> = {}; try { item = JSON.parse(row.value) as Record<string, unknown> } catch { item = {} } return <option key={row._id} value={row._id}>{String(item.name ?? row.key)}</option> })}</select></div>
+          <div><label htmlFor="assumption-evidence-type">EVIDENCE CLASSIFICATION</label><select id="assumption-evidence-type" value={assumptionEvidenceType} onChange={e => setAssumptionEvidenceType(e.target.value as typeof assumptionEvidenceType)}><option value="supports">Supports assumption</option><option value="contradicts">Contradicts assumption</option><option value="inconclusive">Inconclusive / mixed</option></select></div>
+          <div><label htmlFor="assumption-evidence-url">SOURCE URL · HTTPS</label><input id="assumption-evidence-url" type="url" value={assumptionEvidenceUrl} onChange={e => setAssumptionEvidenceUrl(e.target.value)} placeholder="https://example.org/report" maxLength={2000} /></div>
+          <div><label htmlFor="assumption-evidence-note">WHY THIS SOURCE MATTERS</label><textarea id="assumption-evidence-note" rows={2} value={assumptionEvidenceNote} onChange={e => setAssumptionEvidenceNote(e.target.value)} placeholder="Which part of the assumption does it support or challenge?" maxLength={1000} /></div>
+        </div>
+        <button className="primary-button" disabled={assumptionEvidenceBusy || !selectedStrategyId || assumptionEvidenceNote.trim().length < 3 || !assumptionEvidenceUrl.trim()} onClick={() => void saveAssumptionEvidence()}>{assumptionEvidenceBusy ? 'Attaching evidence…' : 'Attach evidence to selected assumption'}</button>
+        <p className="muted-copy">Evidence rule: classification is an operator assessment. A citation is not proof by itself; check the source's authority, date, methodology, and relevance. Evidence links are stored on the selected private strategy record, and the latest 30 references are retained.</p>
       </div>
 
       <div className="glass-card research-card">
