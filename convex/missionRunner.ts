@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { action, internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import { requireOperator, requireOwnedMission } from "./permissions";
 import { directStartBlock, missionIsAlreadyComplete } from "./incidentSafety";
 
@@ -16,7 +17,7 @@ async function audit(c: any, missionId: any, type: string, actionName: string, s
 export const get = query({
   args: { missionId: v.id("missions") },
   returns: v.union(runShape, v.null()),
-  handler: async (c, a) => { await requireOwnedMission(c, a.missionId); return await c.db.query("missionRuns").withIndex("by_mission", q => q.eq("missionId", a.missionId)).order("desc").first(); },
+  handler: async (c, a) => { await requireOwnedMission(c, a.missionId); return (await c.db.query("missionRuns").withIndex("by_mission", q => q.eq("missionId", a.missionId)).order("desc").first()) as Doc<"missionRuns"> | null; },
 });
 
 async function startApprovedInternal(c: any, missionId: any) {
@@ -40,12 +41,12 @@ export const startApproved = internalMutation({ args: { missionId: v.id("mission
 // Legacy public entry point retained for API compatibility, but it must not bypass
 // portfolio decision, dependency/resource preflight, or escalation review.
 export const start = mutation({ args: { missionId: v.id("missions") }, returns: v.id("missionRuns"), handler: async (c, _a) => { await requireOperator(c); throw new Error(directStartBlock()); } });
-export const getInternal = internalQuery({ args: { runId: v.id("missionRuns") }, returns: v.union(runShape, v.null()), handler: async (c, a) => c.db.get(a.runId) });
+export const getInternal = internalQuery({ args: { runId: v.id("missionRuns") }, returns: v.union(runShape, v.null()), handler: async (c, a) => (await c.db.get(a.runId)) as Doc<"missionRuns"> | null });
 export const setState = internalMutation({
   args: { runId: v.id("missionRuns"), status: v.union(v.literal("running"), v.literal("paused"), v.literal("blocked"), v.literal("complete")), currentStage: v.string(), nextActionAt: v.number(), lastError: v.optional(v.string()), retries: v.optional(v.number()) },
   returns: v.null(),
   handler: async (c, a) => {
-    const r = await c.db.get(a.runId); if (!r) throw Error("Mission run not found");
+    const r = (await c.db.get(a.runId)) as Doc<"missionRuns"> | null; if (!r) throw Error("Mission run not found");
     const retries = a.retries ?? r.retries;
     await c.db.patch(a.runId, { status: a.status, currentStage: a.currentStage, nextActionAt: a.nextActionAt, lastError: a.lastError, retries });
     const retryNote = retries > r.retries ? ` Retry ${retries}/${r.maxRetries}.` : "";
