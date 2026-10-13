@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "../convex/schema";
-import { api } from "../convex/_generated/api";
+import { api, internal } from "../convex/_generated/api";
 
 const modules = import.meta.glob("../convex/**/*.ts");
 
@@ -243,6 +243,40 @@ describe("Manifest provider-to-ledger persistence", () => {
 
     expect(await operator.query(api.manifestIntelligence.listBlueprints, {})).toEqual([]);
     expect(await operator.query(api.manifestIntelligence.listStrategies, {})).toEqual([]);
+  });
+
+
+  it("rejects malformed provider usage metadata before it reaches the private ledger", async () => {
+    const t = convexTest(schema, modules);
+    const base = {
+      ownerKey: "usage-owner",
+      provider: "groq",
+      model: "test-model",
+      totalTokens: 42,
+      promptTokens: 30,
+      completionTokens: 12,
+      reportedCostUsd: 0.001,
+      capturedAt: Date.now(),
+    };
+    for (const invalid of [
+      { totalTokens: -1 },
+      { promptTokens: Number.NaN },
+      { completionTokens: Number.POSITIVE_INFINITY },
+      { totalTokens: 100000001 },
+      { reportedCostUsd: -0.01 },
+      { capturedAt: Number.NaN },
+      { provider: " " },
+      { model: " " },
+    ]) {
+      await expect(t.mutation(internal.manifestIntelligence.recordProviderUsageInternal, {
+        ...base,
+        ...invalid,
+      })).rejects.toThrow(/provider-reported|provider usage/i);
+    }
+    await t.mutation(internal.manifestIntelligence.recordProviderUsageInternal, base);
+    const rows = await t.withIdentity(identity("usage-owner")).query(api.manifestIntelligence.listProviderUsage, {});
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ provider: "groq", model: "test-model", totalTokens: 42, reportedCostUsd: 0.001 });
   });
 
   it("rejects anonymous synthesis before invoking the provider", async () => {
