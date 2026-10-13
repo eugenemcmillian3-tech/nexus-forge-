@@ -109,13 +109,13 @@ async function fetchResearchPage(value: string): Promise<Response> {
 }
 
 async function discoverWebSources(queryText: string, limit: number): Promise<WebSource[]> {
-  const searchUrl = \`https://html.duckduckgo.com/html/?q=\${encodeURIComponent(queryText)}\`
+  const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(queryText)}`
   const response = await fetch(searchUrl, {
     redirect: "error",
     headers: { "User-Agent": "NEXUS-FORGE-Research/1.0" },
     signal: AbortSignal.timeout(10_000),
   })
-  if (!response.ok) throw new Error(\`Web search failed (\${response.status}).\`)
+  if (!response.ok) throw new Error(`Web search failed (${response.status}).`)
   const html = await readTextBounded(response, MAX_SEARCH_HTML)
   const sources: WebSource[] = []
   const pattern = /<a[^>]+class=["']result__a["'][^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
