@@ -64,8 +64,13 @@ describe("Research Oracle persistence", () => {
     });
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(html, { status: 200, headers: { "content-type": "text/html" } }))
-      .mockResolvedValueOnce(new Response("<html><body>Verified source page content</body></html>", { status: 200, headers: { "content-type": "text/html" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        ok: true, status: 200, contentType: "text/html", finalUrl: target, hops: [target],
+        body: "<html><body>Verified source page content</body></html>",
+      }), { status: 200, headers: { "content-type": "application/json" } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [{ message: { content: providerResult } }] }), { status: 200, headers: { "content-type": "application/json" } }));
+    vi.stubEnv("RESEARCH_EGRESS_GATEWAY_URL", "https://research-egress.example.workers.dev");
+    vi.stubEnv("RESEARCH_EGRESS_GATEWAY_TOKEN", "test-egress-token");
     vi.stubEnv("GROQ_API_KEY", "test-provider-key");
     vi.stubGlobal("fetch", fetchMock);
 
@@ -81,7 +86,9 @@ describe("Research Oracle persistence", () => {
     expect(result.result).toContain("narrow, testable opportunity");
     expect(result.citations).toEqual([target]);
     expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock.mock.calls[1][0]).toBe(target);
+    expect(fetchMock.mock.calls[1][0]).toBe("https://research-egress.example.workers.dev/fetch");
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: "POST", redirect: "error" });
+    expect(new Headers(fetchMock.mock.calls[1][1]?.headers).get("authorization")).toBe("Bearer test-egress-token");
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       missionId,
@@ -112,8 +119,10 @@ describe("Research Oracle persistence", () => {
     const providerResult = JSON.stringify({ result: "A cautious result based on the available source metadata.", citations: [target] });
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(html, { status: 200, headers: { "content-type": "text/html" } }))
-      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "http://127.0.0.1/admin" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: false, error: "redirect_destination_rejected" }), { status: 403, headers: { "content-type": "application/json" } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [{ message: { content: providerResult } }] }), { status: 200, headers: { "content-type": "application/json" } }));
+    vi.stubEnv("RESEARCH_EGRESS_GATEWAY_URL", "https://research-egress.example.workers.dev");
+    vi.stubEnv("RESEARCH_EGRESS_GATEWAY_TOKEN", "test-egress-token");
     vi.stubEnv("GROQ_API_KEY", "test-provider-key");
     vi.stubGlobal("fetch", fetchMock);
 
@@ -126,12 +135,12 @@ describe("Research Oracle persistence", () => {
 
     expect(result.ok).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock.mock.calls[1][0]).toBe(target);
+    expect(fetchMock.mock.calls[1][0]).toBe("https://research-egress.example.workers.dev/fetch");
     expect(fetchMock.mock.calls.some(call => String(call[0]).includes("127.0.0.1"))).toBe(false);
     expect(result.citations).toEqual([target]);
   });
 
-  it("stops after the redirect-hop limit and never fetches the next destination", async () => {
+  it("does not bypass the gateway redirect-hop limit", async () => {
     const t = convexTest(schema, modules);
     const owner = "research-redirect-cap-owner";
     const missionId = await t.run(async (ctx) => ctx.db.insert("missions", {
@@ -150,12 +159,10 @@ describe("Research Oracle persistence", () => {
     const providerResult = JSON.stringify({ result: "Result based only on available source metadata.", citations: [] });
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(html, { status: 200, headers: { "content-type": "text/html" } }))
-      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/research?hop=1" } }))
-      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/research?hop=2" } }))
-      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/research?hop=3" } }))
-      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/research?hop=4" } }))
-      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "/research?hop=5" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: false, error: "redirect_limit" }), { status: 422, headers: { "content-type": "application/json" } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [{ message: { content: providerResult } }] }), { status: 200, headers: { "content-type": "application/json" } }));
+    vi.stubEnv("RESEARCH_EGRESS_GATEWAY_URL", "https://research-egress.example.workers.dev");
+    vi.stubEnv("RESEARCH_EGRESS_GATEWAY_TOKEN", "test-egress-token");
     vi.stubEnv("GROQ_API_KEY", "test-provider-key");
     vi.stubGlobal("fetch", fetchMock);
 
@@ -166,7 +173,8 @@ describe("Research Oracle persistence", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(7);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[1][0]).toBe("https://research-egress.example.workers.dev/fetch");
     expect(fetchMock.mock.calls.some(call => String(call[0]).includes("hop=5"))).toBe(false);
   });
 
