@@ -33,6 +33,7 @@ function LearningEnginePage() {
   const [hypothesis, setHypothesis] = useState("The candidate strategy improves output quality and completion without increasing runtime or cost.");
   const [baselineLabel, setBaselineLabel] = useState("Current baseline");
   const [candidateLabel, setCandidateLabel] = useState("Candidate strategy");
+  const [manifestStrategyId, setManifestStrategyId] = useState("");
   const [metrics, setMetrics] = useState<MetricDraft[]>(initialMetrics);
   const [baselineSafetyPass, setBaselineSafetyPass] = useState(false);
   const [candidateSafetyPass, setCandidateSafetyPass] = useState(false);
@@ -57,6 +58,7 @@ function LearningEnginePage() {
       const result = await recordExperiment({
         name, hypothesis, baselineLabel, candidateLabel, metrics,
         baselineSafetyPass, candidateSafetyPass, notes,
+        ...(manifestStrategyId ? { manifestStrategyId: manifestStrategyId as any } : {}),
       });
       setReceipt(result);
     } catch (e) {
@@ -89,6 +91,16 @@ function LearningEnginePage() {
         <input id="learning-name" value={name} maxLength={120} onChange={e => setName(e.target.value)} />
         <label htmlFor="learning-hypothesis">TESTABLE HYPOTHESIS</label>
         <textarea id="learning-hypothesis" rows={3} value={hypothesis} maxLength={1200} onChange={e => setHypothesis(e.target.value)} />
+        <label htmlFor="learning-manifest-strategy">LINK TO MANIFEST STRATEGY · OPTIONAL</label>
+        <select id="learning-manifest-strategy" value={manifestStrategyId} onChange={e => setManifestStrategyId(e.target.value)}>
+          <option value="">Standalone comparison (no Manifest strategy)</option>
+          {(manifestRows ?? []).map(row => {
+            let strategy: { name?: string } = {};
+            try { strategy = JSON.parse(row.value) as { name?: string }; } catch { /* Use the ledger key below. */ }
+            return <option key={row._id} value={row._id}>{strategy.name ?? row.key}</option>;
+          })}
+        </select>
+        <p className="muted-copy">Linking a strategy adds traceability; it does not mean the strategy was executed or independently verified.</p>
         <div className="field-grid">
           <div><label htmlFor="learning-baseline">BASELINE LABEL</label><input id="learning-baseline" value={baselineLabel} maxLength={100} onChange={e => setBaselineLabel(e.target.value)} /></div>
           <div><label htmlFor="learning-candidate">CANDIDATE LABEL</label><input id="learning-candidate" value={candidateLabel} maxLength={100} onChange={e => setCandidateLabel(e.target.value)} /></div>
@@ -152,7 +164,7 @@ function LearningEnginePage() {
         {savedRows === undefined ? <p>Loading experiment history…</p> : history.length === 0 ? <div className="empty-state"><h3>No experiments recorded yet</h3><p>Use real baseline and candidate observations to establish the first comparable record.</p></div> : history.map(row => {
           let record: any = null;
           try { record = JSON.parse(row.value); } catch { /* ignore malformed historical record */ }
-          return <article className="portfolio-row" key={row._id}><div className="portfolio-main"><strong>{record?.name ?? row.key}</strong><p>{record?.hypothesis ?? "Stored experiment record"} · {record?.baselineLabel ?? "Baseline"} → {record?.candidateLabel ?? "Candidate"}</p><p>{record?.rationale ?? "No recommendation summary saved."}</p><small>Evidence status: {record?.evidenceStatus ?? "not specified"} · {new Date(row._creationTime).toLocaleString()}</small></div><div className="portfolio-cell"><small>DECISION</small><b>{String(record?.decision ?? "stored").toUpperCase()}</b></div></article>;
+          return <article className="portfolio-row" key={row._id}><div className="portfolio-main"><strong>{record?.name ?? row.key}</strong><p>{record?.hypothesis ?? "Stored experiment record"} · {record?.baselineLabel ?? "Baseline"} → {record?.candidateLabel ?? "Candidate"}</p>{record?.linkedManifestStrategy && <p>Linked Manifest strategy: <strong>{String(record.linkedManifestStrategy.name ?? "Unnamed strategy")}</strong></p>}<p>{record?.rationale ?? "No recommendation summary saved."}</p><small>Evidence status: {record?.evidenceStatus ?? "not specified"} · {new Date(row._creationTime).toLocaleString()}</small></div><div className="portfolio-cell"><small>DECISION</small><b>{String(record?.decision ?? "stored").toUpperCase()}</b></div></article>;
         })}
       </div>
     </section>
