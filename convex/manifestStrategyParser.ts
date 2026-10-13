@@ -4,16 +4,19 @@ const fields = ["name", "mechanism", "prerequisites", "timeToEvidence", "expecte
 /** Parse optional, untrusted model-generated strategy JSON without losing the readable blueprint. */
 export function extractManifestStrategies(generated: string): ManifestStrategyExtraction {
   const fence = String.fromCharCode(96).repeat(3);
-  const pattern = new RegExp(fence + "manifest-strategies\\s*([\\s\\S]*?)\\s*" + fence, "i");
+  const pattern = new RegExp(fence + "(?:manifest-strategies|json)\\s*([\\s\\S]*?)\\s*" + fence, "i");
   const match = pattern.exec(generated);
-  if (!match) return { blueprint: generated.trim(), strategies: [], foundBlock: false, validJson: false };
+  const trimmed = generated.trim();
+  const rawArray = !match && trimmed.startsWith("[") && trimmed.endsWith("]");
+  if (!match && !rawArray) return { blueprint: trimmed, strategies: [], foundBlock: false, validJson: false };
+  const payload = match ? match[1] : trimmed;
   let parsed: unknown;
-  try { parsed = JSON.parse(match[1]); } catch { return { blueprint: generated.replace(match[0], "").trim(), strategies: [], foundBlock: true, validJson: false }; }
-  if (!Array.isArray(parsed)) return { blueprint: generated.replace(match[0], "").trim(), strategies: [], foundBlock: true, validJson: false };
+  try { parsed = JSON.parse(payload); } catch { return { blueprint: match ? generated.replace(match[0], "").trim() : trimmed, strategies: [], foundBlock: true, validJson: false }; }
+  if (!Array.isArray(parsed)) return { blueprint: match ? generated.replace(match[0], "").trim() : trimmed, strategies: [], foundBlock: true, validJson: false };
   const strategies = parsed.slice(0, 3).filter((item): item is ManifestStrategyCandidate => {
     if (!item || typeof item !== "object" || Array.isArray(item)) return false;
     const record = item as Record<string, unknown>;
     return fields.every((field) => typeof record[field] === "string" && (record[field] as string).trim().length > 0);
   }).map((item) => Object.fromEntries(fields.map((field) => [field, item[field].trim().slice(0, 1000)])) as unknown as ManifestStrategyCandidate);
-  return { blueprint: generated.replace(match[0], "").trim(), strategies, foundBlock: true, validJson: strategies.length > 0 };
+  return { blueprint: match ? generated.replace(match[0], "").trim() : "", strategies, foundBlock: true, validJson: strategies.length > 0 };
 }
