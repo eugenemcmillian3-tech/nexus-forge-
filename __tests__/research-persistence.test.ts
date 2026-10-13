@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "../convex/schema";
 import { api } from "../convex/_generated/api";
+import { isSafeResearchUrl } from "../convex/research";
 
 const modules = import.meta.glob("../convex/**/*.ts");
 
@@ -19,6 +20,28 @@ afterEach(() => {
 });
 
 describe("Research Oracle persistence", () => {
+  it("allows ordinary HTTPS DNS URLs and rejects unsafe URL forms", () => {
+    expect(isSafeResearchUrl("https://example.com/research")).toBe(true);
+    expect(isSafeResearchUrl("https://www.example.co.uk/path")).toBe(true);
+    for (const url of [
+      "http://example.com/",
+      "https://user:pass@example.com/",
+      "https://example.com:8443/",
+      "https://localhost/",
+      "https://service.localhost/",
+      "https://metadata.google.internal/",
+      "https://service.internal/",
+      "https://service.local/",
+      "https://127.0.0.1/",
+      "https://127.1/",
+      "https://2130706433/",
+      "https://0x7f000001/",
+      "https://[::1]/",
+      "https://singlelabel/",
+    ]) {
+      expect(isSafeResearchUrl(url), url).toBe(false);
+    }
+  });
   it("saves authenticated research and filters citations to retrieved sources", async () => {
     const t = convexTest(schema, modules);
     const owner = "research-owner-a";
