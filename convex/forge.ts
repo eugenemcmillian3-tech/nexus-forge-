@@ -19,7 +19,7 @@ export const recordAgentEvidence = internalMutation({ args: { missionId: v.id("m
 export const recordCouncilResult = internalMutation({ args: { missionId: v.id("missions"), summary: v.string() }, returns: v.null(), handler: async (ctx, args) => { await ctx.db.insert("evidence", { missionId: args.missionId, agent: "Council Planner", message: args.summary, score: 0.9, severity: "verified" }); await ctx.db.patch(args.missionId, { status: "review", completion: 40 }); return null } })
 export const recordLearningLesson = internalMutation({ args: { missionId: v.id("missions"), lesson: v.string(), confidence: v.number() }, returns: v.null(), handler: async (ctx, args) => { const mission = await ctx.db.get(args.missionId); if (!mission) throw new Error("Mission not found"); await ctx.db.insert("memories", { ownerKey: mission.ownerKey, missionId: mission._id, category: "learning-lesson", key: `council:${Date.now()}`, value: args.lesson.trim(), confidence: Math.max(0, Math.min(1, args.confidence)), source: "council-learning" }); return null } })
 
-export const orchestrate = action({ args: { missionId: v.id("missions"), mission: v.string() }, returns: v.object({ ok: v.boolean(), summary: v.string() }), handler: async (ctx, args) => { const operator = await ctx.runQuery(internal.permissions.currentOperator, {}); if (!operator) throw new Error("Authenticated operator session required"); return await ctx.runAction(internal.forge.orchestrateInternal, args) } })
+export const orchestrate = action({ args: { missionId: v.id("missions"), mission: v.string() }, returns: v.object({ ok: v.boolean(), summary: v.string() }), handler: async (ctx, args) => { const operator = await ctx.runQuery(internal.permissions.currentOperator, {}); if (!operator) throw new Error("Authenticated operator session required"); const missionRecord = await ctx.runQuery(internal.missions.getByIdInternal, { id: args.missionId }); if (!missionRecord || missionRecord.ownerKey !== operator) throw new Error("Mission not found or access denied"); return await ctx.runAction(internal.forge.orchestrateInternal, { missionId: args.missionId, mission: missionRecord.mission }) } })
 
 const runAgent = async (ctx: any, missionId: any, agent: string, role: string, prompt: string, model: keyof typeof COUNCIL_MODELS) => {
   await ctx.runMutation(internal.forge.updateRun, { missionId, agent, status: "running", progress: 20, note: `Running ${role} in coordinated wave using ${COUNCIL_MODELS[model]}.` })
@@ -77,12 +77,13 @@ CITATIONS: ${row.citations.join(", ") || "none"}`).join("\n\n")}${synthesis ? `\
       ])
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Coordinator", message: `Wave 2 completed. Builder and Creative Director consumed Wave 1 handoffs.\n${wave2.map(x => `${x.agent}: ${x.finding}`).join("\n\n")}`, score: wave2.every(x => x.ok) ? 0.9 : 0.55, severity: wave2.every(x => x.ok) ? "verified" : "warning" })
       const wave2Context = wave2.map(x => `${x.agent}: ${x.finding}`).join("\n\n")
+      const specialistWavesSucceeded = [...wave1, ...wave2].every(x => x.ok)
       await ctx.runMutation(internal.forge.updateRun, { missionId: args.missionId, agent: "Critic Agent", status: "running", progress: 60, note: `Reconciling coordinated waves with ${COUNCIL_MODELS.critic}.` })
       const critic = await askCouncil(`You are the NEXUS FORGE Critic Agent. Final coordination wave. Reconcile Wave 1 and Wave 2 outputs against the mission, research, learning, adaptive preflight, and plan. Flag contradictions, missing handoffs, unsupported claims, and unresolved dependencies. Produce CONSENSUS, CONFLICTS, VERIFIED ASSUMPTIONS, REQUIRED CHANGES, HANDOFF QUALITY, LEARNING IMPLICATIONS, GO/NO-GO RECOMMENDATION. Preserve human approval.\n\n${common}\n\nWAVE 1:\n${wave1Context}\n\nWAVE 2:\n${wave2Context}`, 1000, "critic")
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Critic Agent", message: `Model ${COUNCIL_MODELS.critic}\n${critic}`, score: 0.95, severity: "verified" })
       await ctx.runMutation(internal.forge.updateRun, { missionId: args.missionId, agent: "Critic Agent", status: "complete", progress: 100, note: critic.slice(0, 220) })
       await ctx.runMutation(internal.forge.recordLearningLesson, { missionId: args.missionId, lesson: `Coordinated council learning:\n${critic}\n\nPlanning lesson:\n${planner}`, confidence: 0.85 })
-      const decisionPrompt = `You are the NEXUS FORGE Council Decision Maker. Convert the coordinated council output into a bounded decision. Use only the mission, retrieved research, planner, specialist findings, critic reconciliation, and prior learning below. Never invent evidence. Return exactly these sections: DECISION, CONFIDENCE, EVIDENCE BASIS, OPEN QUESTIONS, REQUIRED HUMAN APPROVAL, NEXT EXECUTION STEP. The decision must be GO, REVISE, or NO-GO. Human approval remains mandatory even for GO.
+      const decisionPrompt = `You are the NEXUS FORGE Council Decision Maker. Convert the coordinated council output into a bounded decision. Use only the mission, retrieved research, planner, specialist findings, critic reconciliation, and prior learning below. Never invent evidence. Treat any BLOCKED specialist as a material evidence gap; do not infer their work was completed, and do not recommend GO while required specialist handoffs are missing. Return exactly these sections: DECISION, CONFIDENCE, EVIDENCE BASIS, OPEN QUESTIONS, REQUIRED HUMAN APPROVAL, NEXT EXECUTION STEP. The decision must be GO, REVISE, or NO-GO. Human approval remains mandatory even for GO.
 
 MISSION:
 ${args.mission}
@@ -101,7 +102,7 @@ ${wave2Context}
 CRITIC:
 ${critic}`
       const decision = await askCouncil(decisionPrompt, 900, "planner")
-      await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Council Decision", message: decision, score: 0.93, severity: "verified" })
+      await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Council Decision", message: decision, score: specialistWavesSucceeded ? 0.93 : 0.5, severity: specialistWavesSucceeded ? "verified" : "warning" })
       const summary = `ADAPTIVE PREFLIGHT
 ${preflightContext}
 
@@ -128,7 +129,7 @@ ${critic}
 FINAL COUNCIL DECISION
 ${decision}`
       await ctx.runMutation(internal.forge.recordCouncilResult, { missionId: args.missionId, summary })
-      return { ok: true, summary }
+      return { ok: specialistWavesSucceeded, summary }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       const runs = await ctx.runQuery(internal.forge.getRuns, { missionId: args.missionId })
