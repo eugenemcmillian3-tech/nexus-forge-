@@ -75,7 +75,7 @@ export const recordStrategyOutcome = mutation({
     if (actualResult.length < 3) throw new Error("Enter the observed result, not an expected result.");
     if (evidence.length < 3) throw new Error("Add evidence or a specific measurement source.");
     if (args.actualCost !== undefined && (!Number.isFinite(args.actualCost) || args.actualCost < 0 || args.actualCost > 1000000)) {
-      throw new Error("Actual cost must be a finite amount between $0 and $1,000,000; invalid cost was not saved.");
+      throw new Error("Actual cost must be finite and between $0 and $1,000,000; invalid cost was not saved.");
     }
     const actualCost = args.actualCost;
     let parsed: Record<string, unknown>;
