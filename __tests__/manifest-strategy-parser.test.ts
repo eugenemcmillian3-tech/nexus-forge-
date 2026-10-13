@@ -31,4 +31,17 @@ describe("Manifest strategy extraction", () => {
     expect(result.strategies).toEqual([]);
     expect(result.validJson).toBe(false);
   });
+  it("accepts a JSON-only array from the structured retry", () => {
+    const result = extractManifestStrategies(JSON.stringify([candidate, { ...candidate, name: "Second path" }]));
+    expect(result.strategies).toHaveLength(2);
+    expect(result.validJson).toBe(true);
+    expect(result.blueprint).toBe("");
+  });
+  it("accepts a JSON fenced response from providers that add a fence", () => {
+    const raw = [fence + "json", JSON.stringify([candidate]), fence].join("\n");
+    const result = extractManifestStrategies(raw);
+    expect(result.strategies).toHaveLength(1);
+    expect(result.strategies[0].name).toBe("Small pilot");
+    expect(result.validJson).toBe(true);
+  });
 });
