@@ -17,7 +17,7 @@ async function audit(c: any, missionId: any, type: string, actionName: string, s
 export const get = query({
   args: { missionId: v.id("missions") },
   returns: v.union(runShape, v.null()),
-  handler: async (c, a) => { await requireOwnedMission(c, a.missionId); return (await c.db.query("missionRuns").withIndex("by_mission", q => q.eq("missionId", a.missionId)).order("desc").first()) as Doc<"missionRuns"> | null; },
+  handler: async (c: any, a: any): Promise<Doc<"missionRuns"> | null> => { await requireOwnedMission(c, a.missionId); return (await (c.db.query("missionRuns") as any).withIndex("by_mission", (q: any) => q.eq("missionId", a.missionId)).order("desc").first()) as Doc<"missionRuns"> | null; },
 });
 
 async function startApprovedInternal(c: any, missionId: any) {
@@ -37,11 +37,11 @@ async function startApprovedInternal(c: any, missionId: any) {
   return id;
 }
 
-export const startApproved = internalMutation({ args: { missionId: v.id("missions") }, returns: v.union(v.id("missionRuns"), v.null()), handler: async (c, a) => startApprovedInternal(c, a.missionId) });
+export const startApproved = internalMutation({ args: { missionId: v.id("missions") }, returns: v.union(v.id("missionRuns"), v.null()), handler: async (c: any, a: any) => startApprovedInternal(c, a.missionId) });
 // Legacy public entry point retained for API compatibility, but it must not bypass
 // portfolio decision, dependency/resource preflight, or escalation review.
-export const start = mutation({ args: { missionId: v.id("missions") }, returns: v.id("missionRuns"), handler: async (c, _a) => { await requireOperator(c); throw new Error(directStartBlock()); } });
-export const getInternal = internalQuery({ args: { runId: v.id("missionRuns") }, returns: v.union(runShape, v.null()), handler: async (c, a) => (await c.db.get(a.runId)) as Doc<"missionRuns"> | null });
+export const start = mutation({ args: { missionId: v.id("missions") }, returns: v.id("missionRuns"), handler: async (c: any, _a: any): Promise<never> => { await requireOperator(c); throw new Error(directStartBlock()); } });
+export const getInternal = internalQuery({ args: { runId: v.id("missionRuns") }, returns: v.union(runShape, v.null()), handler: async (c: any, a: any): Promise<Doc<"missionRuns"> | null> => (await c.db.get(a.runId)) as Doc<"missionRuns"> | null });
 export const setState = internalMutation({
   args: { runId: v.id("missionRuns"), status: v.union(v.literal("running"), v.literal("paused"), v.literal("blocked"), v.literal("complete")), currentStage: v.string(), nextActionAt: v.number(), lastError: v.optional(v.string()), retries: v.optional(v.number()) },
   returns: v.null(),
