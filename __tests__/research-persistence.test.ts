@@ -41,6 +41,7 @@ describe("Research Oracle persistence", () => {
     });
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(html, { status: 200, headers: { "content-type": "text/html" } }))
+      .mockResolvedValueOnce(new Response("<html><body>Verified source page content</body></html>", { status: 200, headers: { "content-type": "text/html" } }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [{ message: { content: providerResult } }] }), { status: 200, headers: { "content-type": "application/json" } }));
     vi.stubEnv("GROQ_API_KEY", "test-provider-key");
     vi.stubGlobal("fetch", fetchMock);
@@ -56,6 +57,8 @@ describe("Research Oracle persistence", () => {
     expect(result.ok).toBe(true);
     expect(result.result).toContain("narrow, testable opportunity");
     expect(result.citations).toEqual([target]);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[1][0]).toBe(target);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       missionId,
