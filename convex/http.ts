@@ -5,7 +5,6 @@ import { internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
 
 const http = httpRouter()
-
 auth.addHttpRoutes(http)
 
 function requiredEnv(name: string): string {
@@ -14,73 +13,66 @@ function requiredEnv(name: string): string {
   return value
 }
 
+function unauthorized() {
+  return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } })
+}
+
+function isGitHubRunUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return url.protocol === "https:" && url.hostname === "github.com" &&
+      /^\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/actions\/runs\/[0-9]+\/?$/.test(url.pathname)
+  } catch {
+    return false
+  }
+}
+
+function isCommitSha(value: string): boolean {
+  return /^[0-9a-f]{40}$/i.test(value)
+}
+
+function isHttpsUrl(value: string): boolean {
+  try {
+    return new URL(value).protocol === "https:"
+  } catch {
+    return false
+  }
+}
+
 http.route({
   path: "/github-actions/delivery-result",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const expected = requiredEnv("NEXUS_FORGE_DELIVERY_SECRET")
-    const provided = request.headers.get("Authorization")
-    if (provided !== `Bearer ${expected}`) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      })
-    }
-
+    if (request.headers.get("Authorization") !== `Bearer ${expected}`) return unauthorized()
     let body: { deliveryId?: string; conclusion?: string; runUrl?: string; commitSha?: string; summary?: string }
-    try {
-      body = await request.json()
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      })
-    }
-
-    if (!body.deliveryId || !body.conclusion || !body.runUrl || !body.commitSha) {
-      return new Response(JSON.stringify({ error: "Missing required fields: deliveryId, conclusion, runUrl, commitSha" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      })
-    }
-
-    await ctx.runMutation(internal.delivery.recordWorkflowResult, {
-      id: body.deliveryId as Id<"deliveries">,
-      conclusion: body.conclusion,
-      runUrl: body.runUrl,
-      commitSha: body.commitSha,
-      summary: body.summary ?? "",
-    })
-
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    })
+    try { body = await request.json() } catch { return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { "Content-Type": "application/json" } }) }
+    if (!body.deliveryId || !body.conclusion || !body.runUrl || !body.commitSha) return new Response(JSON.stringify({ error: "Missing required fields: deliveryId, conclusion, runUrl, commitSha" }), { status: 400, headers: { "Content-Type": "application/json" } })
+    if (!isGitHubRunUrl(body.runUrl) || !isCommitSha(body.commitSha) || !["success", "failure", "cancelled", "timed_out", "action_required", "stale", "startup_failure", "neutral", "skipped"].includes(body.conclusion)) return new Response(JSON.stringify({ error: "Invalid workflow evidence fields" }), { status: 400, headers: { "Content-Type": "application/json" } })
+    await ctx.runMutation(internal.delivery.recordWorkflowResult, { id: body.deliveryId as Id<"deliveries">, conclusion: body.conclusion, runUrl: body.runUrl, commitSha: body.commitSha, summary: (body.summary ?? "").slice(0, 2000) })
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } })
   }),
 })
-
 
 http.route({
   path: "/github-actions/deployment-result",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const expected = requiredEnv("NEXUS_FORGE_DELIVERY_SECRET")
-    if (request.headers.get("Authorization") !== `Bearer ${expected}`) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } })
+    if (request.headers.get("Authorization") !== `Bearer ${expected}`) return unauthorized()
     let body: { deliveryId?: string; runUrl?: string; commitSha?: string; deploymentUrl?: string; summary?: string }
     try { body = await request.json() } catch { return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { "Content-Type": "application/json" } }) }
-    if (!body.deliveryId || !body.runUrl || !body.commitSha || !body.deploymentUrl) return new Response(JSON.stringify({ error: "Missing deployment evidence fields" }), { status: 400, headers: { "Content-Type": "application/json" } })
-    let site: URL
-    try { site = new URL(body.deploymentUrl) } catch { return new Response(JSON.stringify({ error: "Invalid deployment URL" }), { status: 400, headers: { "Content-Type": "application/json" } }) }
-    const safeHost = (u: URL) => { const host=u.hostname.toLowerCase(); return u.protocol==="https:"&&!u.username&&!u.password&&!!host&&host!=="localhost"&&!host.endsWith(".localhost")&&!host.endsWith(".local")&&!host.endsWith(".internal")&&host!=="metadata.google.internal"&&host!=="metadata"&&!host.includes(":")&&!/^\d{1,3}(\.\d{1,3}){3}$/.test(host)&&!/^0x[\da-f]+$/i.test(host)&&!/^\d+$/.test(host)&&(!u.port||u.port==="443") }
-    if (!safeHost(site)) return new Response(JSON.stringify({ error: "Deployment URL must be a public HTTPS hostname on the standard port" }), { status: 400, headers: { "Content-Type": "application/json" } })
-    site.hash=""
-    let response: Response | undefined, current=site.toString()
-    try { for(let hop=0;hop<=5;hop++){ response=await fetch(current,{redirect:"manual",signal:AbortSignal.timeout(10000)}); if(![301,302,303,307,308].includes(response.status)) break; const location=response.headers.get("location"); if(!location||hop===5) throw new Error("Redirect limit exceeded"); const next=new URL(location,current); if(!safeHost(next)) throw new Error("Unsafe redirect"); current=next.toString() } } catch { return new Response(JSON.stringify({error:"Deployment readiness probe failed safely"}),{status:409,headers:{"Content-Type":"application/json"}}) }
-    const readiness = await ctx.runAction(internal.readiness.runForDelivery, { siteUrl: current, deliveryId: body.deliveryId as Id<"deliveries"> })
-    if (readiness.status !== "pass") return new Response(JSON.stringify({ error: "Deployment failed required readiness checks", runId: readiness.runId, passedCount: readiness.passedCount, totalCount: readiness.totalCount }), { status: 409, headers: { "Content-Type": "application/json" } })
-    const summary = `Readiness: ${readiness.passedCount}/${readiness.totalCount}. ${body.summary ?? "Deployment readiness probe passed."}`
-    await ctx.runMutation(internal.delivery.recordDeploymentResult, { id: body.deliveryId as Id<"deliveries">, runUrl: body.runUrl, commitSha: body.commitSha, deploymentUrl: current, summary, readinessPassedCount: readiness.passedCount, readinessTotalCount: readiness.totalCount })
-    return new Response(JSON.stringify({ ok: true, verified: true, runId: readiness.runId, passedCount: readiness.passedCount, totalCount: readiness.totalCount }), { status: 200, headers: { "Content-Type": "application/json" } })
+    if (!body.deliveryId || !body.runUrl || !body.commitSha || !body.deploymentUrl) return new Response(JSON.stringify({ error: "Missing required fields: deliveryId, runUrl, commitSha, deploymentUrl" }), { status: 400, headers: { "Content-Type": "application/json" } })
+    if (!isGitHubRunUrl(body.runUrl) || !isCommitSha(body.commitSha) || !isHttpsUrl(body.deploymentUrl)) return new Response(JSON.stringify({ error: "Invalid deployment evidence fields" }), { status: 400, headers: { "Content-Type": "application/json" } })
+    let readiness
+    try {
+      readiness = await ctx.runAction(internal.readiness.runForDelivery, { siteUrl: body.deploymentUrl, deliveryId: body.deliveryId as Id<"deliveries"> })
+    } catch {
+      return new Response(JSON.stringify({ error: "Deployment readiness check could not be completed" }), { status: 409, headers: { "Content-Type": "application/json" } })
+    }
+    if (readiness.status !== "pass") return new Response(JSON.stringify({ error: "Deployment failed the canonical readiness gate", readiness }), { status: 409, headers: { "Content-Type": "application/json" } })
+    await ctx.runMutation(internal.delivery.recordDeploymentResult, { id: body.deliveryId as Id<"deliveries">, runUrl: body.runUrl, commitSha: body.commitSha, deploymentUrl: body.deploymentUrl, summary: `${body.summary ?? ""}\nReadiness: ${readiness.passedCount}/${readiness.totalCount} checks passed (run ${readiness.runId}).` })
+    return new Response(JSON.stringify({ ok: true, verified: true }), { status: 200, headers: { "Content-Type": "application/json" } })
   }),
 })
 
