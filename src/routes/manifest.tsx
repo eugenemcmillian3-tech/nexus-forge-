@@ -42,6 +42,7 @@ function ManifestIntelligencePage() {
   const [constraints, setConstraints] = useState('Prefer existing NEXUS FORGE tools and free-tier resources where reliable; do not expose secrets or execute consequential external actions without approval.')
   const [acceptanceCriteria, setAcceptanceCriteria] = useState('Deliverable is usable, key claims are supported by evidence, tests pass, and success can be measured against the stated goal.')
   const [blueprint, setBlueprint] = useState('')
+  const [latestSynthesisKey, setLatestSynthesisKey] = useState('')
   const [busy, setBusy] = useState(false)
   const [outcomeBusy, setOutcomeBusy] = useState(false)
   const [error, setError] = useState('')
@@ -58,6 +59,7 @@ function ManifestIntelligencePage() {
     try {
       const result = await synthesize({ intent: intent.trim(), domain, budget, horizon, constraints: constraints.trim(), acceptanceCriteria: acceptanceCriteria.trim() })
       setBlueprint(result.blueprint)
+      setLatestSynthesisKey(result.blueprintKey)
       setNotice(result.saved ? result.strategyCount > 0 ? `Blueprint saved privately; ${result.strategyCount} structured strateg${result.strategyCount === 1 ? 'y' : 'ies'} saved to the strategy ledger. This is a proposal, not an executed result.` : 'Blueprint saved privately, but the provider did not return a valid structured strategy block. The blueprint is available; no strategy records were added. Retry synthesis or inspect provider output before treating the ledger as populated.' : 'Blueprint generated.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Manifest synthesis failed. Check AI provider health and try again later.')
@@ -68,6 +70,8 @@ function ManifestIntelligencePage() {
 
   const history = (savedRows ?? []) as SavedBlueprint[]
   const strategies = (strategyRows ?? []) as Array<{ _id: string; key: string; value: string; confidence: number; source: string }>
+  const latestReceiptBlueprint = latestSynthesisKey ? history.find(row => row.key === latestSynthesisKey) : undefined
+  const latestReceiptStrategies = latestSynthesisKey ? strategies.filter(row => row.key.startsWith(`${latestSynthesisKey}:strategy:`)) : []
   const experiments = (experimentRows ?? []) as Array<{ _id: string; _creationTime: number; key: string; value: string; confidence: number; source: string }>
   const saveOutcome = async () => {
     setError('')
@@ -152,14 +156,15 @@ function ManifestIntelligencePage() {
       </div>
 
       <div className="glass-card research-card" aria-labelledby="manifest-live-check-title">
-        <div className="panel-title"><span id="manifest-live-check-title">LIVE PROVIDER VERIFICATION</span><span className="status-chip">OPERATOR ACTION REQUIRED</span></div>
+        <div className="panel-title"><span id="manifest-live-check-title">LIVE PROVIDER VERIFICATION</span><span className="status-chip">{latestSynthesisKey ? latestReceiptBlueprint ? "RECEIPT OBSERVED" : "VERIFYING LEDGER" : "OPERATOR ACTION REQUIRED"}</span></div>
         <p className="muted-copy">Automated tests cover successful persistence, privacy isolation, malformed strategy output, and provider outages. They do not substitute for a real configured-provider call in your signed-in production workspace.</p>
         <div className="workflow-step-list">
           <article className="workflow-step"><span className="workflow-step-mark">1</span><span className="workflow-step-copy"><strong>Run a real synthesis</strong><small>Use the intent compiler above while signed in. The action uses the currently configured healthy-provider route and does not deploy or purchase anything.</small></span></article>
           <article className="workflow-step"><span className="workflow-step-mark">2</span><span className="workflow-step-copy"><strong>Check the live receipt</strong><small>A successful response should say the blueprint was saved privately and report the structured strategy count. A provider error is a failed run, not a success.</small></span></article>
           <article className="workflow-step"><span className="workflow-step-mark">3</span><span className="workflow-step-copy"><strong>Confirm the private ledger</strong><small>Verify the new blueprint and strategy entries appear in this operator's history. Do not mark the live-provider milestone complete until both the receipt and persisted records are visible.</small></span></article>
         </div>
-        <p className="muted-copy">Current evidence status: automated persistence tests pass; production provider-to-ledger execution is not yet independently confirmed.</p>
+        {latestSynthesisKey ? <div className="workflow-step-list"><article className={`workflow-step ${latestReceiptBlueprint ? "is-done" : "is-current"}`}><span className="workflow-step-mark">{latestReceiptBlueprint ? "✓" : "1"}</span><span className="workflow-step-copy"><strong>{latestReceiptBlueprint ? "Exact blueprint receipt found in this operator ledger" : "Waiting for the exact blueprint record"}</strong><small>Receipt key: {latestSynthesisKey}</small></span><span className="workflow-step-state">{latestReceiptBlueprint ? "CONFIRMED" : "PENDING"}</span></article><article className={`workflow-step ${latestReceiptStrategies.length > 0 ? "is-done" : "is-current"}`}><span className="workflow-step-mark">{latestReceiptStrategies.length > 0 ? "✓" : "2"}</span><span className="workflow-step-copy"><strong>{latestReceiptStrategies.length > 0 ? `${latestReceiptStrategies.length} strategy record(s) found for this exact synthesis` : "No strategy records found for this synthesis"}</strong><small>Strategy records are matched by the returned blueprint key, not just by recency.</small></span><span className="workflow-step-state">{latestReceiptStrategies.length > 0 ? "CONFIRMED" : "NOT CONFIRMED"}</span></article></div> : null}
+        <p className="muted-copy">Current evidence status: automated persistence tests pass; production provider-to-ledger execution is not yet independently confirmed until a signed-in operator runs synthesis. {latestSynthesisKey ? latestReceiptBlueprint && latestReceiptStrategies.length > 0 ? "This session now has direct UI evidence that the exact blueprint and its strategy records appeared in the operator-scoped ledger." : "This session has a synthesis receipt; wait for the matching private ledger records before treating persistence as verified." : "No live synthesis has been run from this page session yet."}</p>
       </div>
 
       <div className="glass-card research-card">
