@@ -74,7 +74,10 @@ export const recordStrategyOutcome = mutation({
     const evidence = args.evidence.trim().slice(0, 3000);
     if (actualResult.length < 3) throw new Error("Enter the observed result, not an expected result.");
     if (evidence.length < 3) throw new Error("Add evidence or a specific measurement source.");
-    const actualCost = args.actualCost === undefined ? undefined : Math.max(0, Math.min(1000000, args.actualCost));
+    if (args.actualCost !== undefined && (!Number.isFinite(args.actualCost) || args.actualCost < 0 || args.actualCost > 1000000)) {
+      throw new Error("Actual cost must be a finite amount between $0 and $1,000,000; invalid cost was not saved.");
+    }
+    const actualCost = args.actualCost;
     let parsed: Record<string, unknown>;
     try { parsed = JSON.parse(row.value) as Record<string, unknown>; } catch { throw new Error("Stored strategy record is invalid; outcome was not saved."); }
     await ctx.db.patch(row._id, { value: JSON.stringify({ ...parsed, outcomeStatus: args.outcomeStatus, actualResult, evidence, actualCost: actualCost ?? null, recordedAt: Date.now() }), confidence: args.outcomeStatus === "inconclusive" ? 0.35 : 0.9, source: "manifest-intelligence-operator-measured-outcome" });
