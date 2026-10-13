@@ -175,6 +175,29 @@ describe("Manifest provider-to-ledger persistence", () => {
     });
     expect(saved!.source).toBe("manifest-intelligence-operator-measured-outcome");
 
+    await operator.mutation(api.manifestIntelligence.recordStrategyOutcome, {
+      strategyId: strategy._id,
+      outcomeStatus: "partial",
+      actualResult: "Follow-up pilot reached 5 of 6 target users.",
+      evidence: "Follow-up pilot interview log",
+    });
+    const revised = await operator.query(api.manifestIntelligence.listStrategies, {});
+    const revisedRecord = JSON.parse(revised.find(row => row._id === strategy._id)!.value);
+    expect(revisedRecord.actualResult).toBe("Follow-up pilot reached 5 of 6 target users.");
+    expect(revisedRecord.outcomeHistory).toHaveLength(2);
+    expect(revisedRecord.outcomeHistory[0]).toMatchObject({
+      outcomeStatus: "partial",
+      actualResult: "Pilot reached 4 of 6 target users.",
+      evidence: "Pilot interview log, 2026-10-12",
+      actualCost: 12,
+    });
+    expect(revisedRecord.outcomeHistory[1]).toMatchObject({
+      outcomeStatus: "partial",
+      actualResult: "Follow-up pilot reached 5 of 6 target users.",
+      evidence: "Follow-up pilot interview log",
+      actualCost: null,
+    });
+
     await expect(t.withIdentity(identity("manifest-outcome-owner-b"))
       .mutation(api.manifestIntelligence.recordStrategyOutcome, {
         strategyId: strategy._id,

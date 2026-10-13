@@ -80,7 +80,23 @@ export const recordStrategyOutcome = mutation({
     const actualCost = args.actualCost;
     let parsed: Record<string, unknown>;
     try { parsed = JSON.parse(row.value) as Record<string, unknown>; } catch { throw new Error("Stored strategy record is invalid; outcome was not saved."); }
-    await ctx.db.patch(row._id, { value: JSON.stringify({ ...parsed, outcomeStatus: args.outcomeStatus, actualResult, evidence, actualCost: actualCost ?? null, recordedAt: Date.now() }), confidence: args.outcomeStatus === "inconclusive" ? 0.35 : 0.9, source: "manifest-intelligence-operator-measured-outcome" });
+    const previousHistory = Array.isArray(parsed.outcomeHistory)
+      ? parsed.outcomeHistory.filter((item): item is Record<string, unknown> => !!item && typeof item === "object")
+      : [];
+    // Preserve legacy latest-outcome fields when the record predates outcomeHistory.
+    if (previousHistory.length === 0 && typeof parsed.recordedAt === "number" && typeof parsed.actualResult === "string" && typeof parsed.evidence === "string") {
+      previousHistory.push({
+        outcomeStatus: parsed.outcomeStatus ?? "inconclusive",
+        actualResult: parsed.actualResult,
+        evidence: parsed.evidence,
+        actualCost: typeof parsed.actualCost === "number" && Number.isFinite(parsed.actualCost) ? parsed.actualCost : null,
+        recordedAt: parsed.recordedAt,
+      });
+    }
+    const recordedAt = Date.now();
+    const outcome = { outcomeStatus: args.outcomeStatus, actualResult, evidence, actualCost: actualCost ?? null, recordedAt };
+    const outcomeHistory = [...previousHistory, outcome].slice(-20);
+    await ctx.db.patch(row._id, { value: JSON.stringify({ ...parsed, ...outcome, outcomeHistory }), confidence: args.outcomeStatus === "inconclusive" ? 0.35 : 0.9, source: "manifest-intelligence-operator-measured-outcome" });
     return null;
   },
 });

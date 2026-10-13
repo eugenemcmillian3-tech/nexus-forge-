@@ -187,8 +187,9 @@ function ManifestIntelligencePage() {
           try { item = JSON.parse(row.value) as Record<string, unknown> } catch { item = {} }
           return <article className="workflow-step" key={row._id}>
             <span className="workflow-step-mark">↗</span>
-            <span className="workflow-step-copy"><strong>{String(item.name ?? 'Candidate strategy')}</strong><small>{String(item.mechanism ?? '')}</small><small>Evidence horizon: {String(item.timeToEvidence ?? 'Not specified')} · Outcome: {String(item.outcomeStatus ?? 'not_measured')}</small>
-              {item.actualResult ? <small>Observed: {String(item.actualResult)} · Evidence: {String(item.evidence ?? 'Not supplied')} · Actual cost: {item.actualCost == null ? 'Not recorded' : '$' + String(item.actualCost)}</small> : null}
+            <span className="workflow-step-copy"><strong>{String(item.name ?? 'Candidate strategy')}</strong><small>{String(item.mechanism ?? '')}</small><small>Evidence horizon: {String(item.timeToEvidence ?? 'Not specified')} · Latest outcome: {String(item.outcomeStatus ?? 'not_measured')}</small>
+              {item.actualResult ? <small>Latest observed: {String(item.actualResult)} · Evidence: {String(item.evidence ?? 'Not supplied')} · Actual cost: {item.actualCost == null ? 'Not recorded' : '$' + String(item.actualCost)}</small> : null}
+              {Array.isArray(item.outcomeHistory) && item.outcomeHistory.length > 1 ? <small>Outcome history ({(item.outcomeHistory as unknown[]).length} saved, latest 20): {([...(item.outcomeHistory as unknown[])].reverse()).map((entry, index) => { const record = entry && typeof entry === 'object' ? entry as Record<string, unknown> : {}; return `#${(item.outcomeHistory as unknown[]).length - index} ${String(record.outcomeStatus ?? 'unknown')} — ${String(record.actualResult ?? 'No result')} [${String(record.evidence ?? 'No evidence')}]` }).join(' · ')}</small> : null}
             </span>
             <span className="workflow-step-state">{row.source === 'manifest-intelligence-operator-measured-outcome' ? 'OUTCOME RECORDED' : 'PROPOSED'}</span>
           </article>
