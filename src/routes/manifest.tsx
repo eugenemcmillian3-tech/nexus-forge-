@@ -123,6 +123,17 @@ function ManifestIntelligencePage() {
       {strategies.length > 0 && <button className="primary-button mt-4" disabled={!strategyId || actualResult.trim().length < 3 || evidence.trim().length < 3} onClick={() => void saveOutcome()}>Save measured outcome</button>}
     </div>
 
+    <div className="glass-card research-card mt-8" aria-labelledby="manifest-live-check-title">
+      <div className="panel-title"><span id="manifest-live-check-title">LIVE PROVIDER VERIFICATION</span><span className="status-chip">OPERATOR ACTION REQUIRED</span></div>
+      <p className="muted-copy">Automated tests cover successful persistence, privacy isolation, malformed strategy output, and provider outages. They do not substitute for a real configured-provider call in your signed-in production workspace.</p>
+      <div className="workflow-step-list">
+        <article className="workflow-step"><span className="workflow-step-mark">1</span><span className="workflow-step-copy"><strong>Run a real synthesis</strong><small>Use the intent compiler above while signed in. This uses the configured provider router and does not deploy or purchase anything.</small></span></article>
+        <article className="workflow-step"><span className="workflow-step-mark">2</span><span className="workflow-step-copy"><strong>Check the live receipt</strong><small>A successful response should confirm private blueprint persistence and report the structured strategy count. A provider error is a failed run, not a success.</small></span></article>
+        <article className="workflow-step"><span className="workflow-step-mark">3</span><span className="workflow-step-copy"><strong>Confirm the private ledger</strong><small>Verify the new blueprint and strategy entries appear in this operator's history. Do not mark the live-provider milestone complete until both the receipt and persisted records are visible.</small></span></article>
+      </div>
+      <p className="muted-copy">Current evidence status: automated persistence tests pass; production provider-to-ledger execution is not yet independently confirmed.</p>
+    </div>
+
     <div className="glass-card research-card mt-8">
       <div className="panel-title"><span>PRIVATE BLUEPRINT MEMORY</span><span className="live-pill">{blueprints.length} SAVED</span></div>
       <p className="muted-copy">Saved plans preserve continuity but do not prove execution or success.</p>
