@@ -156,7 +156,7 @@ function ManifestIntelligencePage() {
       </div>
 
       <div className="glass-card research-card" aria-labelledby="manifest-live-check-title">
-        <div className="panel-title"><span id="manifest-live-check-title">LIVE PROVIDER VERIFICATION</span><span className="status-chip">{latestSynthesisKey ? latestReceiptBlueprint ? "RECEIPT OBSERVED" : "VERIFYING LEDGER" : "OPERATOR ACTION REQUIRED"}</span></div>
+        <div className="panel-title"><span id="manifest-live-check-title">LIVE PROVIDER VERIFICATION</span><span className="status-chip">{latestSynthesisKey ? latestReceiptBlueprint ? latestReceiptStrategies.length > 0 ? "FULL RECEIPT" : "BLUEPRINT ONLY" : "VERIFYING LEDGER" : "OPERATOR ACTION REQUIRED"}</span></div>
         <p className="muted-copy">Automated tests cover successful persistence, privacy isolation, malformed strategy output, and provider outages. They do not substitute for a real configured-provider call in your signed-in production workspace.</p>
         <div className="workflow-step-list">
           <article className="workflow-step"><span className="workflow-step-mark">1</span><span className="workflow-step-copy"><strong>Run a real synthesis</strong><small>Use the intent compiler above while signed in. The action uses the currently configured healthy-provider route and does not deploy or purchase anything.</small></span></article>
