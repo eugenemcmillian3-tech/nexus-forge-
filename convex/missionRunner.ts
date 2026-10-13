@@ -42,10 +42,10 @@ export const startApproved: any = (internalMutation as any)({ args: { missionId:
 // portfolio decision, dependency/resource preflight, or escalation review.
 export const start: any = (mutation as any)({ args: { missionId: v.id("missions") }, returns: v.id("missionRuns"), handler: async (c: any, _a: any): Promise<never> => { await requireOperator(c); throw new Error(directStartBlock()); } } as any);
 export const getInternal: any = (internalQuery as any)({ args: { runId: v.id("missionRuns") }, returns: v.union(runShape, v.null()), handler: async (c: any, a: any): Promise<Doc<"missionRuns"> | null> => (await c.db.get(a.runId)) as Doc<"missionRuns"> | null } as any);
-export const setState = internalMutation({
+export const setState: any = (internalMutation as any)({
   args: { runId: v.id("missionRuns"), status: v.union(v.literal("running"), v.literal("paused"), v.literal("blocked"), v.literal("complete")), currentStage: v.string(), nextActionAt: v.number(), lastError: v.optional(v.string()), retries: v.optional(v.number()) },
   returns: v.null(),
-  handler: async (c, a) => {
+  handler: async (c: any, a: any): Promise<null> => {
     const r = (await c.db.get(a.runId)) as Doc<"missionRuns"> | null; if (!r) throw Error("Mission run not found");
     const retries = a.retries ?? r.retries;
     await c.db.patch(a.runId, { status: a.status, currentStage: a.currentStage, nextActionAt: a.nextActionAt, lastError: a.lastError, retries });
@@ -53,7 +53,7 @@ export const setState = internalMutation({
     await audit(c, r.missionId, "run", "state_transition", a.status, `Stage ${r.currentStage} → ${a.currentStage}.${retryNote}${a.lastError ? ` ${a.lastError}` : ""}`, a.runId);
     return null;
   },
-});
+} as any);
 
 export const tick: any = (action as any)({
   args: { runId: v.id("missionRuns") }, returns: v.null(),
