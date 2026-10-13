@@ -34,6 +34,43 @@ afterEach(() => {
 });
 
 describe("Manifest provider-to-ledger persistence", () => {
+  it("shows only owned mission research with saved HTTPS citations in Manifest context", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await t.run(async (ctx) => {
+      const ownedMission = await ctx.db.insert("missions", {
+        title: "Owned evidence mission", mission: "Research the user's stated hypothesis", autonomy: "guided",
+        budget: 0, status: "draft", completion: 0, approved: false, ownerKey: "research-context-owner",
+      });
+      const foreignMission = await ctx.db.insert("missions", {
+        title: "Foreign evidence mission", mission: "Private research for another operator", autonomy: "guided",
+        budget: 0, status: "draft", completion: 0, approved: false, ownerKey: "different-research-owner",
+      });
+      await ctx.db.insert("research", {
+        missionId: ownedMission, query: "Check market demand",
+        result: "A source-backed summary with uncertainty noted.",
+        citations: ["https://example.com/report", "javascript:alert(1)"], createdAt: 200,
+      });
+      await ctx.db.insert("research", {
+        missionId: foreignMission, query: "Private foreign query",
+        result: "Must not leak across operators.", citations: ["https://private.example/report"], createdAt: 300,
+      });
+      return { ownedMission, foreignMission };
+    });
+
+    const operator = t.withIdentity(identity("research-context-owner"));
+    const rows = await operator.query(api.manifestIntelligence.listResearchEvidence, {});
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      missionTitle: "Owned evidence mission",
+      query: "Check market demand",
+      result: "A source-backed summary with uncertainty noted.",
+      citations: ["https://example.com/report"],
+    });
+    expect(rows.some(row => row.missionTitle === "Foreign evidence mission")).toBe(false);
+    expect(await t.query(api.manifestIntelligence.listResearchEvidence, {})).toEqual([]);
+    expect(ids.ownedMission).not.toBe(ids.foreignMission);
+  });
+
   it("assigns unique receipt keys to rapidly persisted blueprints", async () => {
     const t = convexTest(schema, modules);
     const save = (intent: string) => t.mutation(internal.manifestIntelligence.saveBlueprint, {
