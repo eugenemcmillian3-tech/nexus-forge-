@@ -100,6 +100,40 @@ export const saveStrategies = internalMutation({
   },
 });
 
+export const attachAssumptionEvidence = mutation({
+  args: {
+    strategyId: v.id("memories"),
+    evidenceType: v.union(v.literal("supports"), v.literal("contradicts"), v.literal("inconclusive")),
+    url: v.string(),
+    note: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const operatorId = await getAuthUserId(ctx);
+    if (!operatorId) throw new Error("Authenticated operator session required");
+    const row = await ctx.db.get(args.strategyId);
+    if (!row || row.ownerKey !== operatorId || row.category !== "manifest-strategy") throw new Error("Strategy record not found or access denied");
+    const url = args.url.trim();
+    let parsedUrl: URL;
+    try { parsedUrl = new URL(url); } catch { throw new Error("Enter a valid HTTPS source URL."); }
+    if (parsedUrl.protocol !== "https:" || !parsedUrl.hostname || parsedUrl.username || parsedUrl.password || parsedUrl.hostname.endsWith(".local") || parsedUrl.hostname === "localhost") {
+      throw new Error("Evidence links must be public HTTPS URLs without embedded credentials.");
+    }
+    const note = args.note.trim().slice(0, 1000);
+    if (note.length < 3) throw new Error("Describe how this source relates to the assumption.");
+    let strategy: Record<string, unknown>;
+    try { strategy = JSON.parse(row.value) as Record<string, unknown>; } catch { throw new Error("Stored strategy record is invalid; evidence was not saved."); }
+    const existing = Array.isArray(strategy.assumptionEvidence)
+      ? strategy.assumptionEvidence.filter((item): item is Record<string, unknown> => !!item && typeof item === "object")
+      : [];
+    const evidence = { evidenceType: args.evidenceType, url, note, addedAt: Date.now() };
+    await ctx.db.patch(row._id, {
+      value: JSON.stringify({ ...strategy, assumptionEvidence: [...existing, evidence].slice(-30) }),
+    });
+    return null;
+  },
+});
+
 export const recordStrategyOutcome = mutation({
   args: { strategyId: v.id("memories"), outcomeStatus: v.union(v.literal("succeeded"), v.literal("partial"), v.literal("failed"), v.literal("inconclusive")), actualResult: v.string(), evidence: v.string(), actualCost: v.optional(v.number()) },
   returns: v.null(),
