@@ -175,6 +175,23 @@ describe("Manifest provider-to-ledger persistence", () => {
     });
     expect(saved!.source).toBe("manifest-intelligence-operator-measured-outcome");
 
+    await expect(operator.mutation(api.manifestIntelligence.recordStrategyOutcome, {
+      strategyId: strategy._id,
+      outcomeStatus: "partial",
+      actualResult: "Invalid cost validation test",
+      evidence: "Regression fixture",
+      actualCost: -1,
+    })).rejects.toThrow(/actual cost must be a finite amount/i);
+    await expect(operator.mutation(api.manifestIntelligence.recordStrategyOutcome, {
+      strategyId: strategy._id,
+      outcomeStatus: "partial",
+      actualResult: "Invalid cost validation test",
+      evidence: "Regression fixture",
+      actualCost: 1000001,
+    })).rejects.toThrow(/actual cost must be a finite amount/i);
+    const afterInvalidCosts = await operator.query(api.manifestIntelligence.listStrategies, {});
+    expect(JSON.parse(afterInvalidCosts.find(row => row._id === strategy._id)!.value).actualCost).toBe(12);
+
     await expect(t.withIdentity(identity("manifest-outcome-owner-b"))
       .mutation(api.manifestIntelligence.recordStrategyOutcome, {
         strategyId: strategy._id,
