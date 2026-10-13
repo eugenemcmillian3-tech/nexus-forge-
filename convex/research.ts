@@ -17,6 +17,7 @@ const researchValidator = v.object({
 type WebSource = { title: string; url: string; snippet: string }
 const MAX_QUERY_LENGTH = 500
 const MAX_SEARCH_HTML = 300_000
+const MAX_SOURCE_HTML = 120_000
 
 export function extractResearchTarget(rawUrl: string, searchUrl = "https://html.duckduckgo.com/html/"): string | null {
   try {
@@ -90,14 +91,31 @@ function cleanHtml(html: string): string {
     .trim()
 }
 
+async function fetchResearchPage(value: string): Promise<Response> {
+  let current = value
+  for (let hop = 0; hop <= 4; hop++) {
+    if (!isSafeResearchUrl(current)) throw new Error("Research source URL is not allowed")
+    const response = await fetch(current, {
+      redirect: "manual",
+      headers: { "User-Agent": "NEXUS-FORGE-Research/1.0" },
+      signal: AbortSignal.timeout(10_000),
+    })
+    if (![301, 302, 303, 307, 308].includes(response.status)) return response
+    const location = response.headers.get("location")
+    if (!location || hop === 4) throw new Error("Research source redirect limit exceeded")
+    current = new URL(location, current).toString()
+  }
+  throw new Error("Research source redirect limit exceeded")
+}
+
 async function discoverWebSources(queryText: string, limit: number): Promise<WebSource[]> {
-  const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(queryText)}`
+  const searchUrl = \`https://html.duckduckgo.com/html/?q=\${encodeURIComponent(queryText)}\`
   const response = await fetch(searchUrl, {
     redirect: "error",
     headers: { "User-Agent": "NEXUS-FORGE-Research/1.0" },
     signal: AbortSignal.timeout(10_000),
   })
-  if (!response.ok) throw new Error(`Web search failed (${response.status}).`)
+  if (!response.ok) throw new Error(\`Web search failed (\${response.status}).\`)
   const html = await readTextBounded(response, MAX_SEARCH_HTML)
   const sources: WebSource[] = []
   const pattern = /<a[^>]+class=["']result__a["'][^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
@@ -115,7 +133,18 @@ async function discoverWebSources(queryText: string, limit: number): Promise<Web
     }
   }
   if (!sources.length) throw new Error("Web search returned no usable sources.")
-  return sources
+  return Promise.all(sources.map(async source => {
+    try {
+      const page = await fetchResearchPage(source.url)
+      if (!page.ok) return source
+      const contentType = page.headers.get("content-type") || ""
+      if (!contentType.toLowerCase().includes("text/html") && !contentType.toLowerCase().includes("application/xhtml+xml")) return source
+      const text = cleanHtml(await readTextBounded(page, MAX_SOURCE_HTML))
+      return { ...source, snippet: text.slice(0, 5000) }
+    } catch {
+      return source
+    }
+  }))
 }
 
 export const list = query({
