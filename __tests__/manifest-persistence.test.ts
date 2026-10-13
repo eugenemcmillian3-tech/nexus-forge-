@@ -175,23 +175,6 @@ describe("Manifest provider-to-ledger persistence", () => {
     });
     expect(saved!.source).toBe("manifest-intelligence-operator-measured-outcome");
 
-    await expect(operator.mutation(api.manifestIntelligence.recordStrategyOutcome, {
-      strategyId: strategy._id,
-      outcomeStatus: "partial",
-      actualResult: "Invalid cost validation test",
-      evidence: "Regression fixture",
-      actualCost: -1,
-    })).rejects.toThrow(/actual cost must be a finite amount/i);
-    await expect(operator.mutation(api.manifestIntelligence.recordStrategyOutcome, {
-      strategyId: strategy._id,
-      outcomeStatus: "partial",
-      actualResult: "Invalid cost validation test",
-      evidence: "Regression fixture",
-      actualCost: 1000001,
-    })).rejects.toThrow(/actual cost must be a finite amount/i);
-    const afterInvalidCosts = await operator.query(api.manifestIntelligence.listStrategies, {});
-    expect(JSON.parse(afterInvalidCosts.find(row => row._id === strategy._id)!.value).actualCost).toBe(12);
-
     await expect(t.withIdentity(identity("manifest-outcome-owner-b"))
       .mutation(api.manifestIntelligence.recordStrategyOutcome, {
         strategyId: strategy._id,
@@ -202,6 +185,44 @@ describe("Manifest provider-to-ledger persistence", () => {
 
     const afterAttempt = await operator.query(api.manifestIntelligence.listStrategies, {});
     expect(JSON.parse(afterAttempt.find(row => row._id === strategy._id)!.value).outcomeStatus).toBe("partial");
+  });
+
+  it("rejects invalid measured costs and preserves the existing outcome", async () => {
+    const t = convexTest(schema, modules);
+    vi.stubEnv("GROQ_API_KEY", "test-provider-key");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(
+      JSON.stringify({ choices: [{ message: { content: generated } }] }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    )));
+
+    const operator = t.withIdentity(identity("manifest-cost-owner"));
+    await operator.action(api.manifestIntelligence.synthesize, {
+      intent: "Create a measurable product experiment for a new digital workflow.",
+      domain: "AI product / venture",
+      budget: 25,
+      horizon: "14 days",
+    });
+    const strategy = (await operator.query(api.manifestIntelligence.listStrategies, {}))[0];
+    const validOutcome = {
+      strategyId: strategy._id,
+      outcomeStatus: "partial" as const,
+      actualResult: "Pilot reached 4 of 6 target users.",
+      evidence: "Pilot interview log, 2026-10-12",
+      actualCost: 12,
+    };
+    await operator.mutation(api.manifestIntelligence.recordStrategyOutcome, validOutcome);
+
+    for (const actualCost of [-1, 1000001]) {
+      await expect(operator.mutation(api.manifestIntelligence.recordStrategyOutcome, {
+        ...validOutcome, actualCost,
+      })).rejects.toThrow(/actual cost must be finite and between/i);
+    }
+
+    const afterAttempts = await operator.query(api.manifestIntelligence.listStrategies, {});
+    expect(JSON.parse(afterAttempts.find(row => row._id === strategy._id)!.value)).toMatchObject({
+      outcomeStatus: "partial", actualCost: 12,
+      actualResult: "Pilot reached 4 of 6 target users.",
+    });
   });
 
   it("does not persist a blueprint or strategy records when every provider attempt fails", async () => {
