@@ -57,8 +57,11 @@ describe("Manifest provider-to-ledger persistence", () => {
 
     const blueprints = await operator.query(api.manifestIntelligence.listBlueprints, {});
     const strategies = await operator.query(api.manifestIntelligence.listStrategies, {});
-    const otherOwnerStrategies = await t.withIdentity(identity("manifest-owner-b"))
-      .query(api.manifestIntelligence.listStrategies, {});
+    const otherOwner = t.withIdentity(identity("manifest-owner-b"));
+    const otherOwnerBlueprints = await otherOwner.query(api.manifestIntelligence.listBlueprints, {});
+    const otherOwnerStrategies = await otherOwner.query(api.manifestIntelligence.listStrategies, {});
+    const anonymousBlueprints = await t.query(api.manifestIntelligence.listBlueprints, {});
+    const anonymousStrategies = await t.query(api.manifestIntelligence.listStrategies, {});
 
     expect(blueprints).toHaveLength(1);
     expect(JSON.parse(blueprints[0].value)).toMatchObject({
@@ -69,7 +72,10 @@ describe("Manifest provider-to-ledger persistence", () => {
     expect(strategies.map(row => JSON.parse(row.value).name).sort()).toEqual([
       "Manual concierge", "Small pilot", "Workflow prototype",
     ]);
+    expect(otherOwnerBlueprints).toEqual([]);
     expect(otherOwnerStrategies).toEqual([]);
+    expect(anonymousBlueprints).toEqual([]);
+    expect(anonymousStrategies).toEqual([]);
   });
 
   it("retries structured extraction and persists strategies when the first blueprint omits its block", async () => {
