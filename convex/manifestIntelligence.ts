@@ -140,8 +140,26 @@ export const recordProviderUsageInternal = internalMutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    if (!args.ownerKey.trim() || args.ownerKey.length > 256) {
+      throw new Error("Provider usage owner key is invalid.");
+    }
+    for (const [label, value] of [
+      ["prompt tokens", args.promptTokens],
+      ["completion tokens", args.completionTokens],
+      ["total tokens", args.totalTokens],
+    ] as const) {
+      if (value !== undefined && (!Number.isSafeInteger(value) || value < 0 || value > 100000000)) {
+        throw new Error(`Provider-reported ${label} must be a finite, non-negative integer within the accepted range.`);
+      }
+    }
     if (args.reportedCostUsd !== undefined && (!Number.isFinite(args.reportedCostUsd) || args.reportedCostUsd < 0 || args.reportedCostUsd > 1000000)) {
       throw new Error("Provider-reported cost is outside the accepted range.");
+    }
+    if (!args.provider.trim() || args.provider.length > 80 || !args.model.trim() || args.model.length > 160) {
+      throw new Error("Provider usage identity is invalid.");
+    }
+    if (!Number.isFinite(args.capturedAt) || args.capturedAt <= 0) {
+      throw new Error("Provider usage capture timestamp is invalid.");
     }
     await ctx.db.insert("memories", {
       ownerKey: args.ownerKey,
