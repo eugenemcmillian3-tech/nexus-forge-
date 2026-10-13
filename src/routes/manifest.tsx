@@ -187,8 +187,38 @@ function ManifestIntelligencePage() {
           try { item = JSON.parse(row.value) as Record<string, unknown> } catch { item = {} }
           return <article className="workflow-step" key={row._id}>
             <span className="workflow-step-mark">↗</span>
-            <span className="workflow-step-copy"><strong>{String(item.name ?? 'Candidate strategy')}</strong><small>{String(item.mechanism ?? '')}</small><small>Evidence horizon: {String(item.timeToEvidence ?? 'Not specified')} · Outcome: {String(item.outcomeStatus ?? 'not_measured')}</small>
-              {item.actualResult ? <small>Observed: {String(item.actualResult)} · Evidence: {String(item.evidence ?? 'Not supplied')} · Actual cost: {item.actualCost == null ? 'Not recorded' : '$' + String(item.actualCost)}</small> : null}
+            <span className="workflow-step-copy"><strong>{String(item.name ?? 'Candidate strategy')}</strong><small>{String(item.mechanism ?? '')}</small><small>Evidence horizon: {String(item.timeToEvidence ?? 'Not specified')} · Latest outcome: {String(item.outcomeStatus ?? 'not_measured')}</small>
+              {item.actualResult ? <small>Latest observed: {String(item.actualResult)} · Evidence: {String(item.evidence ?? 'Not supplied')} · Actual cost: {item.actualCost == null ? 'Not recorded' : '
+            <span className="workflow-step-state">{row.source === 'manifest-intelligence-operator-measured-outcome' ? 'OUTCOME RECORDED' : 'PROPOSED'}</span>
+          </article>
+        })}
+        {strategies.length > 0 ? <div className="field-grid">
+          <div><label htmlFor="strategy-outcome-target">STRATEGY TO UPDATE</label><select id="strategy-outcome-target" value={selectedStrategyId} onChange={e => setSelectedStrategyId(e.target.value)}><option value="">Select a candidate strategy</option>{strategies.map(row => { let item: Record<string, unknown> = {}; try { item = JSON.parse(row.value) as Record<string, unknown> } catch { item = {} } return <option key={row._id} value={row._id}>{String(item.name ?? row.key)}</option> })}</select></div>
+          <div><label htmlFor="strategy-outcome-status">OBSERVED OUTCOME</label><select id="strategy-outcome-status" value={outcomeStatus} onChange={e => setOutcomeStatus(e.target.value as typeof outcomeStatus)}><option value="succeeded">Succeeded</option><option value="partial">Partially succeeded</option><option value="failed">Failed</option><option value="inconclusive">Inconclusive</option></select></div>
+          <div><label htmlFor="strategy-actual-result">ACTUAL RESULT / METRIC</label><textarea id="strategy-actual-result" rows={2} value={actualResult} onChange={e => setActualResult(e.target.value)} maxLength={2000} placeholder="Observed result, baseline → actual, sample size…" /></div>
+          <div><label htmlFor="strategy-outcome-evidence">EVIDENCE SOURCE</label><textarea id="strategy-outcome-evidence" rows={2} value={outcomeEvidence} onChange={e => setOutcomeEvidence(e.target.value)} maxLength={3000} placeholder="Test run, analytics report, URL, measurement ID, or reproducible notes…" /></div>
+          <div><label htmlFor="strategy-actual-cost">ACTUAL COST · USD (OPTIONAL)</label><input id="strategy-actual-cost" type="number" min={0} max={1000000} value={actualCost} onChange={e => setActualCost(e.target.value)} placeholder="Only enter measured spend" /></div>
+        </div> : null}
+        {strategies.length > 0 ? <button className="primary-button" disabled={!selectedStrategyId || actualResult.trim().length < 3 || outcomeEvidence.trim().length < 3} onClick={() => void saveOutcome()}>Save measured outcome</button> : null}
+      </div>
+
+      <div className="glass-card research-card">
+        <div className="panel-title"><span>PRIVATE BLUEPRINT MEMORY</span><span className="live-pill">{history.length} SAVED</span></div>
+        <p className="muted-copy">Saved plans help preserve continuity. A saved plan is not proof that its proposed work has been executed or that its goals have been achieved.</p>
+        {savedRows === undefined ? <p>Loading saved blueprints…</p> : history.length === 0 ? <p>No blueprints saved yet. Your first synthesis will appear here.</p> : history.map(row => {
+          const item = readBlueprint(row)
+          return <button key={row._id} className="portfolio-row" onClick={() => { setIntent(item.intent); setDomain(item.domain); setBudget(item.budget); setHorizon(item.horizon); setConstraints(item.constraints); setAcceptanceCriteria(item.acceptanceCriteria); setBlueprint(item.blueprint); setNotice('Loaded a saved blueprint. Review it before using it for a new mission.'); setError('') }}>
+            <div className="portfolio-main"><strong>{item.intent}</strong><p>{item.domain} · {item.horizon} · budget cap ${item.budget}</p></div>
+            <div className="portfolio-cell"><small>TYPE</small><b>BLUEPRINT</b></div>
+            <div className="portfolio-cell"><small>CONFIDENCE</small><b>{Math.round(row.confidence * 100)}% RECORD</b></div>
+          </button>
+        })}
+      </div>
+    </section>
+  </WorkspaceLayout>
+}
+ + String(item.actualCost)}</small> : null}
+              {Array.isArray(item.outcomeHistory) && item.outcomeHistory.length > 1 ? <small>Outcome history ({(item.outcomeHistory as unknown[]).length} saved, latest 20): {([...(item.outcomeHistory as unknown[])].reverse()).map((entry, index) => { const record = entry && typeof entry === 'object' ? entry as Record<string, unknown> : {}; return `#${(item.outcomeHistory as unknown[]).length - index} ${String(record.outcomeStatus ?? 'unknown')} — ${String(record.actualResult ?? 'No result')} [${String(record.evidence ?? 'No evidence')}]` }).join(' · ')}</small> : null}
             </span>
             <span className="workflow-step-state">{row.source === 'manifest-intelligence-operator-measured-outcome' ? 'OUTCOME RECORDED' : 'PROPOSED'}</span>
           </article>
