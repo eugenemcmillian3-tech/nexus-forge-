@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Tests, typecheck, and production build
+    name: Tests, typecheck, security audit, and production build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -27,12 +27,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
+          cache: pnpm
+      - name: Enable pinned package manager
+        run: corepack enable
+      - name: Install dependencies from pnpm lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Production dependency security audit
+        run: pnpm audit --prod
+      - name: Full dependency audit (development advisories reported separately)
+        run: pnpm audit
+        continue-on-error: true
       - name: Run test suite
-        run: npm test -- --run
+        run: pnpm test -- --run
       - name: TypeScript check
-        run: npx tsc --noEmit
+        run: pnpm exec tsc --noEmit
       - name: Production build
-        run: npm run build
+        run: pnpm run build
