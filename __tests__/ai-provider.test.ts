@@ -72,29 +72,21 @@ describe("managed AI provider routing", () => {
     expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer test-cloudflare-token");
   });
 
-  it("sends OpenRouter the ordered free-model fallback chain", async () => {
+  it("does not use the deprioritized OpenRouter endpoint for automatic failover", async () => {
     vi.stubEnv("GROQ_API_KEY", "");
     vi.stubEnv("CEREBRAS_API_KEY", "");
     vi.stubEnv("MISTRAL_API_KEY", "");
     vi.stubEnv("CLOUDFLARE_API_TOKEN", "");
     vi.stubEnv("CLOUDFLARE_ACCOUNT_ID", "");
     vi.stubEnv("OPENROUTER_API_KEY", "test-openrouter-key");
-    const fetchMock = vi.fn().mockResolvedValueOnce(completion("OpenRouter fallback chain succeeded"));
+    const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(callAiProvider("planner", "bounded test prompt", 200)).resolves.toBe("OpenRouter fallback chain succeeded");
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toBe("https://openrouter.ai/api/v1/chat/completions");
-    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer test-openrouter-key");
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).models).toEqual([
-      "openai/gpt-oss-120b:free",
-      "meta-llama/llama-3.3-70b-instruct:free",
-      "openrouter/free",
-    ]);
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).model).toBeUndefined();
+    await expect(callAiProvider("planner", "bounded test prompt", 200)).rejects.toThrow(/No AI providers configured/);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("does not try deferred Hugging Face during automatic routing, even if its key exists", async () => {
+  it("does not use deferred Hugging Face or OpenRouter during automatic routing", async () => {
     vi.stubEnv("GROQ_API_KEY", "");
     vi.stubEnv("CEREBRAS_API_KEY", "");
     vi.stubEnv("MISTRAL_API_KEY", "");
@@ -102,13 +94,11 @@ describe("managed AI provider routing", () => {
     vi.stubEnv("HUGGINGFACE_API_KEY", "test-huggingface-token");
     vi.stubEnv("CLOUDFLARE_API_TOKEN", "");
     vi.stubEnv("CLOUDFLARE_ACCOUNT_ID", "");
-    const fetchMock = vi.fn().mockResolvedValueOnce(completion("OpenRouter fallback succeeded"));
+    const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(callAiProvider("planner", "bounded test prompt", 200)).resolves.toBe("OpenRouter fallback succeeded");
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toBe("https://openrouter.ai/api/v1/chat/completions");
-    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer test-openrouter-key");
+    await expect(callAiProvider("planner", "bounded test prompt", 200)).rejects.toThrow(/No AI providers configured/);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("reports provider failures without leaking configured key values", async () => {
