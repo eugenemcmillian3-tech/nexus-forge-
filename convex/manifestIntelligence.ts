@@ -211,11 +211,10 @@ export const saveBlueprint = internalMutation({
   },
   returns: v.string(),
   handler: async (ctx, args) => {
-    const blueprintKey = `manifest:${Date.now()}`;
-    await ctx.db.insert("memories", {
+    const blueprintId = await ctx.db.insert("memories", {
       ownerKey: args.ownerKey,
       category: "manifest-blueprint",
-      key: blueprintKey,
+      key: "manifest:pending",
       value: JSON.stringify({
         intent: args.intent,
         domain: args.domain,
@@ -228,6 +227,9 @@ export const saveBlueprint = internalMutation({
       confidence: 0.75,
       source: "manifest-intelligence-ai-draft",
     });
+    // Use the unique persisted ID so concurrent syntheses cannot share receipt keys.
+    const blueprintKey = `manifest:${blueprintId}`;
+    await ctx.db.patch(blueprintId, { key: blueprintKey });
     return blueprintKey;
   },
 });
