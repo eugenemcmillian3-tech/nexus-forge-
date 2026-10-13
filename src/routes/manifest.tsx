@@ -73,6 +73,19 @@ function ManifestIntelligencePage() {
   const latestReceiptBlueprint = latestSynthesisKey ? history.find(row => row.key === latestSynthesisKey) : undefined
   const latestReceiptStrategies = latestSynthesisKey ? strategies.filter(row => row.key.startsWith(`${latestSynthesisKey}:strategy:`)) : []
   const experiments = (experimentRows ?? []) as Array<{ _id: string; _creationTime: number; key: string; value: string; confidence: number; source: string }>
+  const strategyContext = strategies.map(row => {
+    let item: Record<string, unknown> = {}
+    try { item = JSON.parse(row.value) as Record<string, unknown> } catch { item = {} }
+    return {
+      id: row._id,
+      name: String(item.name ?? 'Candidate strategy'),
+      prerequisites: String(item.prerequisites ?? '').trim(),
+      assumptions: String(item.unverifiedAssumptions ?? '').trim(),
+      failureMode: String(item.failureMode ?? '').trim(),
+      measured: typeof item.actualResult === 'string' && item.actualResult.trim().length > 0 && typeof item.evidence === 'string' && item.evidence.trim().length > 0,
+    }
+  })
+  const unresolvedAssumptionCount = strategyContext.filter(item => item.assumptions && !item.measured).length
   const saveOutcome = async () => {
     setError('')
     setNotice('')
@@ -200,6 +213,17 @@ function ManifestIntelligencePage() {
             ['6 · Research frontier', 'Evaluate transfer to unfamiliar tasks using reproducible benchmarks; general intelligence remains a research goal, not a product claim.'],
           ].map(([title, detail]) => <article className="workflow-step" key={title}><span className="workflow-step-mark">→</span><span className="workflow-step-copy"><strong>{title}</strong><small>{detail}</small></span></article>)}
         </div>
+      </div>
+
+      <div className="glass-card research-card" aria-labelledby="manifest-context-register-title">
+        <div className="panel-title"><span id="manifest-context-register-title">WORLD CONTEXT · ASSUMPTION & DEPENDENCY REGISTER</span><span className="status-chip">{unresolvedAssumptionCount} UNRESOLVED</span></div>
+        <p className="muted-copy">This register organizes prerequisites, unverified assumptions, and failure modes already present in saved candidate strategies. Generated statements remain hypotheses until an operator attaches a concrete evidence reference and records an observed result; this is not independent web research or automatic fact verification.</p>
+        {strategies.length === 0 ? <p className="empty-state">No structured strategies are available to build the context register. Synthesize a blueprint with valid strategy records first.</p> : strategyContext.map(item => <article className="workflow-step" key={item.id}>
+          <span className="workflow-step-mark">{item.measured ? 'E' : '?'}</span>
+          <span className="workflow-step-copy"><strong>{item.name}</strong><small>Prerequisites: {item.prerequisites || 'Not specified by the strategy proposal.'}</small><small>Unverified assumptions: {item.assumptions || 'None supplied; review the plan for missing assumptions.'}</small><small>Primary failure mode: {item.failureMode || 'Not specified by the strategy proposal.'}</small></span>
+          <span className="workflow-step-state">{item.measured ? 'OUTCOME EVIDENCE ENTERED' : 'HYPOTHESIS · VERIFY'}</span>
+        </article>)}
+        <p className="muted-copy">Evidence rule: recording an outcome with a reference indicates operator-entered evidence, not proof of causality or independent validation. Use Research & Memory to gather source-backed context before relying on important external claims.</p>
       </div>
 
       <div className="glass-card research-card">
