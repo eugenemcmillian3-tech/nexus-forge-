@@ -85,6 +85,43 @@ export const recordStrategyOutcome = mutation({
   },
 });
 
+export const recordProviderUsageInternal = internalMutation({
+  args: {
+    ownerKey: v.string(),
+    provider: v.string(),
+    model: v.string(),
+    promptTokens: v.optional(v.number()),
+    completionTokens: v.optional(v.number()),
+    totalTokens: v.optional(v.number()),
+    reportedCostUsd: v.optional(v.number()),
+    capturedAt: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    if (args.reportedCostUsd !== undefined && (!Number.isFinite(args.reportedCostUsd) || args.reportedCostUsd < 0 || args.reportedCostUsd > 1000000)) {
+      throw new Error("Provider-reported cost is outside the accepted range.");
+    }
+    await ctx.db.insert("memories", {
+      ownerKey: args.ownerKey,
+      category: "manifest-provider-usage",
+      key: `provider-usage:${args.capturedAt}:${args.provider}`,
+      value: JSON.stringify({
+        provider: args.provider,
+        model: args.model.slice(0, 160),
+        promptTokens: args.promptTokens ?? null,
+        completionTokens: args.completionTokens ?? null,
+        totalTokens: args.totalTokens ?? null,
+        reportedCostUsd: args.reportedCostUsd ?? null,
+        costStatus: args.reportedCostUsd === undefined ? "not-reported-by-provider" : "provider-reported",
+        capturedAt: args.capturedAt,
+      }),
+      confidence: args.reportedCostUsd === undefined ? 0.7 : 0.95,
+      source: "ai-provider-response-usage-metadata",
+    });
+    return null;
+  },
+});
+
 export const saveBlueprint = internalMutation({
   args: {
     ownerKey: v.string(),
@@ -176,7 +213,8 @@ TIME HORIZON: ${horizon}
 
 Write specific, realistic guidance tailored to the intent. Do not describe the blueprint as completed work; it is a proposal until executed and verified.`;
     const structuredPrompt = `${prompt}\n\nMISSION SPECIFICATION REQUIREMENTS:\n- Constraints and operator assumptions: ${constraints || "Not supplied; identify unknowns instead of inventing constraints."}\n- Required acceptance criteria: ${acceptanceCriteria || "Not supplied; propose measurable criteria and label them as proposals for operator review."}\n- Explicitly identify goal, deliverable, target user, dependencies, permitted tools/resources, risk level, required human approvals, and rollback/stop conditions.\n- If an essential requirement is missing, state the gap and ask a focused clarification question rather than inventing facts.` + "\n\nAppend a fenced JSON block labelled manifest-strategies with three objects containing string fields name, mechanism, prerequisites, timeToEvidence, expectedValue, reversibility, failureMode, unverifiedAssumptions. Keep the blueprint Markdown before it readable. Do not claim execution.";
-    const generated = await callAiProvider("planner", structuredPrompt, 2400);
+    const recordUsage = async (usage: { provider: string; model: string; promptTokens?: number; completionTokens?: number; totalTokens?: number; reportedCostUsd?: number; capturedAt: number }) => { await ctx.runMutation(internal.manifestIntelligence.recordProviderUsageInternal, { ownerKey: operatorId, ...usage }); };
+    const generated = await callAiProvider("planner", structuredPrompt, 2400, recordUsage);
     const extraction = extractManifestStrategies(generated);
     const blueprint = extraction.blueprint;
     let strategies = extraction.strategies;
@@ -188,7 +226,7 @@ Write specific, realistic guidance tailored to the intent. Do not describe the b
     if (strategies.length === 0) {
       const strategyPrompt = `Extract exactly three distinct candidate strategies from the blueprint below. Return ONLY a JSON array, with no Markdown fences or commentary. Each object must contain non-empty string fields: name, mechanism, prerequisites, timeToEvidence, expectedValue, reversibility, failureMode, unverifiedAssumptions. Do not invent claims of execution, measured outcomes, verified costs, or available integrations. Preserve uncertainty in unverifiedAssumptions. If three genuinely distinct strategies cannot be supported by the blueprint, return an empty JSON array.\n\nUSER INTENT: ${intent}\nDOMAIN: ${domain}\nBUDGET CAP: $${budget} USD\nTIME HORIZON: ${horizon}\nCONSTRAINTS: ${constraints || 'Not supplied; identify unknowns.'}\nACCEPTANCE CRITERIA: ${acceptanceCriteria || 'Not supplied; label proposed criteria.'}\n\nBLUEPRINT:\n${blueprint.slice(0, 9000)}`;
       try {
-        const structuredResponse = await callAiProvider("planner", strategyPrompt, 1400);
+        const structuredResponse = await callAiProvider("planner", strategyPrompt, 1400, recordUsage);
         const retry = extractManifestStrategies(structuredResponse);
         if (retry.validJson && retry.strategies.length > 0) {
           strategies = retry.strategies;
