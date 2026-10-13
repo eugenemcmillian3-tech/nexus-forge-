@@ -64,10 +64,10 @@ jobs:
           echo "Delivered artifact validated: $ARTIFACT_REF"
 
       - name: Build platform
-        run: npm run build
+        run: pnpm run build
 
       - name: Test platform
-        run: npm test -- --run
+        run: pnpm test
 
       - name: Persist successful build/test result to Convex
         env:
