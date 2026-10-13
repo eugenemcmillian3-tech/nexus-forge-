@@ -28,6 +28,7 @@ function ManifestIntelligencePage() {
   const savedRows = useQuery(api.manifestIntelligence.listBlueprints, {})
   const strategyRows = useQuery(api.manifestIntelligence.listStrategies, {})
   const providerUsageRows = useQuery(api.manifestIntelligence.listProviderUsage, {})
+  const experimentRows = useQuery(api.learningEngine.listExperiments, {})
   const recordOutcome = useMutation(api.manifestIntelligence.recordStrategyOutcome)
   const [selectedStrategyId, setSelectedStrategyId] = useState('')
   const [outcomeStatus, setOutcomeStatus] = useState<'succeeded' | 'partial' | 'failed' | 'inconclusive'>('succeeded')
@@ -67,6 +68,7 @@ function ManifestIntelligencePage() {
 
   const history = (savedRows ?? []) as SavedBlueprint[]
   const strategies = (strategyRows ?? []) as Array<{ _id: string; key: string; value: string; confidence: number; source: string }>
+  const experiments = (experimentRows ?? []) as Array<{ _id: string; _creationTime: number; key: string; value: string; confidence: number; source: string }>
   const saveOutcome = async () => {
     setError('')
     setNotice('')
@@ -218,6 +220,24 @@ function ManifestIntelligencePage() {
           <div><label htmlFor="strategy-actual-cost">ACTUAL COST · USD (OPTIONAL)</label><input id="strategy-actual-cost" type="number" min={0} max={1000000} value={actualCost} onChange={e => setActualCost(e.target.value)} placeholder="Only enter measured spend" /></div>
         </div> : null}
         {strategies.length > 0 ? <button className="primary-button" disabled={outcomeBusy || !selectedStrategyId || actualResult.trim().length < 3 || outcomeEvidence.trim().length < 3 || (actualCost.trim() !== '' && (!Number.isFinite(Number(actualCost)) || Number(actualCost) < 0 || Number(actualCost) > 1000000))} onClick={() => void saveOutcome()}>{outcomeBusy ? 'Saving measured outcome…' : 'Save measured outcome'}</button> : null}
+      </div>
+
+      <div className="glass-card research-card">
+        <div className="panel-title"><span>LINKED EXPERIMENT EVIDENCE</span><span className="live-pill">{experiments.filter(row => { try { return Boolean((JSON.parse(row.value) as { linkedManifestStrategy?: { id?: string } }).linkedManifestStrategy?.id) } catch { return false } }).length} LINKED</span></div>
+        <p className="muted-copy">Comparison records are linked by private strategy ID. Their measured metrics and evidence stay visible here; recording a comparison does not automatically change the strategy outcome or promote a candidate.</p>
+        {experimentRows === undefined ? <p>Loading linked experiments…</p> : experiments.filter(row => { try { return Boolean((JSON.parse(row.value) as { linkedManifestStrategy?: { id?: string } }).linkedManifestStrategy?.id) } catch { return false } }).length === 0 ? <p className="empty-state">No linked experiments yet. In Verified Learning Engine, select a Manifest strategy when recording a baseline/candidate comparison.</p> : experiments.filter(row => { try { return Boolean((JSON.parse(row.value) as { linkedManifestStrategy?: { id?: string } }).linkedManifestStrategy?.id) } catch { return false } }).map(row => {
+          let item: Record<string, unknown> = {}
+          try { item = JSON.parse(row.value) as Record<string, unknown> } catch { item = {} }
+          const linked = item.linkedManifestStrategy && typeof item.linkedManifestStrategy === 'object' ? item.linkedManifestStrategy as Record<string, unknown> : {}
+          const metrics = Array.isArray(item.metrics) ? item.metrics as Array<Record<string, unknown>> : []
+          const counts = item.counts && typeof item.counts === 'object' ? item.counts as Record<string, unknown> : {}
+          return <article className="workflow-step" key={row._id}>
+            <span className="workflow-step-mark">↔</span>
+            <span className="workflow-step-copy"><strong>{String(item.name ?? row.key)}</strong><small>Strategy: {String(linked.name ?? 'Linked Manifest strategy')} · Decision: {String(item.decision ?? 'inconclusive')}</small><small>Metrics: {metrics.map(metric => `${String(metric.label ?? metric.key ?? 'metric')}: ${String(metric.status ?? 'unrated')} (${String(metric.baseline ?? '?')} → ${String(metric.candidate ?? '?')} ${String(metric.unit ?? '')})`).join(' · ') || 'No metric details stored'}</small><small>Improved: {String(counts.improved ?? 0)} · Regressed: {String(counts.regressed ?? 0)} · Unchanged: {String(counts.unchanged ?? 0)}</small><small>Evidence: {metrics.map(metric => String(metric.evidence ?? '')).filter(Boolean).join(' · ') || 'No evidence references stored'} · {new Date(row._creationTime).toLocaleString()}</small></span>
+            <span className="workflow-step-state">{String(item.evidenceStatus ?? 'OPERATOR EVIDENCE').toUpperCase()}</span>
+          </article>
+        })}
+        <div className="hero-actions"><Link className="secondary-button" to="/learning">Open Verified Learning Engine →</Link></div>
       </div>
 
       <div className="glass-card research-card">
