@@ -32,7 +32,7 @@ function egressGatewayConfig(): EgressGatewayConfig | null {
   try {
     const parsed = new URL(rawUrl)
     if (parsed.protocol !== "https:" || parsed.username || parsed.password || parsed.search || parsed.hash) return null
-    return { url: parsed.toString().replace(/\\/+$/, ""), token }
+    return { url: parsed.toString().replace(/\/+$/, ""), token }
   } catch {
     return null
   }
@@ -75,7 +75,7 @@ async function fetchResearchPageViaGateway(value: string): Promise<GatewayPage> 
   if (!hops.length || hops.some(hop => typeof hop !== "string" || !isSafeResearchUrl(hop))) {
     throw new Error("Research source redirect chain is not allowed")
   }
-  if (typeof data.finalUrl !== "string" || !isSafeResearchUrl(data.finalUrl)) {
+  if (typeof data.finalUrl !== "string" || !isSafeResearchUrl(data.finalUrl) || data.finalUrl !== hops[hops.length - 1]) {
     throw new Error("Research source final URL is not allowed")
   }
   return {
