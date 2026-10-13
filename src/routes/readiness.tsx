@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import { WorkspaceLayout } from '../components/workspace-layout'
+import { useActiveMission } from '../hooks/use-active-mission'
 import metadata from '../metadata.json'
 
 export const Route = createFileRoute('/readiness')({
@@ -28,6 +29,7 @@ function ReadinessChecker() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedRunId, setSelectedRunId] = useState<Id<'readinessRuns'> | null>(null)
+  const { missionId, mission, deliveries } = useActiveMission()
   const runChecks = useAction(api.readiness.run)
   const runs = useQuery(api.readiness.listRuns) ?? []
   const detail: RunDetail | undefined = useQuery(api.readiness.getRun, selectedRunId ? { runId: selectedRunId } : 'skip')
@@ -48,6 +50,21 @@ function ReadinessChecker() {
   }
 
   const failedChecks = detail?.checks.filter(c => c.status === 'fail') ?? []
+  const deliveryEvidence = deliveries.slice(0, 5).map(delivery => {
+    const hasWorkflow = !!delivery.workflowRunUrl && delivery.workflowConclusion === 'success' && !!delivery.workflowCommitSha
+    const hasDeployment = !!delivery.deploymentRunUrl && delivery.deploymentRunUrl === delivery.workflowRunUrl && !!delivery.deploymentCommitSha && delivery.deploymentCommitSha.toLowerCase() === delivery.workflowCommitSha?.toLowerCase() && !!delivery.deploymentUrl
+    const hasReadiness = delivery.readinessStatus === 'pass' && typeof delivery.readinessTotalCount === 'number' && delivery.readinessTotalCount > 0 && delivery.readinessPassedCount === delivery.readinessTotalCount
+    const hasFailure = delivery.workflowConclusion === 'failure' || delivery.readinessStatus === 'fail'
+    const evidenceTime = Math.max(delivery.workflowRecordedAt ?? 0, delivery.readinessCheckedAt ?? 0)
+    const now = Date.now()
+    const freshnessWindowMs = 24 * 60 * 60 * 1000
+    const fresh = !!delivery.workflowRecordedAt && !!delivery.readinessCheckedAt &&
+      now >= delivery.workflowRecordedAt && now - delivery.workflowRecordedAt <= freshnessWindowMs &&
+      now >= delivery.readinessCheckedAt && now - delivery.readinessCheckedAt <= freshnessWindowMs
+    const complete = hasWorkflow && hasDeployment && hasReadiness
+    const evidenceState = hasFailure ? 'FAILED' : !complete ? 'INCOMPLETE' : fresh ? 'FRESH' : 'STALE'
+    return { delivery, hasWorkflow, hasDeployment, hasReadiness, evidenceState, evidenceTime }
+  })
 
   return <WorkspaceLayout title="Launch Readiness Checker" eyebrow="PRODUCTION VALIDATION / LRC"><div className="nexus-shell" data-testid="readiness-root"> 
     <main className="workspace rc-page" data-state={busy ? 'loading' : runs.length > 0 ? 'ready' : 'empty'}>
@@ -78,6 +95,20 @@ function ReadinessChecker() {
           <span className="status-chip">● EVIDENCE REQUIRED PER CHECK</span>
         </div>
         {error && <p className="rc-error" data-testid="rc-error" role="alert">{error}</p>}
+      </section>
+
+      <section className="glass-card rc-card" data-testid="rc-delivery-evidence">
+        <div className="panel-title"><span>DELIVERY EVIDENCE RECONCILIATION</span><span className="live-pill">{deliveryEvidence.length} RECORD{deliveryEvidence.length === 1 ? '' : 'S'}</span></div>
+        {!missionId || !mission ? <div className="empty-state"><h3>Select a mission to inspect delivery evidence</h3><p>This section reads the active mission's existing delivery records. It does not dispatch workflows or repeat approval checks.</p><Link className="secondary-button" to="/mission">Open Mission Console →</Link></div> : deliveryEvidence.length === 0 ? <div className="empty-state"><h3>No delivery evidence recorded for this mission</h3><p>Build/test, deployment, and canonical readiness evidence will appear here when the delivery ledger records them.</p><Link className="secondary-button" to="/delivery">Open Delivery Pipeline →</Link></div> : deliveryEvidence.map(({ delivery, hasWorkflow, hasDeployment, hasReadiness, evidenceState, evidenceTime }) => <article className="delivery-row" key={delivery._id} data-testid="rc-delivery-row" data-evidence-state={evidenceState.toLowerCase()}>
+          <div><strong>{delivery.target} · {delivery.branch}</strong><small>{delivery.status} · {delivery.stage.toUpperCase()}</small>
+            <p>Evidence state: <strong>{evidenceState}</strong>{evidenceTime ? ` · last evidence ${formatTime(evidenceTime)}` : ' · no evidence timestamp recorded'}</p>
+            <p>{hasWorkflow ? '✓ Build/test workflow succeeded with a recorded commit.' : '✗ Build/test evidence is missing or not successful.'}</p>
+            <p>{hasDeployment ? '✓ Deployment evidence points to the same workflow and commit.' : '✗ Deployment URL, run link, or matching commit evidence is missing.'}</p>
+            <p>{hasReadiness ? `✓ Canonical readiness passed ${delivery.readinessPassedCount}/${delivery.readinessTotalCount} checks.` : `✗ Canonical readiness is ${delivery.readinessStatus ?? 'missing'} or incomplete (${delivery.readinessPassedCount ?? 0}/${delivery.readinessTotalCount ?? 0}).`}</p>
+            {delivery.workflowRunUrl && <p><a href={delivery.workflowRunUrl} target="_blank" rel="noreferrer">Workflow evidence ↗</a>{delivery.deploymentUrl ? <> · <a href={delivery.deploymentUrl} target="_blank" rel="noreferrer">Deployment ↗</a></> : null}</p>}
+          </div><span className={evidenceState === 'FRESH' ? 'rc-badge rc-pass' : 'rc-badge rc-fail'}>{evidenceState}</span>
+        </article>)}
+        <p className="rc-sub">Fresh means both workflow and canonical readiness timestamps are within 24 hours. This is a freshness cue, not a new live probe or independent proof of business outcomes.</p>
       </section>
 
       {detail && <section className="glass-card rc-card" data-testid="rc-result" data-state={busy ? 'loading' : 'ready'}>
