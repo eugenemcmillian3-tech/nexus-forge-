@@ -29,7 +29,10 @@ function text(data: any): string {
   throw new Error("AI provider returned no usable text.");
 }
 
-async function call(provider: ProviderName, prompt: string, maxTokens: number): Promise<string> {
+type ProviderUsage = { provider: ProviderName; model: string; promptTokens?: number; completionTokens?: number; totalTokens?: number; reportedCostUsd?: number; capturedAt: number };
+type UsageRecorder = (usage: ProviderUsage) => Promise<void>;
+
+async function call(provider: ProviderName, prompt: string, maxTokens: number, onUsage?: UsageRecorder): Promise<string> {
   const cfg = providers[provider];
   const rawKey = process.env[cfg.key]?.trim();
   const key = rawKey?.replace(/^["']|["']$/g, "").trim();
@@ -67,16 +70,28 @@ async function call(provider: ProviderName, prompt: string, maxTokens: number): 
     (error as Error & { status?: number }).status = response.status;
     throw error;
   }
-  return text(JSON.parse(body));
+  const payload = JSON.parse(body);
+  if (onUsage) {
+    const usage = payload?.usage ?? payload?.result?.usage ?? {};
+    const rawCost = payload?.usage?.cost ?? payload?.cost ?? payload?.result?.cost;
+    const reportedCostUsd = typeof rawCost === "number" && Number.isFinite(rawCost) && rawCost >= 0 ? rawCost : undefined;
+    const promptTokens = Number.isFinite(usage.prompt_tokens) ? usage.prompt_tokens : Number.isFinite(usage.input_tokens) ? usage.input_tokens : undefined;
+    const completionTokens = Number.isFinite(usage.completion_tokens) ? usage.completion_tokens : Number.isFinite(usage.output_tokens) ? usage.output_tokens : undefined;
+    const totalTokens = Number.isFinite(usage.total_tokens) ? usage.total_tokens : promptTokens !== undefined || completionTokens !== undefined ? (promptTokens ?? 0) + (completionTokens ?? 0) : undefined;
+    if (promptTokens !== undefined || completionTokens !== undefined || reportedCostUsd !== undefined) {
+      await onUsage({ provider, model, promptTokens, completionTokens, totalTokens, reportedCostUsd, capturedAt: Date.now() });
+    }
+  }
+  return text(payload);
 }
 
-export async function callAiProvider(role: ChatRole, prompt: string, maxTokens: number): Promise<string> {
+export async function callAiProvider(role: ChatRole, prompt: string, maxTokens: number, onUsage?: UsageRecorder): Promise<string> {
   const ordered = [routes[role], ...fallbacks.filter((p) => p !== routes[role])];
   const configured = ordered.filter((p) => Boolean(process.env[providers[p].key]?.trim()) && (p !== "cloudflare" || Boolean(process.env.CLOUDFLARE_ACCOUNT_ID?.trim())));
   if (!configured.length) throw new Error("No AI providers configured. Set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, GROQ_API_KEY, or CEREBRAS_API_KEY.");
   const failures: string[] = [];
   for (const provider of configured) {
-    try { return await call(provider, prompt, maxTokens); }
+    try { return await call(provider, prompt, maxTokens, onUsage); }
     catch (error) {
       const failure = error instanceof Error ? error : new Error(String(error));
       failures.push(failure.message);
@@ -104,5 +119,5 @@ export const AI_PROVIDER_PLAN = {
   research: "Groq with Cloudflare Workers AI fallback",
   openrouter: "OpenRouter free-model fallback chain: GPT-OSS 120B Free → Llama 3.3 70B Free → openrouter/free; availability and rate limits are not guaranteed",
   huggingface: "Deferred from automatic routing until a key is configured and inference is verified",
-  fallbackOrder: "Role primary (Groq/Cerebras) → Cloudflare Workers AI → other confirmed healthy provider (Groq/Cerebras); OpenRouter, Mistral, and Hugging Face are deferred",
+  fallbackOrder: "Role primary (Groq/Cerebras) → Cloudflare Workers AI → other confirmed configured provider (OpenRouter); Mistral and Hugging Face are deferred",
 } as const;
