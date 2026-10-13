@@ -34,6 +34,29 @@ afterEach(() => {
 });
 
 describe("Manifest provider-to-ledger persistence", () => {
+  it("assigns unique receipt keys to rapidly persisted blueprints", async () => {
+    const t = convexTest(schema, modules);
+    const save = (intent: string) => t.mutation(internal.manifestIntelligence.saveBlueprint, {
+      ownerKey: "manifest-key-owner",
+      intent,
+      domain: "AI product",
+      budget: 25,
+      horizon: "14 days",
+      blueprint: "A bounded proposal.",
+    });
+
+    const keys = await Promise.all([
+      save("First measurable experiment"),
+      save("Second measurable experiment"),
+    ]);
+
+    expect(keys[0]).not.toBe(keys[1]);
+    const operator = t.withIdentity(identity("manifest-key-owner"));
+    const blueprints = await operator.query(api.manifestIntelligence.listBlueprints, {});
+    expect(blueprints.map(row => row.key).sort()).toEqual([...keys].sort());
+    expect(blueprints.every(row => row.key.startsWith("manifest:"))).toBe(true);
+  });
+
   it("persists the provider blueprint and structured strategies to the authenticated owner's private ledger", async () => {
     const t = convexTest(schema, modules);
     vi.stubEnv("GROQ_API_KEY", "test-provider-key");
