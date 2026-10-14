@@ -20,7 +20,7 @@ The nine mission lifecycle checkpoints remain separate from the 16-page product 
 | Launch Readiness (`/readiness`) | URL checks, pass/fail evidence, audit history, canonical delivery evidence | Readiness proves the recorded checks, not complete artifact functionality or user value. |
 | Portfolio (`/portfolio`) | Recommendations, decisions, accept-to-draft continuation, measured summaries | Recommendations are advisory; larger evidence coverage and actual product outcome ingestion remain partial. |
 | Learning (`/learning`) | Measured comparisons, safety evidence, reviewed lesson capture, draft handoff | Operator-entered comparisons remain distinguished from independent verification; broader benchmark coverage is needed. |
-| Capability & Reliability (`/capabilities`) | Recorded mission, verification, incident, experiment, and manual provider signals | Dashboard aggregates available records; not an uptime monitor or complete capability benchmark suite. |
+| Capability & Reliability (`/capabilities`) | Recorded mission, verification, incident, experiment, and manual provider signals | Dashboard includes artifact-dom-v1 controlled fixtures and operator-private GitHub-verified CI receipts. It remains an aggregate view, not an uptime monitor or a complete capability benchmark suite. |
 | Incident Center (`/incidents`) | Saved incidents, owner-scoped diagnosis, documented escalation review, recovery evidence | Review never resumes execution automatically; broader failure-mode/recovery validation remains partial. |
 
 ## This change
@@ -35,6 +35,6 @@ The nine mission lifecycle checkpoints remain separate from the 16-page product 
 
 ## Next build priority
 
-Criterion-linked browser interaction checks are now available on Artifact Forge; see [usage and evidence boundaries](ARTIFACT_BROWSER_CHECKS.md). Next establish repeatable benchmark fixtures and trusted CI/browser evidence for broader behavior. Keep the existing accepted Research, Manifest, and LocalBoost evidence; do not repeat authentication or approval exercises as a routine maintenance gate.
+Criterion-linked browser interaction checks are now available on Artifact Forge; see [usage and evidence boundaries](ARTIFACT_BROWSER_CHECKS.md). The versioned DOM fixture suite and GitHub-verified CI receipts now exist; see [CI benchmark scope](BENCHMARK_CI_EVIDENCE.md). Next extend CI execution to exact generated-artifact snapshots and broader browser/integration behavior. Keep the existing accepted Research, Manifest, and LocalBoost evidence; do not repeat authentication or approval exercises as a routine maintenance gate.
 
 The remaining 16 partial milestones and seven deferred expansions stay partial/deferred. Search availability alone does not complete the persistent-knowledge milestone; semantic relevance, ranking evaluation, and measured reuse effectiveness remain open.

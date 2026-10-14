@@ -16,6 +16,7 @@ import type * as manifestIntelligence from "../manifestIntelligence.js";
 import type * as learningEngine from "../learningEngine.js";
 import type * as manifestStrategyParser from "../manifestStrategyParser.js";
 import type * as audit from "../audit.js";
+import type * as benchmarks from "../benchmarks.js";
 import type * as auth from "../auth.js";
 import type * as delivery from "../delivery.js";
 import type * as forge from "../forge.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   artifactTests: typeof artifactTests;
   artifacts: typeof artifacts;
   audit: typeof audit;
+  benchmarks: typeof benchmarks;
   auth: typeof auth;
   delivery: typeof delivery;
   forge: typeof forge;
