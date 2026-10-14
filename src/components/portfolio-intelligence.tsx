@@ -1,5 +1,6 @@
 import { useAction, useMutation, useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
+import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 
 export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }: { ownerKey?: string; onSelect: (id: string) => void }) {
@@ -15,6 +16,8 @@ export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }
   const resolveReview = useMutation(api.portfolio.resolveReview)
   const [opportunityBusy, setOpportunityBusy] = useState(false)
   const [opportunityReceipt, setOpportunityReceipt] = useState<string | null>(null)
+  const [opportunityError, setOpportunityError] = useState<string | null>(null)
+  const [selectedDraft, setSelectedDraft] = useState<string | null>(null)
   const [discoveryTheme, setDiscoveryTheme] = useState('emerging opportunities for small AI-enabled digital products')
   const [discoveryBusy, setDiscoveryBusy] = useState(false)
   const missions = useQuery(api.missions.list, { ownerKey, paginationOpts: { numItems: 20, cursor: null } })
@@ -22,6 +25,8 @@ export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }
   const topSignal = learning?.prioritySignals[0]
   return <section id="portfolio" className="workspace portfolio-section">
     <div className="workspace-head"><div><div className="section-kicker">PORTFOLIO INTELLIGENCE / 007</div><h2>Mission History</h2></div><span className="status-chip"><span className="pulse-dot" /> PORTFOLIO LIVE</span></div>
+    {opportunityError && <div className="glass-card research-card"><p role="alert">{opportunityError}</p><Link className="secondary-button" to="/incidents">Review incidents →</Link></div>}
+    {opportunityReceipt && <div className="glass-card research-card"><p className="receipt" role="status">{opportunityReceipt}</p>{selectedDraft && <Link className="primary-button" to="/mission">Continue to selected draft mission →</Link>}</div>}
     <div className="stats-strip compact"><div><strong>{portfolio?.totalMissions ?? 0}</strong><span>Missions</span></div><div><strong>{portfolio?.active ?? 0}</strong><span>Active</span></div><div><strong>{portfolio?.blocked ?? 0}</strong><span>Review</span></div><div><strong>{Math.round((portfolio?.completionRate ?? 0) * 100)}%</strong><span>Completion</span></div><div><strong>{portfolio?.recommendation?.toUpperCase() ?? '—'}</strong><span>Recommendation</span></div></div>
     {learning && <div className="glass-card research-card"><div className="panel-title"><span>LEARNING-AWARE PRIORITIZATION</span><span className="live-pill">● ADVISORY</span></div><div className="decision-line"><span>TOP SIGNAL</span><strong>{topSignal?.signal ?? 'Insufficient verified history'}</strong></div><p>{topSignal?.implication ?? 'Verified outcomes will inform future ranking once sufficient evidence exists.'}</p><div className="stats-strip compact"><div><strong>{Math.round(learning.successRate * 100)}%</strong><span>Verified success</span></div><div><strong>{learning.verifiedOutcomes}</strong><span>Verified outcomes</span></div><div><strong>{learning.lessonsCaptured}</strong><span>Lessons</span></div><div><strong>{learning.measuredOutcomes}</strong><span>Measured</span></div><div><strong>{Math.round(learning.measurementCoverage * 100)}%</strong><span>Measurement coverage</span></div><div><strong>${learning.actualRuntimeCost.toFixed(2)}</strong><span>Recorded runtime cost (USD)</span></div><div><strong>{learning.runtimeCostRecords}</strong><span>Cost records</span></div><div><strong>{learning.prioritySignals.length}</strong><span>Priority signals</span></div></div></div>}
     <div className="glass-card research-card">
@@ -32,30 +37,31 @@ export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }
         <div><label>GOVERNANCE</label><div className="fake-input">Human decision required</div></div>
       </div>
       <button className="primary-button small" disabled={discoveryBusy || !discoveryTheme.trim()} onClick={async () => {
-        setDiscoveryBusy(true); setOpportunityReceipt(null)
+        setDiscoveryBusy(true); setOpportunityReceipt(null); setOpportunityError(null); setSelectedDraft(null)
         try {
           const result = await discoverOpportunities({ ownerKey, theme: discoveryTheme.trim() })
           setOpportunityReceipt(`Scout persisted ${result.recommendations.length} recommendation(s). Select one to create a draft mission.`)
         } catch (error) {
-          setOpportunityReceipt(error instanceof Error ? error.message : 'Opportunity discovery failed.')
+          setOpportunityError(error instanceof Error ? error.message : 'Opportunity discovery failed.')
         } finally { setDiscoveryBusy(false) }
       }}>{discoveryBusy ? 'Scanning web + reasoning…' : 'Discover opportunities ↗'}</button>
-      {opportunityReceipt && <p className="receipt">{opportunityReceipt}</p>}
       {discovered?.filter(row => row.status === 'recommended').slice(0, 6).map(row => <div className="guard-item" key={row._id}>
         <span>◇</span>
         <div><strong>{row.title}</strong><small>{row.mission}</small><small>{row.evidence.slice(0, 2).join(' · ')}</small></div>
         <div className="button-row">
           <button className="secondary-button" disabled={opportunityBusy} onClick={async () => {
-            setOpportunityBusy(true)
+            setOpportunityBusy(true); setOpportunityReceipt(null); setOpportunityError(null); setSelectedDraft(null)
             try {
               const id = await acceptRecommendation({ id: row._id })
               setOpportunityReceipt('Opportunity accepted as a draft mission. Mission approval and execution remain separate gates.')
-              onSelect(id)
-            } finally { setOpportunityBusy(false) }
+              setSelectedDraft(id); onSelect(id)
+            } catch (error) { setOpportunityError(error instanceof Error ? error.message : 'Portfolio action failed. Review the current record before retrying.') } finally { setOpportunityBusy(false) }
           }}>Accept → Draft</button>
           <button className="ghost-button" disabled={opportunityBusy} onClick={async () => {
-            await dismissRecommendation({ id: row._id })
-            setOpportunityReceipt('Opportunity dismissed. No mission was created.')
+            setOpportunityBusy(true); setOpportunityReceipt(null); setOpportunityError(null); setSelectedDraft(null)
+            try { await dismissRecommendation({ id: row._id }); setOpportunityReceipt('Opportunity dismissed. No mission was created.') }
+            catch (error) { setOpportunityError(error instanceof Error ? error.message : 'Could not dismiss this recommendation.') }
+            finally { setOpportunityBusy(false) }
           }}>Dismiss</button>
         </div>
       </div>)}
@@ -67,18 +73,18 @@ export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }
         <span>!</span><div><strong>{review.title}</strong><small>{review.mission.slice(0, 220)} · {review.completion}% complete · {review.approved ? 'previously approved' : 'not approved'}</small></div>
         <div className="button-row">
           <button className="secondary-button" disabled={opportunityBusy} onClick={async () => {
-            setOpportunityBusy(true); setOpportunityReceipt(null)
+            setOpportunityBusy(true); setOpportunityReceipt(null); setOpportunityError(null); setSelectedDraft(null)
             try {
               await resolveReview({ missionId: review._id, decision: 'reopen', note: 'Human operator reviewed the blocked mission and returned it to draft for an explicit re-approval decision.' })
               setOpportunityReceipt('Review resolved to draft. Mission approval and execution authorization remain separate human gates.')
-            } finally { setOpportunityBusy(false) }
+            } catch (error) { setOpportunityError(error instanceof Error ? error.message : 'Portfolio action failed. Review the current record before retrying.') } finally { setOpportunityBusy(false) }
           }}>Return to draft</button>
           <button className="secondary-button" disabled={opportunityBusy} onClick={async () => {
-            setOpportunityBusy(true); setOpportunityReceipt(null)
+            setOpportunityBusy(true); setOpportunityReceipt(null); setOpportunityError(null); setSelectedDraft(null)
             try {
               await resolveReview({ missionId: review._id, decision: 'dismiss', note: 'Human operator reviewed the blocked mission and explicitly cancelled it.' })
               setOpportunityReceipt('Mission cancelled by human review. It cannot resume without creating a new governed mission.')
-            } finally { setOpportunityBusy(false) }
+            } catch (error) { setOpportunityError(error instanceof Error ? error.message : 'Portfolio action failed. Review the current record before retrying.') } finally { setOpportunityBusy(false) }
           }}>Dismiss mission</button>
         </div>
       </div>)}
@@ -90,12 +96,12 @@ export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }
       {opportunity.rationale.map((reason, i) => <div className="guard-item" key={`opp-reason-${i}`}><span>↻</span><div><strong>Learning rationale</strong><small>{reason}</small></div></div>)}
       {opportunity.evidence.map((evidence, i) => <div className="guard-item" key={`opp-evidence-${i}`}><span>✓</span><div><strong>Persisted evidence</strong><small>{evidence}</small></div></div>)}
       {opportunity.blockedByReview ? <span className="status-chip">BLOCKED BY REVIEW</span> : <button className="secondary-button" disabled={opportunityBusy} onClick={async () => {
-        setOpportunityBusy(true); setOpportunityReceipt(null)
+        setOpportunityBusy(true); setOpportunityReceipt(null); setOpportunityError(null); setSelectedDraft(null)
         try {
           const id = await createRecommendedMission({ title: opportunity.title, mission: opportunity.mission, ownerKey: opportunity.ownerKey })
           setOpportunityReceipt("Draft mission created. Human mission approval is still required before execution.")
-          onSelect(id)
-        } finally { setOpportunityBusy(false) }
+          setSelectedDraft(id); onSelect(id)
+        } catch (error) { setOpportunityError(error instanceof Error ? error.message : 'Portfolio action failed. Review the current record before retrying.') } finally { setOpportunityBusy(false) }
       }}>{opportunityBusy ? "Creating draft…" : "Accept opportunity → Create draft mission"}</button>}
       {opportunityReceipt && <p className="receipt">{opportunityReceipt}</p>}
       <p>Recommendations are generated from persisted measurements and lessons. Accepting one creates only a draft; it never approves, executes, deploys, or verifies the mission.</p>
