@@ -44,3 +44,24 @@ describe('artifact browser interaction harness with controlled fixtures', () => 
     expect(doc).toContain('\\u003c/script>')
   })
 })
+
+describe('exact text acceptance', () => {
+  it('rejects numeric substrings and skips dependent steps while contains stays compatible', async () => {
+    const report = await execute('<output id="result">140</output>', [
+      { criterionIndex: 0, steps: [{ action: 'assertText', selector: '#result', value: '14' }] },
+      { criterionIndex: 1, steps: [{ action: 'assertTextEquals', selector: '#result', value: '14' }, { action: 'assertTextEquals', selector: '#result', value: '140' }] },
+    ])
+    expect(report.results[0][0].status).toBe('pass')
+    expect(report.results[1].map(step => step.status)).toEqual(['fail', 'not_run'])
+    expect(report.results[1][0].detail).toContain('observed 140')
+  })
+  it('compares complete text including nested content, whitespace and an empty state', async () => {
+    const report = await execute('<output id="result">Total: <b>14</b></output><output id="spaced"> 14 </output><output id="empty"></output>', [
+      { criterionIndex: 0, steps: [{ action: 'assertTextEquals', selector: '#result', value: 'Total: 14' }] },
+      { criterionIndex: 1, steps: [{ action: 'assertTextEquals', selector: '#spaced', value: '14' }] },
+      { criterionIndex: 2, steps: [{ action: 'assertTextEquals', selector: '#spaced', value: ' 14 ' }] },
+      { criterionIndex: 3, steps: [{ action: 'assertTextEquals', selector: '#empty', value: '' }] },
+    ])
+    expect(report.results.map(test => test[0].status)).toEqual(['pass', 'fail', 'pass', 'pass'])
+  })
+})
