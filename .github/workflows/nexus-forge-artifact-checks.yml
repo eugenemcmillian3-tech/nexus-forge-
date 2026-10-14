@@ -79,7 +79,7 @@ jobs:
               name: 'NEXUS artifact snapshot v1', head_sha: context.sha,
               external_id: report.snapshotSha, status: 'completed',
               conclusion: report.allPassed ? 'success' : 'failure',
-              details_url: context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + '/attempts/' + process.env.GITHUB_RUN_ATTEMPT,
+              details_url: process.env.GITHUB_SERVER_URL + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + '/attempts/' + process.env.GITHUB_RUN_ATTEMPT,
               output: { title: 'Exact artifact Chromium result', summary: 'Snapshot ' + report.snapshotSha + '; browser ' + report.browserVersion + '. Approval and delivery unchanged.', text }
             });
       - name: Retain CI report
