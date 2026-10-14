@@ -2,13 +2,14 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction, useMutation } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
+import { WorkspaceLoading } from '../components/workspace-loading'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useActiveMission } from '../hooks/use-active-mission'
 
 export const Route = createFileRoute('/artifacts')({ component: ArtifactsPage })
 
-function ArtifactsPage() {
-  const { missionId, mission, councilComplete, hasResearch, artifacts, research } = useActiveMission()
+export function ArtifactsPage() {
+  const { evidenceLoading, missionId, mission, councilComplete, hasResearch, artifacts, research } = useActiveMission()
   const generate = useAction(api.artifacts.generate)
   const verify = useMutation(api.artifacts.verify)
   const approve = useMutation(api.artifacts.approve)
@@ -33,6 +34,7 @@ function ArtifactsPage() {
     try { const result = await verify({ id }); if (!result.passed) { setError(`Approval blocked: current quality checks failed (${Math.round(result.score * 100)}%).`); return } await approve({ id, approved: true }); setReceipt('Human artifact approval recorded. Delivery preparation is now available.') }
     catch (e) { setError(e instanceof Error ? e.message : 'Artifact approval failed.') } finally { setBusyId('') }
   }
+  if (evidenceLoading) return <WorkspaceLoading title="Artifact Forge" />
   return <WorkspaceLayout title="Artifact Forge" eyebrow="STAGE 04 / GENERATE · VERIFY · APPROVE">
     <section className="workspace"><div className="glass-card research-card"><div className="panel-title"><span>ARTIFACT GENERATION</span><span className={allowed ? 'live-pill' : 'status-chip'}>{allowed ? 'READY' : 'PREREQUISITES MISSING'}</span></div>
       {!missionId ? <><p>Select a mission first.</p><Link className="primary-button" to="/mission">Open Mission Console →</Link></> : !mission?.approved ? <><p>Mission approval must be recorded first.</p><Link className="primary-button" to="/mission">Review mission →</Link></> : !councilComplete ? <><p>Complete the AI Council before generating artifacts.</p><Link className="primary-button" to="/council">Review Council →</Link></> : !hasResearch ? <><p>Save mission-specific research before generating an artifact.</p><Link className="primary-button" to="/evidence">Gather evidence →</Link></> : <>
