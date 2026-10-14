@@ -1,4 +1,4 @@
-import { action, internalMutation, mutation, query } from "./_generated/server";
+import { actionGeneric as action, internalMutationGeneric as internalMutation, mutationGeneric as mutation, queryGeneric as query } from "convex/server";
 import { v } from "convex/values"
 import { requireOperator, requireOwnedMission } from "./permissions";
 import { internal } from "./_generated/api";
