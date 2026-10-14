@@ -18,6 +18,11 @@ export default defineSchema({
     results: v.array(v.array(v.object({ status: v.union(v.literal("pass"), v.literal("fail"), v.literal("not_run")), detail: v.string() }))),
     passed: v.number(), failed: v.number(), notRun: v.number(), covered: v.number(), total: v.number(), allPassed: v.boolean(), createdAt: v.number(),
   }).index("by_artifact", ["artifactId"]),
+  benchmarkReceipts: defineTable({
+    operatorId: v.string(), repository: v.string(), runId: v.string(), runUrl: v.string(), commitSha: v.string(), attempt: v.number(),
+    workflowPath: v.string(), jobName: v.string(), jobConclusion: v.string(), runConclusion: v.string(), suiteVersion: v.string(),
+    outcome: v.union(v.literal("passed"), v.literal("failed"), v.literal("not_run")), recordedAt: v.number(),
+  }).index("by_operator", ["operatorId"]).index("by_operator_run", ["operatorId", "runId", "attempt"]),
   artifacts: defineTable({ missionId: v.id("missions"), type: v.string(), name: v.string(), content: v.string(), status: v.string(), requiresApproval: v.boolean() }).index("by_mission", ["missionId"]),
   deliveries: defineTable({ missionId: v.id("missions"), artifactId: v.optional(v.id("artifacts")), target: v.string(), branch: v.string(), stage: v.union(v.literal("prepared"), v.literal("approval"), v.literal("github"), v.literal("build"), v.literal("test"), v.literal("deploy"), v.literal("verified"), v.literal("blocked")), approved: v.boolean(), status: v.string(), evidence: v.string(), workflowRunUrl: v.optional(v.string()), workflowConclusion: v.optional(v.string()), workflowCommitSha: v.optional(v.string()), workflowRecordedAt: v.optional(v.number()), deploymentRunUrl: v.optional(v.string()), deploymentCommitSha: v.optional(v.string()), deploymentUrl: v.optional(v.string()), readinessStatus: v.optional(v.union(v.literal("pass"), v.literal("fail"))), readinessPassedCount: v.optional(v.number()), readinessTotalCount: v.optional(v.number()), readinessCheckedAt: v.optional(v.number()), createdAt: v.number() }).index("by_mission", ["missionId"]),
   verifications: defineTable({ missionId: v.id("missions"), deliveryId: v.id("deliveries"), passed: v.boolean(), score: v.number(), criteria: v.array(v.string()), evidence: v.array(v.string()), summary: v.string(), createdAt: v.number() }).index("by_mission", ["missionId"]).index("by_delivery", ["deliveryId"]),
