@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { MissionControl } from '../components/mission-control'
+import { WorkspaceLoading } from '../components/workspace-loading'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useMissionGuide } from '../lib/use-mission-guide'
 import { guidedWorkspaces } from '../lib/workspaces'
@@ -7,7 +8,8 @@ import { guidedWorkspaces } from '../lib/workspaces'
 export const Route = createFileRoute('/workflow')({ component: WorkflowPage })
 
 export function WorkflowPage() {
-  const { missionId, mission, stages, nextStage, completed } = useMissionGuide()
+  const { missionId, mission, stages, nextStage, completed, evidenceLoading } = useMissionGuide()
+  if (evidenceLoading) return <WorkspaceLoading title="Guided Workflow & Feature Guide" />
   return <WorkspaceLayout title="Guided Workflow & Feature Guide" eyebrow="OPERATOR HANDBOOK / START HERE">
     <section className="workspace">
       <div className="hero-grid">
