@@ -85,7 +85,7 @@ export const getLearningContext = internalQuery({
   handler: async (ctx, args) => {
     const mission = await ctx.db.get("missions", args.missionId)
     if (!mission) throw new Error("Mission not found")
-    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.neq(q.field("category"), "retrieval-evaluation")).order("desc").take(60)
+    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.and(q.neq(q.field("category"), "retrieval-evaluation"), q.neq(q.field("category"), "strategy-reuse-comparison"))).order("desc").take(60)
     const outcomes = rows.filter(row => row.category === "verification-outcome").slice(0, 10).map(row => ({ value: row.value, confidence: row.confidence, source: row.source }))
     const lessons = rows.filter(row => row.category === "learning-lesson" || row.category === "operational-recovery").slice(0, 10).map(row => {
       let value = row.value
@@ -120,7 +120,7 @@ export const getAdaptivePreflight = internalQuery({
   handler: async (ctx, args) => {
     const mission = await ctx.db.get("missions", args.missionId)
     if (!mission) throw new Error("Mission not found")
-    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.neq(q.field("category"), "retrieval-evaluation")).order("desc").take(80)
+    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.and(q.neq(q.field("category"), "retrieval-evaluation"), q.neq(q.field("category"), "strategy-reuse-comparison"))).order("desc").take(80)
     return buildPreflight(args.missionId, rows)
   },
 })
@@ -129,7 +129,7 @@ export const getAdaptivePreflightForOperator = query({
   args: { missionId: v.id("missions") }, returns: preflight,
   handler: async (ctx, args) => {
     const mission = await requireOwnedMission(ctx, args.missionId)
-    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.neq(q.field("category"), "retrieval-evaluation")).order("desc").take(80)
+    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.and(q.neq(q.field("category"), "retrieval-evaluation"), q.neq(q.field("category"), "strategy-reuse-comparison"))).order("desc").take(80)
     return buildPreflight(args.missionId, rows)
   },
 })
@@ -139,7 +139,7 @@ export const remember = mutation({
   returns: v.id("memories"),
   handler: async (ctx, args) => {
     const userId = await requireOperator(ctx)
-    if (args.category === "retrieval-evaluation") throw new Error("Retrieval evaluations must be computed by the server.")
+    if (["retrieval-evaluation", "strategy-reuse-comparison", "mission-source"].includes(args.category)) throw new Error("Evaluation and mission-source receipts must be computed by the server.")
     const mission = args.missionId ? await requireOwnedMission(ctx, args.missionId) : null
     const ownerKey = mission?.ownerKey ?? userId
     let value = args.value
