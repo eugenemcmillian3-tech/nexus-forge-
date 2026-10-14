@@ -62,3 +62,7 @@ Portfolio Intelligence imports product-outcome-v1 JSON reports from the fixed pr
 ## Direct managed analytics update
 
 Portfolio Intelligence now retrieves aggregate NEXUS FORGE site traffic from the existing Macaly managed connection and saves owner-private, scope-acknowledged receipts with raw response and SHA-256 identity. The deployed backend was verified against the real provider. See [direct analytics scope and evidence](DIRECT_SITE_ANALYTICS.md). Traffic stays separate from mission-attributed product outcomes; integrations for other deployed products and independent outcome validation remain partial.
+
+## Council memory-context evidence update
+
+AI Council now captures prospective selected memory IDs, channel routing, exact rendered learning/preflight text and saved mission input. Receipts distinguish prepared from a returned planner response; relevance evaluations use owned historical labels without rerunning models. Existing recent-history policy remains unchanged. See [context/evaluation contract](COUNCIL_MEMORY_SELECTION.md). Historical runs are not backfilled, and model attention or causal effectiveness is not claimed. Representative labels and candidate-policy comparisons remain next work.
