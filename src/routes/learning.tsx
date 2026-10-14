@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
+import { StrategyReuseOutcomes } from "../components/strategy-reuse-outcomes";
 import { WorkspaceLayout } from "../components/workspace-layout";
 import { deriveManifestOutcomeSignals } from "../lib/manifest-outcome-signals";
 import { deriveStrategyComparisonSignals } from "../lib/strategy-comparison-signals";
@@ -215,7 +216,8 @@ function LearningEnginePage() {
         <p className="muted-copy">These are deterministic summaries of operator-entered observations, not independent verification, statistical significance, or causal proof. Human review remains required before reuse.</p>
       </div>
 
-      <div className="glass-card research-card">
+      <StrategyReuseOutcomes />
+      <div className="glass-card research-card" id="reviewed-learning-memory">
         <div className="panel-title"><span>REUSABLE LEARNING MEMORY</span><span className="live-pill">OPERATOR REVIEW REQUIRED</span></div>
         <p className="muted-copy">Promote a finding into reusable memory only after reviewing its evidence. Saved lessons are owner-scoped and become advisory context for future Council planning; they do not execute actions or automatically change a strategy.</p>
         <label htmlFor="reviewed-lesson-strategy">MANIFEST STRATEGY</label>
