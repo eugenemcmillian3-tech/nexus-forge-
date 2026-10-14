@@ -1,3 +1,4 @@
+import { artifactCiState } from './artifactCiValidators'
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
@@ -10,7 +11,7 @@ const resultsValidator = v.array(v.array(v.object({ status: v.union(v.literal('p
 const row = v.object({
   _id: v.id('artifactTestRuns'), _creationTime: v.number(), missionId: v.id('missions'), artifactId: v.id('artifacts'), operatorId: v.string(),
   runnerVersion: v.string(), missionSnapshot: v.string(), artifactSnapshot: v.string(), criteria: v.array(v.string()),
-  plan: planValidator, results: resultsValidator, passed: v.number(), failed: v.number(), notRun: v.number(), covered: v.number(), total: v.number(), allPassed: v.boolean(), createdAt: v.number(),
+  ci: v.optional(artifactCiState), plan: planValidator, results: resultsValidator, passed: v.number(), failed: v.number(), notRun: v.number(), covered: v.number(), total: v.number(), allPassed: v.boolean(), createdAt: v.number(),
 })
 export const list = query({
   args: { artifactId: v.id('artifacts') }, returns: v.array(row),

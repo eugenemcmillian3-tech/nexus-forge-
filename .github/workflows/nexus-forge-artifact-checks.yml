@@ -1,0 +1,93 @@
+name: NEXUS FORGE Exact Artifact Checks
+on:
+  workflow_dispatch:
+    inputs:
+      snapshot_path:
+        description: Exact saved snapshot bundle path
+        required: true
+        type: string
+      snapshot_sha:
+        description: SHA-256 of the exact saved bundle
+        required: true
+        type: string
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/artifact-ci/**'
+      - '.github/workflows/nexus-forge-artifact-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/artifact-ci/**'
+      - '.github/workflows/nexus-forge-artifact-checks.yml'
+permissions:
+  contents: read
+  checks: write
+jobs:
+  artifact:
+    name: Exact artifact Chromium checks
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact source commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare bounded snapshot input
+        env:
+          INPUT_PATH: ${{ inputs.snapshot_path }}
+          INPUT_SHA: ${{ inputs.snapshot_sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          mkdir -p ci-input ci-output
+          chmod 777 ci-output
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { createHash } from 'node:crypto';
+          let path = process.env.INPUT_PATH, expected = process.env.INPUT_SHA;
+          if (process.env.EVENT_NAME !== 'workflow_dispatch') { path = '.github/artifact-ci/fixture.json'; expected = createHash('sha256').update(fs.readFileSync(path)).digest('hex'); }
+          if (process.env.EVENT_NAME === 'workflow_dispatch' && !/^nexus-forge-checks\/[a-zA-Z0-9]+\/bundle\.json$/.test(path || '')) throw new Error('Invalid snapshot path');
+          const stat = fs.lstatSync(path);
+          if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 200000 || !/^[0-9a-f]{64}$/.test(expected || '')) throw new Error('Invalid snapshot file or digest');
+          const bytes = fs.readFileSync(path);
+          if (createHash('sha256').update(bytes).digest('hex') !== expected) throw new Error('Snapshot digest mismatch');
+          fs.writeFileSync('ci-input/bundle.json', bytes);
+          fs.appendFileSync(process.env.GITHUB_ENV, 'SNAPSHOT_SHA=' + expected + '\n');
+          NODE
+      - name: Build pinned Chromium runner
+        run: docker build -t nexus-exact-artifact-ci .github/artifact-ci
+      - name: Execute snapshot without network or credentials
+        run: |
+          timeout 180s docker run --rm --init --network none --read-only \
+            --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges \
+            --security-opt seccomp=.github/artifact-ci/seccomp_profile.json \
+            --pids-limit 256 --memory 1g --cpus 2 --shm-size 256m \
+            --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 -e HOME=/tmp \
+            -v "$PWD/ci-input:/input:ro" -v "$PWD/ci-output:/output:rw" \
+            nexus-exact-artifact-ci /input/bundle.json /output/report.json "$SNAPSHOT_SHA"
+      - name: Publish snapshot-bound GitHub Check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('ci-output/report.json', 'utf8'));
+            const text = JSON.stringify(report);
+            if (text.length > 60000 || report.snapshotSha !== process.env.SNAPSHOT_SHA || report.version !== 'artifact-ci-v1') throw new Error('Invalid runner report');
+            await github.rest.checks.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              name: 'NEXUS artifact snapshot v1', head_sha: context.sha,
+              external_id: report.snapshotSha, status: 'completed',
+              conclusion: report.allPassed ? 'success' : 'failure',
+              details_url: process.env.GITHUB_SERVER_URL + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + '/attempts/' + process.env.GITHUB_RUN_ATTEMPT,
+              output: { title: 'Exact artifact Chromium result', summary: 'Snapshot ' + report.snapshotSha + '; browser ' + report.browserVersion + '. Approval and delivery unchanged.', text }
+            });
+      - name: Retain CI report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-artifact-ci-report
+          path: ci-output/report.json
+          if-no-files-found: warn
+      - name: Enforce criterion outcome
+        run: node -e "const r=require('./ci-output/report.json'); if(!r.allPassed) process.exit(1)"
