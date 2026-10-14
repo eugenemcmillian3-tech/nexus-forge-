@@ -47,9 +47,9 @@ export const listRecent = query({
 
 export const saveSpec = internalMutation({
   args: { ownerKey: v.string(), intent: v.string(), domain: v.string(), budget: v.number(), horizon: v.optional(v.string()), specification: v.string() },
-  returns: v.null(),
+  returns: v.id("memories"),
   handler: async (ctx, args) => {
-    await ctx.db.insert("memories", {
+    const id = await ctx.db.insert("memories", {
       ownerKey: args.ownerKey,
       category: "intent-specification",
       key: `intent-spec:${Date.now()}`,
@@ -57,13 +57,13 @@ export const saveSpec = internalMutation({
       confidence: 0.7,
       source: "intelligence-orchestrator-ai-draft",
     });
-    return null;
+    return id;
   },
 });
 
 export const compileIntent = action({
   args: { intent: v.string(), domain: v.string(), budget: v.number(), horizon: v.string() },
-  returns: v.object({ specification: spec, saved: v.boolean() }),
+  returns: v.object({ specification: spec, saved: v.boolean(), sourceMemoryId: v.id("memories") }),
   handler: async (ctx, args) => {
     const ownerKey = await getAuthUserId(ctx);
     if (!ownerKey) throw new Error("Authenticated operator session required");
@@ -76,7 +76,7 @@ export const compileIntent = action({
     const raw = await callAiProvider("planner", prompt, 1400);
     const result = parseMissionSpecification(raw);
     const specification = JSON.stringify(result);
-    await ctx.runMutation(internal.intelligenceOrchestrator.saveSpec, { ownerKey, intent, domain, budget, horizon, specification });
-    return { specification: result, saved: true };
+    const sourceMemoryId = await ctx.runMutation(internal.intelligenceOrchestrator.saveSpec, { ownerKey, intent, domain, budget, horizon, specification });
+    return { specification: result, saved: true, sourceMemoryId };
   },
 });

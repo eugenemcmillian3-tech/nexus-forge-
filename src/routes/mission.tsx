@@ -9,10 +9,11 @@ export const Route = createFileRoute('/mission')({ component: MissionPage })
 
 function MissionPage() {
   const pathname = useRouterState({ select: state => state.location.pathname })
-  const { missionId, setMissionId, mission: activeMission } = useActiveMission()
+  const { missionId, setMissionId, mission: activeMission, sourceLinks } = useActiveMission()
   const missions = useQuery(api.missions.list, { ownerKey: 'local-workspace', paginationOpts: { numItems: 30, cursor: null } })
   const createMission = useMutation(api.missions.create)
   const approveMission = useMutation(api.missions.approve)
+  const [sourceMemoryId, setSourceMemoryId] = useState<string | undefined>()
   const [title, setTitle] = useState('NEXUS Forge Mission')
   const [description, setDescription] = useState('Create a new AI venture that turns creative intent into measurable digital products.')
   const [autonomy, setAutonomy] = useState('Approval required')
@@ -24,7 +25,8 @@ function MissionPage() {
     const raw = window.sessionStorage.getItem('nexus-forge-manifest-handoff')
     if (!raw) return
     try {
-      const handoff = JSON.parse(raw) as { intent?: string; domain?: string; budget?: number; horizon?: string; constraints?: string; acceptanceCriteria?: string; blueprint?: string }
+      const handoff = JSON.parse(raw) as { sourceMemoryId?: string; intent?: string; domain?: string; budget?: number; horizon?: string; constraints?: string; acceptanceCriteria?: string; blueprint?: string }
+      setSourceMemoryId(handoff.sourceMemoryId)
       const intent = handoff.intent?.trim() || 'Review Manifest Intelligence proposal'
       const blueprint = handoff.blueprint?.trim() || ''
       setTitle(`Manifest: ${intent.slice(0, 56)}`)
@@ -42,8 +44,9 @@ function MissionPage() {
     if (!title.trim() || !description.trim()) { setError('A title and mission outcome are required.'); return }
     setBusy(true); setError(''); setReceipt('')
     try {
-      const id = await createMission({ title: title.trim(), mission: description.trim(), autonomy, budget, ownerKey: 'local-workspace' })
+      const id = await createMission({ title: title.trim(), mission: description.trim(), autonomy, budget, ownerKey: 'local-workspace', ...(sourceMemoryId ? { sourceMemoryId: sourceMemoryId as any } : {}) })
       setMissionId(id)
+      setSourceMemoryId(undefined)
       window.sessionStorage.removeItem('nexus-forge-manifest-handoff')
       setReceipt('Draft created and selected. The Manifest handoff is now safely consumed. Review the mission contract, then explicitly approve it before Council execution.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Mission creation failed.') } finally { setBusy(false) }
@@ -63,7 +66,7 @@ function MissionPage() {
         <button className="primary-button" disabled={busy} onClick={() => void create()}>{busy ? 'Creating…' : 'Create new draft mission ↗'}</button>
       </div>
       <div id="active-mission-contract" className="glass-card research-card"><div className="panel-title"><span>ACTIVE MISSION</span><span className="live-pill">{activeMission ? activeMission.status.toUpperCase() : 'NOT SELECTED'}</span></div>
-        {activeMission ? <><h3>{activeMission.title}</h3><p>{activeMission.mission}</p><div className="decision-line"><span>AUTHORITY</span><strong>{activeMission.autonomy}</strong></div><div className="decision-line"><span>SPEND CAP</span><strong>${activeMission.budget}</strong></div><div className="decision-line"><span>MISSION APPROVAL</span><strong>{activeMission.approved ? 'APPROVED' : 'PENDING'}</strong></div>
+        {activeMission ? <><h3>{activeMission.title}</h3><p>{activeMission.mission}</p>{sourceLinks.map(link => <p key={link.sourceMemoryId}>Draft source: <Link to={link.path}>{link.key} →</Link><small> · Saved receipt {link.sourceMemoryId}</small></p>)}<div className="decision-line"><span>AUTHORITY</span><strong>{activeMission.autonomy}</strong></div><div className="decision-line"><span>SPEND CAP</span><strong>${activeMission.budget}</strong></div><div className="decision-line"><span>MISSION APPROVAL</span><strong>{activeMission.approved ? 'APPROVED' : 'PENDING'}</strong></div>
           {!activeMission.approved && <button className="secondary-button" disabled={busy} onClick={() => void approve()}>Approve mission contract</button>}
           {activeMission.approved && <p className="receipt">Approved. Continue to the AI Council page to explicitly start planning.</p>}
         </> : <p>Create a draft mission to begin. Existing missions can be selected below.</p>}
