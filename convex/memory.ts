@@ -1,3 +1,5 @@
+import type { PaginationResult } from "convex/server"
+import type { Doc } from "./_generated/dataModel"
 import { paginationOptsValidator, paginationResultValidator } from "convex/server"
 import { v } from "convex/values"
 import { mutation, query, internalQuery, internalMutation } from "./_generated/server"
@@ -26,7 +28,7 @@ function buildPreflight(missionId: any, rows: any[]) {
 export const list = query({
   args: { ownerKey: v.optional(v.string()), paginationOpts: paginationOptsValidator },
   returns: paginationResultValidator(memoryValidator),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<PaginationResult<Doc<"memories">>> => {
     const userId = await getAuthUserId(ctx)
     if (!userId) throw new ConvexError("Authenticated operator session required")
     return ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", userId)).order("desc").paginate(args.paginationOpts)
@@ -43,7 +45,7 @@ export const browse = query({
     paginationOpts: paginationOptsValidator,
   },
   returns: paginationResultValidator(memoryValidator),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<PaginationResult<Doc<"memories">>> => {
     const ownerKey = await requireOperator(ctx)
     if (args.missionId) await requireOwnedMission(ctx, args.missionId)
     const search = args.search?.trim() ?? ""
