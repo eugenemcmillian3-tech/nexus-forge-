@@ -43,7 +43,8 @@ export const verifyRun = action({
       return response.json()
     }
     const run = await read(base)
-    const jobs = await read(base + '/jobs?filter=latest&per_page=100')
+    if (!Number.isInteger(run.run_attempt) || run.run_attempt < 1) throw new Error('GitHub did not return a valid run attempt.')
+    const jobs = await read(base + '/attempts/' + run.run_attempt + '/jobs?per_page=100')
     const receipt = verifyBenchmarkMetadata(runId, run, jobs)
     return ctx.runMutation(internal.benchmarks.recordInternal, { ...receipt, operatorId })
   },
