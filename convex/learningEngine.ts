@@ -1,5 +1,8 @@
+import type { MutationCtx } from "./_generated/server"
+import type { Id } from "./_generated/dataModel"
+import { evaluateProductOutcome } from "./productOutcomeModel"
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 const metric = v.object({
@@ -145,22 +148,7 @@ export const recordReuseComparison = mutation({
   args: { missionId: v.id("missions"), lessonId: v.id("memories"), baselineMeasurementId: v.id("measurements"), candidateMeasurementId: v.id("measurements"), applied: v.boolean(), notes: v.string() },
   returns: v.id("memories"),
   handler: async (ctx, args) => {
-    const ownerKey = await getAuthUserId(ctx)
-    if (!ownerKey) throw new Error("Authenticated operator session required.")
-    const mission = await ctx.db.get(args.missionId)
-    const lesson = await ctx.db.get(args.lessonId)
-    if (!mission || mission.ownerKey !== ownerKey || !lesson || lesson.ownerKey !== ownerKey || lesson.category !== "learning-lesson" || lesson.source !== "operator-reviewed-manifest-learning") throw new Error("Mission or reviewed lesson not found in your private workspace.")
-    let reviewed: { lesson?: string; applicability?: string; reviewStatus?: string; manifestStrategyId?: string } = {}
-    try { reviewed = JSON.parse(lesson.value) } catch { throw new Error("Reviewed lesson record is malformed.") }
-    if (reviewed.reviewStatus !== "operator-reviewed" || typeof reviewed.lesson !== "string" || typeof reviewed.applicability !== "string" || typeof reviewed.manifestStrategyId !== "string") throw new Error("Choose a reviewed lesson linked to a Manifest strategy.")
-    const strategyId = ctx.db.normalizeId("memories", reviewed.manifestStrategyId)
-    const strategy = strategyId ? await ctx.db.get(strategyId) : null
-    if (!strategy || strategy.ownerKey !== ownerKey || strategy.category !== "manifest-strategy") throw new Error("Linked Manifest strategy not found in your private workspace.")
-    const link = await ctx.db.query("memories").withIndex("by_owner_category", q => q.eq("ownerKey", ownerKey).eq("category", "mission-source")).filter(q => q.and(q.eq(q.field("missionId"), mission._id), q.eq(q.field("key"), "source:" + lesson._id), q.eq(q.field("source"), "mission-source-link"))).first()
-    if (!link) throw new Error("This mission was not created from the selected reviewed lesson.")
-    let linkedId: unknown
-    try { linkedId = JSON.parse(link.value).sourceMemoryId } catch { throw new Error("Mission source receipt is malformed.") }
-    if (linkedId !== lesson._id) throw new Error("Mission source receipt does not match the lesson.")
+    const { ownerKey, mission, lesson, reviewed, strategy, link } = await loadReuseProvenance(ctx, args.missionId, args.lessonId)
     if (!args.applied || args.notes.trim().length < 12 || args.notes.length > 1600) throw new Error("Confirm actual application and describe the comparable conditions in 12–1600 characters.")
     const baseline = await ctx.db.get(args.baselineMeasurementId)
     const candidate = await ctx.db.get(args.candidateMeasurementId)
@@ -180,5 +168,51 @@ export const recordReuseComparison = mutation({
     if (existing) return existing._id
     const record = { version: "strategy-reuse-v1", strategyId: strategy._id, strategyKey: strategy.key, lessonId: lesson._id, lesson: reviewed.lesson.slice(0, 1600), applicability: reviewed.applicability.slice(0, 1000), sourceReceiptId: link._id, handoffAt: link._creationTime, missionId: mission._id, baseline: snapshot(baseline, baselineMission.title), candidate: snapshot(candidate, mission.title), direction, delta, outcome, applied: true, notes: args.notes.trim(), recordedAt: Date.now(), evidenceStatus: candidate.metric === "actual runtime cost" ? "operator-recorded spend; operator-attested application and comparability" : "recorded delivery-readiness measurements; operator-attested application and comparability", limitation: "Observed association only. No causal proof, automatic promotion or business-outcome certification." }
     return ctx.db.insert("memories", { ownerKey, missionId: mission._id, category: "strategy-reuse-comparison", key, value: JSON.stringify(record), confidence: 0.5, source: "lesson-handoff-measurement-comparison" })
+  },
+})
+
+async function loadReuseProvenance(ctx: MutationCtx, missionId: Id<"missions">, lessonId: Id<"memories">) {
+    const ownerKey = await getAuthUserId(ctx)
+    if (!ownerKey) throw new ConvexError("Authenticated operator session required.")
+    const mission = await ctx.db.get(missionId)
+    const lesson = await ctx.db.get(lessonId)
+    if (!mission || mission.ownerKey !== ownerKey || !lesson || lesson.ownerKey !== ownerKey || lesson.category !== "learning-lesson" || lesson.source !== "operator-reviewed-manifest-learning") throw new ConvexError("Mission or reviewed lesson not found in your private workspace.")
+    let reviewed: { lesson?: string; applicability?: string; reviewStatus?: string; manifestStrategyId?: string } = {}
+    try { reviewed = JSON.parse(lesson.value) } catch { throw new ConvexError("Reviewed lesson record is malformed.") }
+    if (reviewed.reviewStatus !== "operator-reviewed" || typeof reviewed.lesson !== "string" || typeof reviewed.applicability !== "string" || typeof reviewed.manifestStrategyId !== "string") throw new ConvexError("Choose a reviewed lesson linked to a Manifest strategy.")
+    const strategyId = ctx.db.normalizeId("memories", reviewed.manifestStrategyId)
+    const strategy = strategyId ? await ctx.db.get(strategyId) : null
+    if (!strategy || strategy.ownerKey !== ownerKey || strategy.category !== "manifest-strategy") throw new ConvexError("Linked Manifest strategy not found in your private workspace.")
+    const link = await ctx.db.query("memories").withIndex("by_owner_category", q => q.eq("ownerKey", ownerKey).eq("category", "mission-source")).filter(q => q.and(q.eq(q.field("missionId"), mission._id), q.eq(q.field("key"), "source:" + lesson._id), q.eq(q.field("source"), "mission-source-link"))).first()
+    if (!link) throw new ConvexError("This mission was not created from the selected reviewed lesson.")
+    let linkedId: unknown
+    try { linkedId = JSON.parse(link.value).sourceMemoryId } catch { throw new ConvexError("Mission source receipt is malformed.") }
+    if (linkedId !== lesson._id) throw new ConvexError("Mission source receipt does not match the lesson.")
+    return { ownerKey, mission, lesson, reviewed: { lesson: reviewed.lesson, applicability: reviewed.applicability }, strategy, link }
+}
+
+export const recordProductReuseComparison = mutation({
+  args: { missionId: v.id("missions"), lessonId: v.id("memories"), baselineOutcomeId: v.id("productOutcomes"), candidateOutcomeId: v.id("productOutcomes"), applied: v.boolean(), notes: v.string() },
+  returns: v.id("memories"),
+  handler: async (ctx, args) => {
+    const { ownerKey, mission, lesson, reviewed, strategy, link } = await loadReuseProvenance(ctx, args.missionId, args.lessonId)
+    if (!args.applied || args.notes.trim().length < 12 || args.notes.length > 1600) throw new ConvexError("Confirm application and describe comparable conditions in 12–1600 characters.")
+    const baseline = await ctx.db.get(args.baselineOutcomeId), candidate = await ctx.db.get(args.candidateOutcomeId)
+    if (!baseline || !candidate || baseline.ownerKey !== ownerKey || candidate.ownerKey !== ownerKey || candidate.missionId !== mission._id || baseline.missionId === mission._id) throw new ConvexError("Choose owned product observations from the reuse mission and a different baseline mission.")
+    const baselineMission = await ctx.db.get(baseline.missionId)
+    if (!baselineMission || baselineMission.ownerKey !== ownerKey) throw new ConvexError("Baseline mission not found in your private workspace.")
+    if (baseline._creationTime >= link._creationTime || baseline.periodEnd > link._creationTime || candidate.periodStart < link._creationTime || candidate._creationTime <= link._creationTime) throw new ConvexError("Baseline record and observation period must precede the handoff; the candidate observation period must start after it.")
+    if (baseline.metric !== candidate.metric || baseline.unit !== candidate.unit || baseline.direction !== candidate.direction || baseline.target !== candidate.target) throw new ConvexError("Product observations must use the same metric, unit, direction and target.")
+    if (baseline.periodEnd - baseline.periodStart !== candidate.periodEnd - candidate.periodStart || baseline.sampleSize !== candidate.sampleSize || baseline.method !== candidate.method) throw new ConvexError("Use equal observation durations and sample sizes, and the same measurement method text.")
+    const baselineScore = evaluateProductOutcome(baseline, Date.now()), candidateScore = evaluateProductOutcome(candidate, Date.now())
+    const snapshot = (row: typeof baseline, title: string, actual: number) => ({ id: row._id, missionId: row.missionId, missionTitle: title, metric: row.metric, observed: row.observed, actual, target: row.target, unit: row.unit, direction: row.direction, sampleSize: row.sampleSize, periodStart: row.periodStart, periodEnd: row.periodEnd, method: row.method, evidence: row.evidence, notes: row.notes, observedAt: row._creationTime, provenance: row.provenance })
+    const delta = candidateScore.actual - baselineScore.actual
+    const benefit = candidateScore.direction === "higher" ? delta : -delta
+    const outcome = Math.abs(benefit) < 0.000001 ? "unchanged" : benefit > 0 ? "improved" : "regressed"
+    const key = "strategy-reuse-product:" + lesson._id + ":" + baseline._id + ":" + candidate._id
+    const existing = await ctx.db.query("memories").withIndex("by_owner_category", q => q.eq("ownerKey", ownerKey).eq("category", "strategy-reuse-comparison")).filter(q => q.eq(q.field("key"), key)).first()
+    if (existing) return existing._id
+    const record = { version: "strategy-reuse-product-v1", strategyId: strategy._id, strategyKey: strategy.key, lessonId: lesson._id, lesson: reviewed.lesson.slice(0, 1600), applicability: reviewed.applicability.slice(0, 1000), sourceReceiptId: link._id, handoffAt: link._creationTime, missionId: mission._id, baseline: snapshot(baseline, baselineMission.title, baselineScore.actual), candidate: snapshot(candidate, mission.title, candidateScore.actual), direction: candidateScore.direction, delta, outcome, applied: true, notes: args.notes.trim(), recordedAt: Date.now(), evidenceStatus: "operator-recorded product observations; operator-attested application and comparable conditions", limitation: "Observed association only; matching fields do not prove comparable populations, causal effectiveness, independent revenue verification or strategy promotion." }
+    return ctx.db.insert("memories", { ownerKey, missionId: mission._id, category: "strategy-reuse-comparison", key, value: JSON.stringify(record), confidence: 0.5, source: "lesson-handoff-product-comparison" })
   },
 })

@@ -50,7 +50,7 @@ const roadmap = [
     "n": 8,
     "title": "Verified Learning Engine",
     "status": "partial",
-    "detail": "Reviewed-lesson handoffs can now link to comparable earlier/later runtime-cost or delivery-readiness measurements. Broader verified evidence, repeated comparisons and product outcomes remain open."
+    "detail": "Reviewed-lesson handoffs now link to matched earlier/later cost, readiness and product observations with immutable receipts. Broader verified evidence, repeated comparisons and product outcomes remain open."
   },
   {
     "n": 9,
@@ -160,7 +160,7 @@ function RoadmapPage() {
     <div className="hero-actions"><Link className="primary-button" to="/workflow">Continue guided workflow →</Link><Link className="secondary-button" to="/evidence">Review research evidence →</Link><Link className="secondary-button" to="/incidents">Review recovery →</Link></div>
     <div className="stats-strip compact"><div><strong>{done.length}</strong><span>Completed milestone</span></div><div><strong>{partial.length}</strong><span>Partially implemented</span></div><div><strong>{deferred.length}</strong><span>Deferred / not implemented</span></div></div>
     <div className="glass-card research-card"><div className="panel-title"><span>NEXT WORK · FOUNDATION FIRST</span><span className="status-chip">IN PROGRESS</span></div>
-      <ol><li>Broaden the criterion and benchmark corpus beyond the initial controlled examples and offline artifact interactions.</li><li>Collect representative retrieval evaluations and repeated lesson-reuse outcome comparisons under comparable conditions.</li><li>Connect comparable recorded product outcomes to strategy reuse, then add authenticated ingestion and representative outcome evidence.</li></ol><p><a href="https://github.com/eugenemcmillian3-tech/nexus-forge-/blob/main/docs/FEATURE_FUNCTION_REVIEW.md" target="_blank" rel="noreferrer">Review page functions, components, and remaining capability gaps →</a></p>
+      <ol><li>Broaden the criterion and benchmark corpus beyond the initial controlled examples and offline artifact interactions.</li><li>Collect representative retrieval evaluations and repeated lesson-reuse outcome comparisons under comparable conditions.</li><li>Add authenticated product evidence ingestion and collect representative repeated strategy/outcome comparisons.</li></ol><p><a href="https://github.com/eugenemcmillian3-tech/nexus-forge-/blob/main/docs/FEATURE_FUNCTION_REVIEW.md" target="_blank" rel="noreferrer">Review page functions, components, and remaining capability gaps →</a></p>
       <p>Dependency and resource preflight checks block execution in the backend. Mission Control displays blockers, advisories, and resource availability; authorization and execution wait for ready preflight and incident clearance.</p>
     </div>
     <div className="glass-card research-card"><div className="panel-title"><span>IMPLEMENTED FOUNDATION</span><span className="live-pill">SAVED EVIDENCE</span></div>
