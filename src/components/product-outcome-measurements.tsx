@@ -1,3 +1,4 @@
+import { GitHubProductImport } from "./github-product-import"
 import { useMutation, usePaginatedQuery } from 'convex/react'
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
@@ -40,7 +41,7 @@ export function ProductOutcomeMeasurements({ missionId, missionTitle }: { missio
     finally { setBusy(false) }
   }
   return <div className="glass-card research-card" id="product-outcomes">
-    <div className="panel-title"><span>PRODUCT &amp; BUSINESS OUTCOMES</span><span className="live-pill">OPERATOR-RECORDED</span></div>
+    <div className="panel-title"><span>PRODUCT &amp; BUSINESS OUTCOMES</span><span className="live-pill">OBSERVED EVIDENCE</span></div>
     <p>Record what happened after a product or business experiment: adoption, customers, revenue or task performance. Include the completed observation period, measured population, method and evidence. These records stay separate from delivery readiness and mission completion.</p>
     {!missionId ? <Link className="secondary-button" to="/mission">Select a mission to record its product results →</Link> : <details><summary>Record an observation for {missionTitle ?? 'the selected mission'}</summary><form onSubmit={event => { event.preventDefault(); void save() }}>
       <label htmlFor="product-metric">OUTCOME METRIC</label><select id="product-metric" value={metric} onChange={event => { setMetric(event.target.value as typeof metric); setObserved(''); setTarget('') }}>{metrics.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}</select>
@@ -56,17 +57,18 @@ export function ProductOutcomeMeasurements({ missionId, missionTitle }: { missio
       <label htmlFor="product-notes">LIMITATIONS &amp; CONDITIONS</label><textarea id="product-notes" rows={2} maxLength={1600} value={notes} onChange={event => setNotes(event.target.value)} />
       <button className="secondary-button" disabled={busy || !observed || !target || !sampleSize || !periodStart || !periodEnd || method.trim().length < 12 || !evidence.trim()}>{busy ? 'Saving observation…' : 'Save product outcome observation'}</button>
     </form></details>}
+    {missionId && <GitHubProductImport missionId={missionId} />}
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}
     <label htmlFor="product-history-scope">OUTCOME HISTORY SCOPE</label><select id="product-history-scope" value={selectedMission ? 'mission' : 'all'} onChange={event => setScope(event.target.value)}><option value="mission" disabled={!missionId}>Selected mission</option><option value="all">All my missions</option></select>
     <div aria-live="polite" aria-busy={status === 'LoadingFirstPage' || status === 'LoadingMore'}>
       {status === 'LoadingFirstPage' ? <p>Loading product observations…</p> : results.length === 0 ? <p>No product outcome observations in this scope. A deployed product alone is not evidence of adoption or business success.</p> : results.map(row => <article className="evidence-item" key={row._id}><div>
         <b>{metrics.find(item => item.key === row.metric)?.label ?? row.metric} · {row.actual.toLocaleString(undefined, { maximumFractionDigits: 4 })} {row.unit}</b><p>Target: {row.target} {row.unit} · {row.direction} is better · {row.targetMet ? 'Reported target met' : 'Reported target not met'} · Sample: {row.sampleSize}</p>
         <p>{new Date(row.periodStart).toLocaleString()} → {new Date(row.periodEnd).toLocaleString()}</p><p>{row.method}</p>{row.notes && <p>Limitations: {row.notes}</p>}
-        <details><summary>Inspect evidence and provenance</summary><p>Mission: {row.missionId} · Receipt: {row._id} · Recorded: {new Date(row.recordedAt).toLocaleString()}</p><p>Provenance: {row.provenance}; references were not fetched or independently verified.{row.metric === 'task-success-rate' ? ' Successful tasks: ' + row.observed + ' / ' + row.sampleSize : ''}</p>{row.evidence.map((item, index) => <p key={index}>{item}</p>)}</details>
+        <details><summary>Inspect evidence and provenance</summary><p>Mission: {row.missionId} · Receipt: {row._id} · Recorded: {new Date(row.recordedAt).toLocaleString()}</p><p>Provenance: {row.provenance}; underlying measurement references are not independently verified.{row.metric === 'task-success-rate' ? ' Successful tasks: ' + row.observed + ' / ' + row.sampleSize : ''}</p>{row.importReceipt && <><p>Imported repository: {row.importReceipt.repository} · Commit: {row.importReceipt.commitSha}</p><p>Path: {row.importReceipt.path}</p><p>Blob: {row.importReceipt.blobSha} · Report SHA-256: {row.importReceipt.reportSha256}</p><a href={'https://github.com/' + row.importReceipt.repository + '/blob/' + row.importReceipt.commitSha + '/' + row.importReceipt.path} target="_blank" rel="noreferrer">Inspect pinned source report ↗</a></>}{row.evidence.map((item, index) => <p key={index}>{item}</p>)}</details>
       </div></article>)}
       {status === 'CanLoadMore' && <button className="secondary-button" onClick={() => loadMore(10)}>Load more product outcomes</button>}{status === 'LoadingMore' && <p>Loading more product outcomes…</p>}
     </div>
-    <p className="muted-copy">Target comparisons use operator-entered observations. No automatic analytics ingestion, independent verification, strategy promotion or mission completion occurs. Repeated submissions create additional historical observations.</p>
+    <p className="muted-copy">Target comparisons use operator-entered or repository-authored observations. GitHub imports retain commit-bound source receipts; direct analytics ingestion and independent figure verification remain open. Manual resubmissions create additional observations; identical GitHub imports reuse their receipt.</p>
     <Link className="secondary-button" to="/learning">Continue to learning &amp; comparison review →</Link>
   </div>
 }
