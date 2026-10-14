@@ -1,7 +1,7 @@
 import { paginationOptsValidator, paginationResultValidator } from "convex/server"
-import { productOutcomeFields, productOutcomeInput, evaluateProductOutcome } from "./productOutcomeModel"
+import { productOutcomeFields, productOutcomeInput, productImportReceipt, evaluateProductOutcome } from "./productOutcomeModel"
 import { v } from "convex/values"
-import { mutation, query } from "./_generated/server"
+import { internalMutation, mutation, query } from "./_generated/server"
 import { internal } from "./_generated/api"
 import { requireOperator, requireOwnedMission } from "./permissions"
 import { evaluateDeliveryEvidence } from "./deliveryEvidence"
@@ -41,5 +41,24 @@ export const productOutcomes = query({
       return ctx.db.query("productOutcomes").withIndex("by_mission", q => q.eq("missionId", args.missionId!)).order("desc").paginate(args.paginationOpts)
     }
     return ctx.db.query("productOutcomes").withIndex("by_owner", q => q.eq("ownerKey", ownerKey)).order("desc").paginate(args.paginationOpts)
+  },
+})
+
+
+export const importProductOutcomeInternal = internalMutation({
+  args: { ...productOutcomeInput, receipt: productImportReceipt }, returns: v.id("productOutcomes"),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx)
+    await requireOwnedMission(ctx, args.missionId)
+    const { receipt, ...input } = args
+    const importKey = receipt.repository + ":" + receipt.commitSha + ":" + receipt.path
+    const existing = await ctx.db.query("productOutcomes").withIndex("by_owner_import", q => q.eq("ownerKey", ownerKey).eq("importKey", importKey)).unique()
+    if (existing) {
+      if (existing.importReceipt?.reportSha256 !== receipt.reportSha256 || existing.missionId !== args.missionId) throw new Error("Conflicting immutable report import.")
+      return existing._id
+    }
+    const recordedAt = Date.now()
+    const result = evaluateProductOutcome(input, recordedAt)
+    return ctx.db.insert("productOutcomes", { ...input, ...result, ownerKey, recordedAt, provenance: "github-report", importKey, importReceipt: receipt })
   },
 })
