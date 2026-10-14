@@ -58,3 +58,7 @@ Verified Learning Engine now selects either cost/readiness measurements or struc
 ## Authenticated repository-report ingestion update
 
 Portfolio Intelligence imports product-outcome-v1 JSON reports from the fixed project repository at full commit SHAs. Server-side owned-mission authorization, bounded byte/identity validation, source digests and immutable idempotent receipts distinguish github-report from manual operator-recorded observations. Product reuse snapshots retain that provenance. See [import workflow and limits](GITHUB_PRODUCT_EVIDENCE_IMPORT.md). Repository source verification does not independently certify report figures; direct analytics ingestion remains open.
+
+## Direct managed analytics update
+
+Portfolio Intelligence now retrieves aggregate NEXUS FORGE site traffic from the existing Macaly managed connection and saves owner-private, scope-acknowledged receipts with raw response and SHA-256 identity. The deployed backend was verified against the real provider. See [direct analytics scope and evidence](DIRECT_SITE_ANALYTICS.md). Traffic stays separate from mission-attributed product outcomes; integrations for other deployed products and independent outcome validation remain partial.
