@@ -20,7 +20,7 @@ The nine mission lifecycle checkpoints remain separate from the 16-page product 
 | Launch Readiness (`/readiness`) | URL checks, pass/fail evidence, audit history, canonical delivery evidence | Readiness proves the recorded checks, not complete artifact functionality or user value. |
 | Portfolio (`/portfolio`) | Recommendations, decisions, accept-to-draft continuation, measured summaries | Recommendations are advisory; larger evidence coverage and actual product outcome ingestion remain partial. |
 | Learning (`/learning`) | Measured comparisons, safety evidence, reviewed lesson capture, draft handoff | Operator-entered comparisons remain distinguished from independent verification; broader benchmark coverage is needed. |
-| Capability & Reliability (`/capabilities`) | Recorded mission, verification, incident, experiment, and manual provider signals | Dashboard includes artifact-dom-v1 controlled fixtures and operator-private GitHub-verified CI receipts. It remains an aggregate view, not an uptime monitor or a complete capability benchmark suite. |
+| Capability & Reliability (`/capabilities`) | Recorded mission, verification, incident, experiment, and manual provider signals | Dashboard includes artifact-dom-v2 controlled fixtures and operator-private GitHub-verified CI receipts. It remains an aggregate view, not an uptime monitor or a complete capability benchmark suite. |
 | Incident Center (`/incidents`) | Saved incidents, owner-scoped diagnosis, documented escalation review, recovery evidence | Review never resumes execution automatically; broader failure-mode/recovery validation remains partial. |
 
 ## This change
