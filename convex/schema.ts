@@ -1,3 +1,4 @@
+import { artifactCiState } from "./artifactCiValidators"
 import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
 import { authTables } from "@convex-dev/auth/server"
@@ -13,7 +14,7 @@ export default defineSchema({
   artifactTestRuns: defineTable({
     missionId: v.id("missions"), artifactId: v.id("artifacts"), operatorId: v.string(),
     runnerVersion: v.string(), missionSnapshot: v.string(), artifactSnapshot: v.string(),
-    criteria: v.array(v.string()),
+    ci: v.optional(artifactCiState), criteria: v.array(v.string()),
     plan: v.array(v.object({ criterionIndex: v.number(), steps: v.array(v.object({ action: v.union(v.literal("fill"), v.literal("click"), v.literal("assertText"), v.literal("assertValue"), v.literal("assertVisible"), v.literal("assertInvalid")), selector: v.string(), value: v.string() })) })),
     results: v.array(v.array(v.object({ status: v.union(v.literal("pass"), v.literal("fail"), v.literal("not_run")), detail: v.string() }))),
     passed: v.number(), failed: v.number(), notRun: v.number(), covered: v.number(), total: v.number(), allPassed: v.boolean(), createdAt: v.number(),
