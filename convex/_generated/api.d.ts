@@ -26,6 +26,7 @@ import type * as macaly from "../macaly.js";
 import type * as memory from "../memory.js";
 import type * as missionRunner from "../missionRunner.js";
 import type * as missions from "../missions.js";
+import type * as missionSources from "../missionSources.js";
 import type * as permissions from "../permissions.js";
 import type * as portfolio from "../portfolio.js";
 import type * as readiness from "../readiness.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   memory: typeof memory;
   missionRunner: typeof missionRunner;
   missions: typeof missions;
+  missionSources: typeof missionSources;
   permissions: typeof permissions;
   portfolio: typeof portfolio;
   readiness: typeof readiness;
