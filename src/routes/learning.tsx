@@ -29,7 +29,7 @@ const initialMetrics: MetricDraft[] = [
 
 function LearningEnginePage() {
   const recordExperiment = useMutation(api.learningEngine.recordExperiment);
-  const captureReviewedLesson = useMutation(api.learningEngine.captureReviewedLesson);
+  const captureReviewedLesson = useMutation(api.memory.remember);
   const savedRows = useQuery(api.learningEngine.listExperiments, {});
   const manifestRows = useQuery(api.manifestIntelligence.listStrategies, {});
   const [name, setName] = useState("Strategy comparison");
@@ -58,13 +58,17 @@ function LearningEnginePage() {
     if (references.length < 2) { setLessonMessage("Add at least two evidence references on separate lines."); return; }
     setLessonBusy(true);
     try {
-      const result = await captureReviewedLesson({
+      await captureReviewedLesson({
+        category: "learning-lesson",
+        key: "reviewed-lesson-pending",
+        value: lessonText,
+        confidence: 0.6,
+        source: "operator-reviewed-manifest-learning",
         manifestStrategyId: lessonStrategyId as any,
-        lesson: lessonText,
         applicability: lessonApplicability,
         evidenceReferences: references,
       });
-      setLessonMessage(`Saved reviewed lesson for ${result.strategyKey}. Future mission planning can retrieve it as advisory context.`);
+      setLessonMessage("Saved reviewed lesson. Future mission planning can retrieve it as advisory context.");
       setLessonText("");
       setLessonApplicability("");
       setLessonEvidence("");
