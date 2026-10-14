@@ -7,8 +7,8 @@ const identity = (subject: string) => ({ subject, issuer: "https://nexus-forge.t
 async function fixture(status: "escalated" | "open" = "escalated") {
   const t = convexTest(schema, modules)
   const ids = await t.run(async ctx => {
-    const missionId = await ctx.db.insert("missions", { title: "Recovery", mission: "Review an actual failure", autonomy: "guided", budget: 0, status: "blocked", completion: 0, approved: true, ownerKey: "owner-a" })
-    const runId = await ctx.db.insert("missionRuns", { missionId, startedAt: 1, deadlineAt: 2, maxRetries: 2, retries: 2, status: "escalated", currentStage: "timeout_escalation", nextActionAt: 1 })
+    const missionId = await ctx.db.insert("missions", { title: "Recovery", mission: "Review an actual failure", autonomy: "guided", budget: 0, status: "review", completion: 0, approved: true, ownerKey: "owner-a" })
+    const runId = await ctx.db.insert("missionRuns", { missionId, startedAt: 1, deadlineAt: 2, maxRetries: 2, retries: 2, status: "blocked", currentStage: "timeout_escalation", nextActionAt: 1 })
     const incidentId = await ctx.db.insert("incidents", { missionId, runId, kind: "test", stage: "timeout", message: "Execution timeout", attempts: 2, status, createdAt: 1 })
     return { missionId, runId, incidentId }
   })
@@ -35,8 +35,8 @@ describe("documented escalation recovery", () => {
     const data = await t.run(async ctx => ({ incident: await ctx.db.get(incidentId), run: await ctx.db.get(runId), mission: await ctx.db.get(missionId), audit: await ctx.db.query("auditEvents").collect() }))
     expect(data.incident).toMatchObject({ status: "resolved", ...notes })
     expect(data.incident?.resolvedAt).toBeGreaterThan(0)
-    expect(data.run?.status).toBe("escalated")
-    expect(data.mission?.status).toBe("blocked")
+    expect(data.run?.status).toBe("blocked")
+    expect(data.mission?.status).toBe("review")
     expect(data.audit).toHaveLength(1)
     expect(data.audit[0]).toMatchObject({ missionId, runId, eventType: "incident:human_review_resolved" })
   })
