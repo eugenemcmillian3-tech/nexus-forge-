@@ -82,3 +82,48 @@ describe('actual Council memory selection provenance', () => {
     await expect(t.withIdentity(identity('owner-b')).mutation(api.memory.evaluateCouncilMemory, { receiptId: receipt._id, expectedIds: [selected], rationale: 'Relevant expected context' })).rejects.toThrow()
   })
 })
+
+describe('captured advisory policy comparisons', () => {
+  it('scores the same saved labels, preserves snapshots and deduplicates comparisons', async () => {
+    const { t, owner, missionId } = await fixture()
+    const target = await t.run(async ctx => {
+      const id = await ctx.db.insert('memories', { ownerKey: 'owner-a', category: 'learning-lesson', key: 'bounded-product-experiment', value: 'Unique archived guidance: reviewed evidence bounded product experiment.', confidence: 0.6, source: 'test' })
+      for (let i = 0; i < 20; i++) await ctx.db.insert('memories', { ownerKey: 'owner-a', category: 'learning-lesson', key: 'unrelated-' + i, value: 'Unrelated gardening information.', confidence: 0.5, source: 'test' })
+      return id
+    })
+    await owner.action(api.forge.orchestrate, { missionId, mission: 'ignored' })
+    const receipt = (await owner.query(api.memory.councilMemoryHistory, { missionId }))[0]
+    expect(receipt.selected.map(row => row.memoryId)).not.toContain(target)
+    expect(receipt.candidate?.selected.map(row => row.memoryId)).toContain(target)
+    expect(receipt.candidate?.selected).toHaveLength(receipt.selected.length)
+    expect(vi.mocked(callAiProvider).mock.calls[0][1]).not.toContain('Unique archived guidance')
+    const evaluationId = await owner.mutation(api.memory.evaluateCouncilMemory, { receiptId: receipt._id, expectedIds: [target], rationale: 'The archived guidance matches the canonical mission.' })
+    await t.run(ctx => ctx.db.patch(target, { value: 'Changed after capture' }))
+    const id = await owner.mutation(api.memory.compareCouncilMemoryPolicy, { evaluationId })
+    expect(await owner.mutation(api.memory.compareCouncilMemoryPolicy, { evaluationId })).toBe(id)
+    const comparisons = await owner.query(api.memory.councilPolicyComparisons, { receiptId: receipt._id })
+    expect(comparisons).toHaveLength(1)
+    expect(comparisons[0].baseline).toMatchObject({ hits: 0, recall: 0 })
+    expect(comparisons[0].candidate).toMatchObject({ hits: 1, recall: 1 })
+    expect(comparisons[0].recallDelta).toBe(1)
+    const omitted = receipt.selected.find(row => !receipt.candidate!.selected.some(item => item.memoryId === row.memoryId))!
+    const regressionLabels = await owner.mutation(api.memory.evaluateCouncilMemory, { receiptId: receipt._id, expectedIds: [omitted.memoryId], rationale: 'This baseline memory remains relevant under another explicit judgment.' })
+    await owner.mutation(api.memory.compareCouncilMemoryPolicy, { evaluationId: regressionLabels })
+    const regression = (await owner.query(api.memory.councilPolicyComparisons, { receiptId: receipt._id })).find(row => row.evaluationId === regressionLabels)!
+    expect(regression.recallDelta).toBe(-1)
+    expect(regression.precisionDelta).toBeLessThan(0)
+    expect((await owner.query(api.memory.councilMemoryHistory, { missionId }))[0]).toEqual(receipt)
+    await expect(t.mutation(api.memory.compareCouncilMemoryPolicy, { evaluationId })).rejects.toThrow()
+    await expect(t.withIdentity(identity('owner-b')).mutation(api.memory.compareCouncilMemoryPolicy, { evaluationId })).rejects.toThrow()
+    await expect(t.withIdentity(identity('owner-b')).query(api.memory.councilPolicyComparisons, { receiptId: receipt._id })).rejects.toThrow()
+  })
+  it('does not reconstruct a candidate for historical receipts', async () => {
+    const { t, owner, missionId, selected } = await fixture()
+    await owner.action(api.forge.orchestrate, { missionId, mission: 'ignored' })
+    const receipt = (await owner.query(api.memory.councilMemoryHistory, { missionId }))[0]
+    await t.run(ctx => ctx.db.patch(receipt._id, { candidate: undefined }))
+    const evaluationId = await owner.mutation(api.memory.evaluateCouncilMemory, { receiptId: receipt._id, expectedIds: [selected], rationale: 'Saved relevance label for historical context.' })
+    await expect(owner.mutation(api.memory.compareCouncilMemoryPolicy, { evaluationId })).rejects.toThrow()
+    expect(await owner.query(api.memory.councilPolicyComparisons, { receiptId: receipt._id })).toEqual([])
+  })
+})

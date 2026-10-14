@@ -4,8 +4,10 @@ import { Link } from '@tanstack/react-router'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 
-function EvaluateSelection({ receiptId }: { receiptId: Id<'councilMemoryReceipts'> }) {
+function EvaluateSelection({ receiptId, selectedIds, candidateAvailable }: { receiptId: Id<'councilMemoryReceipts'>; selectedIds: Id<'memories'>[]; candidateAvailable: boolean }) {
   const evaluate = useMutation(api.memory.evaluateCouncilMemory)
+  const compare = useMutation(api.memory.compareCouncilMemoryPolicy)
+  const comparisons = useQuery(api.memory.councilPolicyComparisons, candidateAvailable ? { receiptId } : 'skip')
   const history = useQuery(api.memory.councilMemoryEvaluations, { receiptId })
   const [expected, setExpected] = useState(''), [rationale, setRationale] = useState('')
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
@@ -13,6 +15,12 @@ function EvaluateSelection({ receiptId }: { receiptId: Id<'councilMemoryReceipts
     setBusy(true); setError(''); setMessage('')
     try { const id = await evaluate({ receiptId, expectedIds: expected.split(/\s+/).filter(Boolean) as Id<'memories'>[], rationale: rationale.trim() }); setMessage('Saved Council selection evaluation · ' + id) }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not evaluate this selection. Review expected memory receipts and retry.') }
+    finally { setBusy(false) }
+  }
+  const compareSaved = async (evaluationId: Id<'councilMemoryEvaluations'>) => {
+    setBusy(true); setError(''); setMessage('')
+    try { const id = await compare({ evaluationId }); setMessage('Saved policy comparison · ' + id) }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not compare captured policies. Retry after reviewing the label receipt.') }
     finally { setBusy(false) }
   }
   return <details><summary>Evaluate this captured selection</summary>
@@ -24,7 +32,8 @@ function EvaluateSelection({ receiptId }: { receiptId: Id<'councilMemoryReceipts
     </form>
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}
     <p className="muted-copy">Precision = labeled relevant selected IDs / unique selected IDs. Recall = selected relevant IDs / expected IDs. Multiple prompt channels count each memory once. No reciprocal-rank score is assigned to these separate context channels.</p>
-    {history === undefined ? <p>Loading evaluations…</p> : history.length === 0 ? <p>No relevance evaluation saved for this context yet.</p> : history.map(row => <p key={row._id}>{row.hits} relevant hits / {row.selectedCount} selected · Precision {(row.precision * 100).toFixed(0)}% · Recall {(row.recall * 100).toFixed(0)}% · {row.rationale} · {new Date(row.recordedAt).toLocaleString()}</p>)}
+    {history === undefined ? <p>Loading evaluations…</p> : history.length === 0 ? <p>No relevance evaluation saved for this context yet.</p> : history.map(row => <div key={row._id}><p>{row.hits} relevant hits / {row.selectedCount} selected · Precision {(row.precision * 100).toFixed(0)}% · Recall {(row.recall * 100).toFixed(0)}% · {row.rationale} · {new Date(row.recordedAt).toLocaleString()}</p><p>Expected IDs: {row.expectedIds.join(', ')}</p><p>Missed expected IDs: {row.expectedIds.filter(id => !selectedIds.includes(id)).join(', ') || 'None under these labels'}</p>{candidateAvailable && <button type="button" className="secondary-button" disabled={busy} onClick={() => void compareSaved(row._id)}>Compare candidate using these saved labels</button>}</div>)}
+    {candidateAvailable ? <><h4>Saved policy comparisons</h4><p className="muted-copy">Both selections use the same captured source window, unique-memory budget and expected IDs. Lexical matching is experimental and has never replaced the planner's context.</p>{comparisons === undefined ? <p>Loading comparisons…</p> : comparisons.length === 0 ? <p>No candidate comparison saved for this receipt yet. Save relevance labels above, then compare using those labels.</p> : comparisons.map(item => <div key={item._id}><p>Label receipt: {item.evaluationId} · {item.expectedIds.length} expected memories</p><table><thead><tr><th>Policy</th><th>Hits / selected</th><th>Precision</th><th>Recall</th></tr></thead><tbody><tr><td>Current captured policy</td><td>{item.baseline.hits} / {item.baseline.selectedCount}</td><td>{(item.baseline.precision * 100).toFixed(1)}%</td><td>{(item.baseline.recall * 100).toFixed(1)}%</td></tr><tr><td>Lexical candidate</td><td>{item.candidate.hits} / {item.candidate.selectedCount}</td><td>{(item.candidate.precision * 100).toFixed(1)}%</td><td>{(item.candidate.recall * 100).toFixed(1)}%</td></tr></tbody></table><p>Candidate minus current: precision {(item.precisionDelta * 100).toFixed(1)} percentage points · recall {(item.recallDelta * 100).toFixed(1)} percentage points</p><p>Comparison receipt: {item._id} · {new Date(item.recordedAt).toLocaleString()}</p></div>)}</> : <p className="muted-copy">No candidate was captured for this historical receipt. Candidate comparisons become available on future planning attempts; current data will not be substituted for missing history.</p>}
   </details>
 }
 
@@ -43,9 +52,10 @@ export function CouncilMemoryInspection({ missionId }: { missionId: Id<'missions
         <h4>Exact learning context</h4><pre className="whitespace-pre-wrap break-words">{row.learningContext}</pre>
         <h4>Exact adaptive preflight context</h4><pre className="whitespace-pre-wrap break-words">{row.preflightContext}</pre>
       </details>
-      <EvaluateSelection receiptId={row._id} />
+      {row.candidate && <details><summary>Inspect advisory candidate selection · not sent to Council</summary><p>{row.candidate.policyVersion} · Budget {row.candidate.budget} · Terms: {row.candidate.missionTerms.join(', ') || 'No indexed mission terms; recency tie-breaking only'}</p><p>Distinct mission-term overlap ranks eligible memories in the same newest-80 source window, with recency then ID tie-breaking. At most 40 mission terms are used. This is a shadow candidate, not live planning context.</p>{row.candidate.selected.length === 0 ? <p>Candidate selected no memories under this budget.</p> : row.candidate.selected.map(item => <div key={item.memoryId}><strong>{item.key}</strong><p>Receipt {item.memoryId} · {item.category} · {item.source}</p><pre className="whitespace-pre-wrap break-words">{item.value}</pre></div>)}</details>}
+      <EvaluateSelection receiptId={row._id} selectedIds={row.selected.map(item => item.memoryId)} candidateAvailable={!!row.candidate} />
     </div></article>)}
-    <p className="muted-copy">Latest 10 context receipts and latest 20 evaluations per receipt. Captured text stays immutable; relevance labels are separate saved observations. Evaluation never changes selection policy, mission approval or completion.</p>
+    <p className="muted-copy">Latest 10 context receipts and latest 20 evaluations per receipt. Captured text stays immutable; relevance labels are separate saved observations. Candidate comparisons reuse saved relevance labels and never change live selection policy, mission approval or completion.</p>
     <Link className="secondary-button" to="/evidence">Inspect saved memory receipts in Research &amp; Memory →</Link>
   </div>
 }
