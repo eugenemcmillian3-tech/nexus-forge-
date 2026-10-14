@@ -20,8 +20,9 @@ export function verifyBenchmarkMetadata(runId: string, run: any, jobs: any): Ben
   if (!/^[0-9a-f]{40}$/i.test(run?.head_sha ?? '') || !Number.isInteger(run?.run_attempt) || run.run_attempt < 1) throw new Error('GitHub did not return a valid commit and attempt.')
   if (!Array.isArray(jobs?.jobs) || jobs.total_count > 100) throw new Error('The job list is incomplete; no benchmark receipt was recorded.')
   const job = jobs.jobs.find((item: any) => item.name === benchmarkSuite.jobName && String(item.run_id) === runId)
-  if (!job || job.status !== 'completed' || typeof job.conclusion !== 'string' || !Array.isArray(job.steps)) throw new Error('This run has no completed artifact-dom-v2 benchmark job.')
+  if (!job || job.status !== 'completed' || typeof job.conclusion !== 'string' || !Array.isArray(job.steps)) throw new Error('This run has no completed artifact-dom-v3 benchmark job.')
   const step = job.steps.find((item: any) => item.name === benchmarkSuite.stepName)
-  const outcome = job.conclusion === 'success' && step?.conclusion === 'success' ? 'passed' : step?.conclusion === 'failure' ? 'failed' : 'not_run'
+  const chromiumStep = job.steps.find((item: any) => item.name === benchmarkSuite.chromiumStepName)
+  const outcome = job.conclusion === 'success' && step?.conclusion === 'success' && chromiumStep?.conclusion === 'success' ? 'passed' : step?.conclusion === 'failure' || chromiumStep?.conclusion === 'failure' ? 'failed' : 'not_run'
   return { repository: benchmarkSuite.repository, runId, runUrl, commitSha: run.head_sha.toLowerCase(), attempt: run.run_attempt, workflowPath: benchmarkSuite.workflowPath, jobName: benchmarkSuite.jobName, jobConclusion: job.conclusion, runConclusion: String(run.conclusion ?? 'unknown').slice(0, 40), suiteVersion: benchmarkSuite.version, outcome }
 }
