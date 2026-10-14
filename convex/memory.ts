@@ -52,7 +52,30 @@ export const getLearningContext = internalQuery({
     if (!mission) throw new Error("Mission not found")
     const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).order("desc").take(60)
     const outcomes = rows.filter(row => row.category === "verification-outcome").slice(0, 10).map(row => ({ value: row.value, confidence: row.confidence, source: row.source }))
-    const lessons = rows.filter(row => row.category === "learning-lesson" || row.category === "operational-recovery").slice(0, 10).map(row => ({ value: row.value, confidence: row.confidence, source: row.source }))
+    const lessons = rows.filter(row => row.category === "learning-lesson" || row.category === "operational-recovery").slice(0, 10).map(row => {
+      let value = row.value
+      if (row.category === "learning-lesson" && row.source === "operator-reviewed-manifest-learning") {
+        try {
+          const parsed = JSON.parse(row.value) as {
+            lesson?: string; applicability?: string; strategyKey?: string;
+            evidenceReferences?: string[]; reviewStatus?: string; limitations?: string;
+          }
+          if (parsed.reviewStatus === "operator-reviewed" && typeof parsed.lesson === "string") {
+            value = [
+              `REVIEW STATUS: ${parsed.reviewStatus}`,
+              `LESSON: ${parsed.lesson}`,
+              `APPLICABILITY: ${parsed.applicability || "Not specified"}`,
+              `LINKED MANIFEST STRATEGY: ${parsed.strategyKey || "Not available"}`,
+              `OPERATOR-PROVIDED EVIDENCE REFERENCES: ${(parsed.evidenceReferences ?? []).join("; ") || "None"}`,
+              `LIMITATIONS: ${parsed.limitations || "Operator-provided evidence is not independent verification or causal proof."}`,
+            ].join("\\n")
+          }
+        } catch {
+          value = "Reviewed lesson record could not be parsed; do not rely on it without operator review."
+        }
+      }
+      return { value, confidence: row.confidence, source: row.source }
+    })
     return { ownerKey: mission.ownerKey, outcomes, lessons }
   },
 })
