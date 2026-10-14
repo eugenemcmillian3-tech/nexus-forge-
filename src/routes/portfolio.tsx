@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { ProductOutcomeMeasurements } from '../components/product-outcome-measurements'
 import { PortfolioIntelligence } from '../components/portfolio-intelligence'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useActiveMission } from '../hooks/use-active-mission'
@@ -6,8 +7,8 @@ import { useActiveMission } from '../hooks/use-active-mission'
 export const Route = createFileRoute('/portfolio')({ component: PortfolioPage })
 
 function PortfolioPage() {
-  const { setMissionId } = useActiveMission()
+  const { setMissionId, missionId, mission } = useActiveMission()
   return <WorkspaceLayout title="Portfolio Intelligence" eyebrow="OPERATIONS / MISSION HISTORY & DECISIONS">
-    <section className="workspace"><PortfolioIntelligence ownerKey="local-workspace" onSelect={id => { setMissionId(id as any) }} /><div className="hero-actions"><Link className="secondary-button" to="/mission">Open Mission Console →</Link></div></section>
+    <section className="workspace"><PortfolioIntelligence ownerKey="local-workspace" onSelect={id => { setMissionId(id as any) }} /><ProductOutcomeMeasurements key={missionId ?? "all"} missionId={missionId} missionTitle={mission?.title} /><div className="hero-actions"><Link className="secondary-button" to="/mission">Open Mission Console →</Link></div></section>
   </WorkspaceLayout>
 }
