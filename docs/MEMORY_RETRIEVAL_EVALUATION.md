@@ -26,7 +26,7 @@ Receipts retain version lesson-retrieval-v1, owner, scope, query, rationale, tim
 
 Saved evaluations use the existing private memories table under retrieval-evaluation and an owner/category index. History shows the latest 20 evaluations. No external publication or model request occurs. Generic public memory writes cannot create this reserved receipt category. Evaluation records are excluded before sampling Council learning and adaptive-preflight context so they do not displace useful lessons.
 
-Council planning still uses its separate recent-history window. This tool measures memory-browser retrieval, not the actual Council prompt selection and not whether reusing a strategy caused better outcomes. Strategy adoption, comparable subsequent outcomes, broader relevance corpora and repeated-run analysis remain next work.
+Council planning still uses its separate recent-history window. This tool measures memory-browser retrieval, not the actual Council prompt selection and not whether reusing a strategy caused better outcomes. Reviewed-lesson application and comparable subsequent cost/readiness outcomes can now be recorded separately; see [strategy reuse comparisons](STRATEGY_REUSE_OUTCOMES.md). Broader relevance corpora, causal effectiveness, business outcomes and repeated-run analysis remain open.
 
 Nothing in this feature approves missions, promotes strategies, dispatches delivery, or changes completion.
 
