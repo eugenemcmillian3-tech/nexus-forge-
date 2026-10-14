@@ -3,13 +3,14 @@ import { useAction, useMutation, useQuery } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
+import { WorkspaceLoading } from '../components/workspace-loading'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useActiveMission } from '../hooks/use-active-mission'
 
 export const Route = createFileRoute('/incidents')({ component: IncidentsPage })
 
-function IncidentsPage() {
-  const { missionId, mission } = useActiveMission()
+export function IncidentsPage() {
+  const { evidenceLoading, missionId, mission } = useActiveMission()
   const incidents = useQuery(api.incidents.list, missionId ? { missionId } : 'skip')
   const diagnose = useAction(api.incidents.diagnose)
   const reviewEscalated = useMutation(api.incidents.reviewEscalated)
@@ -39,6 +40,7 @@ function IncidentsPage() {
     } finally { setBusyId(null) }
   }
 
+  if (evidenceLoading) return <WorkspaceLoading title="Incident Center" />
   return <WorkspaceLayout title="Incident Center" eyebrow="OPERATIONS / DIAGNOSIS & RECOVERY">
     <section className="workspace">
       <div className="glass-card research-card">
