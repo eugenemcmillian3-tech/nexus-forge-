@@ -1,17 +1,17 @@
 import { v } from "convex/values"
 import { action, internalAction, internalMutation, internalQuery, query } from "./_generated/server"
 import { internal } from "./_generated/api"
-import { callAiProvider, COUNCIL_MODELS } from "./aiProvider"
+import { COUNCIL_MODELS } from "./aiProvider"
+import { callManagedAi } from "./providerAccounting"
+import type { Id } from "./_generated/dataModel"
 import { requireOwnedMission } from "./permissions"
 
 const agents = [["Vision Architect", "Mission mapping"], ["Research Oracle", "Evidence & market"], ["Systems Engineer", "Architecture"], ["Builder Agent", "Code & tests"], ["Creative Director", "Brand & media"], ["Critic Agent", "Verification"]] as const
 const agentShape = v.object({ _id: v.id("agentRuns"), _creationTime: v.number(), missionId: v.id("missions"), agent: v.string(), role: v.string(), status: v.string(), progress: v.number(), note: v.string() })
 
-async function askCouncil(prompt: string, maxTokens = 700, model: keyof typeof COUNCIL_MODELS = "planner", ctx?: any, ownerKey?: string): Promise<string> {
-  const recordUsage = ctx && ownerKey ? async (usage: any) => {
-    await ctx.runMutation((internal as any).manifestIntelligence.recordProviderUsageInternal, { ownerKey, ...usage })
-  } : undefined
-  return await callAiProvider(COUNCIL_MODELS[model], prompt, maxTokens, recordUsage)
+async function askCouncil(prompt: string, maxTokens = 700, model: keyof typeof COUNCIL_MODELS = "planner", ctx?: any, ownerKey?: string, missionId?: Id<"missions">, stage = "council-" + model, missionRunId?: Id<"missionRuns">): Promise<string> {
+  if (!ctx || !ownerKey || !missionId) throw new Error("Council accounting context required")
+  return callManagedAi(ctx, { ownerKey, missionId, ...(missionRunId ? { missionRunId } : {}), stage, role: COUNCIL_MODELS[model], prompt, maxTokens })
 }
 
 export const listRuns = query({ args: { missionId: v.id("missions") }, returns: v.array(agentShape), handler: async (ctx, args) => { await requireOwnedMission(ctx, args.missionId); return await ctx.db.query("agentRuns").withIndex("by_mission", q => q.eq("missionId", args.missionId)).collect() } })
@@ -24,10 +24,10 @@ export const recordLearningLesson = internalMutation({ args: { missionId: v.id("
 
 export const orchestrate = action({ args: { missionId: v.id("missions"), mission: v.string() }, returns: v.object({ ok: v.boolean(), summary: v.string() }), handler: async (ctx, args) => { const operator = await ctx.runQuery(internal.permissions.currentOperator, {}); if (!operator) throw new Error("Authenticated operator session required"); const missionRecord = await ctx.runQuery(internal.missions.getByIdInternal, { id: args.missionId }); if (!missionRecord || missionRecord.ownerKey !== operator) throw new Error("Mission not found or access denied"); return await ctx.runAction(internal.forge.orchestrateInternal, { missionId: args.missionId, mission: missionRecord.mission }) } })
 
-const runAgent = async (ctx: any, missionId: any, ownerKey: string, agent: string, role: string, prompt: string, model: keyof typeof COUNCIL_MODELS) => {
+const runAgent = async (ctx: any, missionId: any, ownerKey: string, agent: string, role: string, prompt: string, model: keyof typeof COUNCIL_MODELS, missionRunId?: Id<"missionRuns">) => {
   await ctx.runMutation(internal.forge.updateRun, { missionId, agent, status: "running", progress: 20, note: `Running ${role} in coordinated wave using ${COUNCIL_MODELS[model]}.` })
   try {
-    const finding = await askCouncil(prompt, 650, model, ctx, ownerKey)
+    const finding = await askCouncil(prompt, 650, model, ctx, ownerKey, missionId, "council-" + agent, missionRunId)
     await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId, agent, message: finding, score: 0.8, severity: "verified" })
     await ctx.runMutation(internal.forge.updateRun, { missionId, agent, status: "complete", progress: 100, note: finding.slice(0, 220) })
     return { agent, finding, ok: true }
@@ -40,7 +40,7 @@ const runAgent = async (ctx: any, missionId: any, ownerKey: string, agent: strin
 }
 
 export const orchestrateInternal = internalAction({
-  args: { missionId: v.id("missions"), mission: v.string() }, returns: v.object({ ok: v.boolean(), summary: v.string() }),
+  args: { missionId: v.id("missions"), mission: v.string(), missionRunId: v.optional(v.id("missionRuns")) }, returns: v.object({ ok: v.boolean(), summary: v.string() }),
   handler: async (ctx, args) => {
     const missionRecord = await ctx.runQuery(internal.missions.getByIdInternal, { id: args.missionId })
     if (!missionRecord) throw new Error("Mission not found")
@@ -65,26 +65,26 @@ CITATIONS: ${row.citations.join(", ") || "none"}`).join("\n\n")}${synthesis ? `\
       const preflightContext = `ADAPTIVE PREFLIGHT — derived from persisted verified history; advisory only:\nRISKS:\n${adaptive.riskSignals.map(s => `- [${s.confidence}] ${s.value}`).join("\n") || "- No prior risk signal found."}\nREUSE PATTERNS:\n${adaptive.reusePatterns.map(s => `- [${s.confidence}] ${s.value}`).join("\n") || "- None found."}\nREQUIRED EVIDENCE:\n${adaptive.requiredEvidence.map(x => `- ${x}`).join("\n")}\nRECOVERY GUIDANCE:\n${adaptive.recoveryGuidance.map(x => `- ${x}`).join("\n")}\nRATIONALE:\n${adaptive.rationale.map(x => `- ${x}`).join("\n")}`
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Adaptive Preflight", message: preflightContext, score: adaptive.riskSignals.length ? 0.85 : 0.8, severity: "verified" })
       const memoryReceiptId = await ctx.runMutation(internal.memory.recordCouncilMemorySelection, { missionId: args.missionId, missionText: args.mission, selected: memorySelection.selected, ...(memorySelection.candidate ? { candidate: memorySelection.candidate } : {}), corpusCutoff: memorySelection.corpusCutoff, learningContext, preflightContext })
-      const planner = await askCouncil(`You are the NEXUS FORGE Council Planner. Produce a governed execution plan. Never invent research. Clearly label unverified assumptions. Return OBJECTIVE, MILESTONES with acceptance evidence, RISKS with mitigation, AGENT ASSIGNMENTS, DEPENDENCY WAVES, HANDOFFS, NEXT ACTION, LEARNING INFLUENCE, APPROVAL GATE. Preserve human approval. Adaptive preflight is advisory and must not authorize execution.\n\nMission:\n${args.mission}\n\n${researchContext}\n\n${learningContext}\n\n${preflightContext}`, 1400, "planner", ctx, missionRecord.ownerKey)
+      const planner = await askCouncil(`You are the NEXUS FORGE Council Planner. Produce a governed execution plan. Never invent research. Clearly label unverified assumptions. Return OBJECTIVE, MILESTONES with acceptance evidence, RISKS with mitigation, AGENT ASSIGNMENTS, DEPENDENCY WAVES, HANDOFFS, NEXT ACTION, LEARNING INFLUENCE, APPROVAL GATE. Preserve human approval. Adaptive preflight is advisory and must not authorize execution.\n\nMission:\n${args.mission}\n\n${researchContext}\n\n${learningContext}\n\n${preflightContext}`, 1400, "planner", ctx, missionRecord.ownerKey, args.missionId, "council-plan", args.missionRunId)
       await ctx.runMutation(internal.memory.markCouncilPlannerResponded, { receiptId: memoryReceiptId })
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Council Planner", message: `Model ${COUNCIL_MODELS.planner}\n${planner}`, score: 0.9, severity: "verified" })
       const common = `Mission:\n${args.mission}\n\n${researchContext}\n\n${learningContext}\n\n${preflightContext}\n\nCouncil Plan:\n${planner}`
       const wave1 = await Promise.all([
-        runAgent(ctx, args.missionId, missionRecord.ownerKey, "Vision Architect", "Mission mapping", `You are the Vision Architect. Wave 1 independent analysis. Define objective decomposition, measurable acceptance criteria, and decision boundaries. Do not assume findings from other agents. ${common}`, "wave1"),
-        runAgent(ctx, args.missionId, missionRecord.ownerKey, "Research Oracle", "Evidence & market", `You are the Research Oracle. Wave 1 independent analysis. Identify evidence needs, research gaps, and source-verification requirements. Do not invent sources. ${common}`, "wave1"),
-        runAgent(ctx, args.missionId, missionRecord.ownerKey, "Systems Engineer", "Architecture", `You are the Systems Engineer. Wave 1 independent analysis. Define architecture, dependencies, interfaces, and technical risks. ${common}`, "wave1"),
+        runAgent(ctx, args.missionId, missionRecord.ownerKey, "Vision Architect", "Mission mapping", `You are the Vision Architect. Wave 1 independent analysis. Define objective decomposition, measurable acceptance criteria, and decision boundaries. Do not assume findings from other agents. ${common}`, "wave1", args.missionRunId),
+        runAgent(ctx, args.missionId, missionRecord.ownerKey, "Research Oracle", "Evidence & market", `You are the Research Oracle. Wave 1 independent analysis. Identify evidence needs, research gaps, and source-verification requirements. Do not invent sources. ${common}`, "wave1", args.missionRunId),
+        runAgent(ctx, args.missionId, missionRecord.ownerKey, "Systems Engineer", "Architecture", `You are the Systems Engineer. Wave 1 independent analysis. Define architecture, dependencies, interfaces, and technical risks. ${common}`, "wave1", args.missionRunId),
       ])
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Coordinator", message: `Wave 1 completed. Independent outputs are now available for downstream handoff.\n${wave1.map(x => `${x.agent}: ${x.finding}`).join("\n\n")}`, score: wave1.every(x => x.ok) ? 0.9 : 0.55, severity: wave1.every(x => x.ok) ? "verified" : "warning" })
       const wave1Context = wave1.map(x => `${x.agent}: ${x.finding}`).join("\n\n")
       const wave2 = await Promise.all([
-        runAgent(ctx, args.missionId, missionRecord.ownerKey, "Builder Agent", "Code & tests", `You are the Builder Agent. Wave 2 downstream handoff. Use Wave 1 outputs to define implementation, test strategy, and artifact requirements. Flag contradictions rather than silently resolving them. ${common}\n\nWAVE 1 HANDOFF:\n${wave1Context}`, "wave2"),
-        runAgent(ctx, args.missionId, missionRecord.ownerKey, "Creative Director", "Brand & media", `You are the Creative Director. Wave 2 downstream handoff. Use Wave 1 outputs to define UX/content requirements and consistency checks. Flag contradictions. ${common}\n\nWAVE 1 HANDOFF:\n${wave1Context}`, "wave2"),
+        runAgent(ctx, args.missionId, missionRecord.ownerKey, "Builder Agent", "Code & tests", `You are the Builder Agent. Wave 2 downstream handoff. Use Wave 1 outputs to define implementation, test strategy, and artifact requirements. Flag contradictions rather than silently resolving them. ${common}\n\nWAVE 1 HANDOFF:\n${wave1Context}`, "wave2", args.missionRunId),
+        runAgent(ctx, args.missionId, missionRecord.ownerKey, "Creative Director", "Brand & media", `You are the Creative Director. Wave 2 downstream handoff. Use Wave 1 outputs to define UX/content requirements and consistency checks. Flag contradictions. ${common}\n\nWAVE 1 HANDOFF:\n${wave1Context}`, "wave2", args.missionRunId),
       ])
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Coordinator", message: `Wave 2 completed. Builder and Creative Director consumed Wave 1 handoffs.\n${wave2.map(x => `${x.agent}: ${x.finding}`).join("\n\n")}`, score: wave2.every(x => x.ok) ? 0.9 : 0.55, severity: wave2.every(x => x.ok) ? "verified" : "warning" })
       const wave2Context = wave2.map(x => `${x.agent}: ${x.finding}`).join("\n\n")
       const specialistWavesSucceeded = [...wave1, ...wave2].every(x => x.ok)
       await ctx.runMutation(internal.forge.updateRun, { missionId: args.missionId, agent: "Critic Agent", status: "running", progress: 60, note: `Reconciling coordinated waves with ${COUNCIL_MODELS.critic}.` })
-      const critic = await askCouncil(`You are the NEXUS FORGE Critic Agent. Final coordination wave. Reconcile Wave 1 and Wave 2 outputs against the mission, research, learning, adaptive preflight, and plan. Flag contradictions, missing handoffs, unsupported claims, and unresolved dependencies. Produce CONSENSUS, CONFLICTS, VERIFIED ASSUMPTIONS, REQUIRED CHANGES, HANDOFF QUALITY, LEARNING IMPLICATIONS, GO/NO-GO RECOMMENDATION. Preserve human approval.\n\n${common}\n\nWAVE 1:\n${wave1Context}\n\nWAVE 2:\n${wave2Context}`, 1000, "critic", ctx, missionRecord.ownerKey)
+      const critic = await askCouncil(`You are the NEXUS FORGE Critic Agent. Final coordination wave. Reconcile Wave 1 and Wave 2 outputs against the mission, research, learning, adaptive preflight, and plan. Flag contradictions, missing handoffs, unsupported claims, and unresolved dependencies. Produce CONSENSUS, CONFLICTS, VERIFIED ASSUMPTIONS, REQUIRED CHANGES, HANDOFF QUALITY, LEARNING IMPLICATIONS, GO/NO-GO RECOMMENDATION. Preserve human approval.\n\n${common}\n\nWAVE 1:\n${wave1Context}\n\nWAVE 2:\n${wave2Context}`, 1000, "critic", ctx, missionRecord.ownerKey, args.missionId, "council-critic", args.missionRunId)
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Critic Agent", message: `Model ${COUNCIL_MODELS.critic}\n${critic}`, score: 0.95, severity: "verified" })
       await ctx.runMutation(internal.forge.updateRun, { missionId: args.missionId, agent: "Critic Agent", status: "complete", progress: 100, note: critic.slice(0, 220) })
       await ctx.runMutation(internal.forge.recordLearningLesson, { missionId: args.missionId, lesson: `Coordinated council learning:\n${critic}\n\nPlanning lesson:\n${planner}`, confidence: 0.85 })
@@ -106,7 +106,7 @@ ${wave2Context}
 
 CRITIC:
 ${critic}`
-      const decision = await askCouncil(decisionPrompt, 900, "planner", ctx, missionRecord.ownerKey)
+      const decision = await askCouncil(decisionPrompt, 900, "planner", ctx, missionRecord.ownerKey, args.missionId, "council-decision", args.missionRunId)
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Council Decision", message: decision, score: specialistWavesSucceeded ? 0.93 : 0.5, severity: specialistWavesSucceeded ? "verified" : "warning" })
       const summary = `ADAPTIVE PREFLIGHT
 ${preflightContext}
