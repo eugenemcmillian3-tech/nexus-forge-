@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction, useMutation, useQuery } from 'convex/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../../convex/_generated/api'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { getCompleteReceiptStrategies, getReceiptStrategyRows } from '../lib/manifest-receipt'
@@ -83,6 +83,19 @@ function ManifestIntelligencePage() {
 
   const history = (savedRows ?? []) as SavedBlueprint[]
   const strategies = (strategyRows ?? []) as Array<{ _id: string; key: string; value: string; confidence: number; source: string }>
+  useEffect(() => {
+    if (latestSynthesisKey || !savedRows || savedRows.length === 0) return
+    const latest = savedRows[0] as SavedBlueprint
+    const item = readBlueprint(latest)
+    setLatestSynthesisKey(latest.key)
+    setIntent(item.intent)
+    setDomain(item.domain)
+    setBudget(item.budget)
+    setHorizon(item.horizon)
+    setConstraints(item.constraints)
+    setAcceptanceCriteria(item.acceptanceCriteria)
+    setBlueprint(item.blueprint)
+  }, [latestSynthesisKey, savedRows])
   const latestReceiptBlueprint = latestSynthesisKey ? history.find(row => row.key === latestSynthesisKey) : undefined
   const latestReceiptStrategyRows = latestSynthesisKey ? getReceiptStrategyRows(strategies, latestSynthesisKey) : []
   const latestReceiptStrategies = latestSynthesisKey ? getCompleteReceiptStrategies(strategies, latestSynthesisKey) : []
