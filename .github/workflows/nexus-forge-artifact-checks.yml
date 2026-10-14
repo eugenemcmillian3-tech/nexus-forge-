@@ -66,6 +66,39 @@ jobs:
             --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 -e HOME=/tmp \
             -v "$PWD/ci-input:/input:ro" -v "$PWD/ci-output:/output:rw" \
             nexus-exact-artifact-ci /input/bundle.json /output/report.json "$SNAPSHOT_SHA"
+      - name: Verify exact-text negative control
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { createHash } from 'node:crypto';
+          const bundle = JSON.parse(fs.readFileSync('ci-input/bundle.json', 'utf8'));
+          bundle.testRunId = 'ci-exact-text-negative';
+          bundle.artifactSnapshot = '<!doctype html><html><body><output id="result">140</output></body></html>';
+          bundle.criteria = ['Exact result must equal 14'];
+          bundle.plan = [{ criterionIndex: 0, steps: [
+            { action: 'assertTextEquals', selector: '#result', value: '14' },
+            { action: 'assertTextEquals', selector: '#result', value: '140' }
+          ] }];
+          const bytes = JSON.stringify(bundle);
+          fs.writeFileSync('ci-input/negative.json', bytes);
+          fs.appendFileSync(process.env.GITHUB_ENV, 'NEGATIVE_SHA=' + createHash('sha256').update(bytes).digest('hex') + '\n');
+          NODE
+          export NEGATIVE_SHA="$(sha256sum ci-input/negative.json | cut -d ' ' -f 1)"
+          timeout 180s docker run --rm --init --network none --read-only \
+            --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges \
+            --security-opt seccomp=.github/artifact-ci/seccomp_profile.json \
+            --pids-limit 256 --memory 1g --cpus 2 --shm-size 256m \
+            --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 -e HOME=/tmp \
+            -v "$PWD/ci-input:/input:ro" -v "$PWD/ci-output:/output:rw" \
+            nexus-exact-artifact-ci /input/negative.json /output/negative-report.json "$NEGATIVE_SHA"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const report = JSON.parse(fs.readFileSync('ci-output/negative-report.json', 'utf8'));
+          const steps = report.results?.[0];
+          if (report.snapshotSha !== process.env.NEGATIVE_SHA || report.allPassed !== false || report.results.length !== 1 || steps?.length !== 2 || steps[0].status !== 'fail' || !steps[0].detail.includes('Expected 14; observed 140') || steps[1].status !== 'not_run') throw new Error('Exact-text negative control was not detected correctly');
+          console.log('Exact text rejected 140 for expected 14 and skipped the dependent step.');
+          NODE
       - name: Publish snapshot-bound GitHub Check
         uses: actions/github-script@v7
         with:
@@ -87,7 +120,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: exact-artifact-ci-report
-          path: ci-output/report.json
+          path: |
+            ci-output/report.json
+            ci-output/negative-report.json
           if-no-files-found: warn
       - name: Enforce criterion outcome
         run: node -e "const r=require('./ci-output/report.json'); if(!r.allPassed) process.exit(1)"
