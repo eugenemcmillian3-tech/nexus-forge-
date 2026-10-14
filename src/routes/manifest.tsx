@@ -58,6 +58,7 @@ function ManifestIntelligencePage() {
   const [outcomeBusy, setOutcomeBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [strategiesOpened, setStrategiesOpened] = useState(false)
 
   const generate = async () => {
     setError('')
@@ -71,7 +72,8 @@ function ManifestIntelligencePage() {
       const result = await synthesize({ intent: intent.trim(), domain, budget, horizon, constraints: constraints.trim(), acceptanceCriteria: acceptanceCriteria.trim() })
       setBlueprint(result.blueprint)
       setLatestSynthesisKey(result.blueprintKey)
-      setNotice(result.saved ? result.strategyCount > 0 ? `Blueprint saved privately; ${result.strategyCount} structured strateg${result.strategyCount === 1 ? 'y' : 'ies'} saved to the strategy ledger. This is a proposal, not an executed result.` : 'Blueprint saved privately, but the provider did not return a valid structured strategy block. The blueprint is available; no strategy records were added. Retry synthesis or inspect provider output before treating the ledger as populated.' : 'Blueprint generated.')
+      setStrategiesOpened(false)
+      setNotice(result.saved ? result.strategyCount === 3 ? 'Blueprint saved privately with all three structured strategies. Next: verify this exact receipt below, then review the strategies.' : result.strategyCount > 0 ? `Blueprint saved privately; ${result.strategyCount} structured strateg${result.strategyCount === 1 ? 'y' : 'ies'} saved. Three are required. Next: inspect the receipt and retry if the ledger is incomplete.` : 'Blueprint saved privately, but no valid structured strategy records were returned. Next: inspect the receipt below; the workflow will not skip this missing evidence.' : 'Blueprint generated. Check the receipt before continuing.')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Manifest synthesis failed. Check AI provider health and try again later.')
     } finally {
@@ -182,7 +184,21 @@ function ManifestIntelligencePage() {
 
   return <WorkspaceLayout title="Manifest Intelligence" eyebrow="RESEARCH FRONTIER / INTENT → POSSIBILITY">
     <section className="workspace">
+      <div className="manifest-start-here">
+        <div><span className="section-kicker">START HERE · FOLLOW IN ORDER</span><h2>One goal. One sequence.</h2><p>Do the main action first. Everything else is supporting evidence, only needed after a blueprint exists.</p></div>
+        <ol>
+          <li><strong>1. Define the outcome</strong><span>Complete the form below and synthesize one blueprint.</span></li>
+          <li><strong>2. Verify the receipt</strong><span>Confirm the saved blueprint and all three strategy records.</span></li>
+          <li><strong>3. Review the strategies</strong><span>Open the strategy section only after synthesis succeeds.</span></li>
+          <li><strong>4. Continue the work</strong><span>Create a governed mission or open Artifact Forge to build.</span></li>
+        </ol>
+      </div>
       <div className="manifest-brief"><span className="section-kicker">OUTCOME SYNTHESIS</span><p>Describe one result you want. NEXUS FORGE will draft a blueprint and save its evidence. Nothing is deployed or executed from this page.</p></div>
+
+      <section className="glass-card research-card manifest-next-step" aria-live="polite" aria-labelledby="manifest-next-step-title">
+        <div className="panel-title"><span id="manifest-next-step-title">YOUR NEXT STEP</span><span className="status-chip">STEP {latestSynthesisKey ? latestReceiptBlueprint && latestReceiptStrategies.length === 3 ? strategiesOpened ? '4 OF 4' : '3 OF 4' : '2 OF 4' : '1 OF 4'}</span></div>
+        {!latestSynthesisKey ? <><h3>1. Create the blueprint</h3><p>Start with the goal above. After synthesis, this guide will move to receipt verification automatically.</p><button className="primary-button" onClick={() => document.getElementById('manifest-intent')?.focus()}>Start with the outcome ↑</button></> : !latestReceiptBlueprint || latestReceiptStrategies.length !== 3 ? <><h3>2. Verify the exact receipt</h3><p>{latestReceiptBlueprint ? `Blueprint receipt found. ${latestReceiptStrategies.length} of 3 complete strategy records are confirmed for this exact synthesis.` : 'Waiting for the saved blueprint to appear in your private ledger.'} Do not continue to build until the receipt and all three complete strategy records are confirmed.</p><button className="primary-button" onClick={() => document.getElementById('manifest-live-check-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Check receipt evidence ↓</button></> : !strategiesOpened ? <><h3>3. Review the three strategies</h3><p>The exact blueprint and all three complete strategy records are now visible. Open the strategy ledger and compare the approaches before choosing what to build.</p><button className="primary-button" onClick={() => { const panel = document.getElementById('manifest-strategy-ledger'); if (panel instanceof HTMLDetailsElement) panel.open = true; setStrategiesOpened(true); requestAnimationFrame(() => panel?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }}>Review strategies ↓</button></> : <><h3>4. Continue the work</h3><p>Receipt checks passed and the strategy ledger has been opened. Carry the selected goal and blueprint into a governed mission; execution and external delivery remain governed by the existing workflow.</p><Link className="primary-button" to="/mission" onClick={() => { window.sessionStorage.setItem('nexus-forge-manifest-handoff', JSON.stringify({ intent, domain, budget, horizon, constraints, acceptanceCriteria, blueprint })); }}>Create a governed mission →</Link></>}
+      </section>
 
       <div className="console-grid">
         <div className="glass-card research-card">
@@ -206,6 +222,7 @@ function ManifestIntelligencePage() {
         </div>
       </div>
 
+      <details className="manifest-secondary"><summary>Advanced · AI provider usage receipts</summary>
       <div className="glass-card research-card" aria-labelledby="manifest-provider-usage-title">
         <div className="panel-title"><span id="manifest-provider-usage-title">AI PROVIDER USAGE LEDGER</span><span className="live-pill">{providerUsageRows?.length ?? 0} RECORDS</span></div>
         <p className="muted-copy">Private usage metadata from successful Manifest provider responses. Token counts and costs appear only when the provider returns them; missing cost data is not treated as $0 and no estimated spend is presented as actual billing.</p>
@@ -215,8 +232,9 @@ function ManifestIntelligencePage() {
           <span className="workflow-step-state">{row.reportedCostUsd == null ? 'COST NOT REPORTED' : 'PROVIDER-REPORTED COST'}{row.reportedCostUsd == null ? null : <small>${row.reportedCostUsd.toFixed(6)} USD</small>}</span>
         </article>)}
       </div>
+      </details>
 
-      <div className="glass-card research-card" aria-labelledby="manifest-live-check-title">
+      <div className="glass-card research-card" id="manifest-receipt-evidence" aria-labelledby="manifest-live-check-title">
         <div className="panel-title"><span id="manifest-live-check-title">LIVE PROVIDER VERIFICATION</span><span className="status-chip">{latestSynthesisKey ? latestReceiptBlueprint ? latestReceiptStrategies.length === 3 ? "FULL RECEIPT" : latestReceiptStrategyRows.length > 0 ? "PARTIAL LEDGER" : "BLUEPRINT ONLY" : "VERIFYING LEDGER" : "OPERATOR ACTION REQUIRED"}</span></div>
         <p className="muted-copy">Automated tests cover successful persistence, privacy isolation, malformed strategy output, and provider outages. They do not substitute for a real configured-provider call in your signed-in production workspace.</p>
         <div className="workflow-step-list">
@@ -228,6 +246,7 @@ function ManifestIntelligencePage() {
         <p className="muted-copy">Current evidence status: automated persistence tests pass; production provider-to-ledger execution is not yet independently confirmed until a signed-in operator runs synthesis. {latestSynthesisKey ? latestReceiptBlueprint && latestReceiptStrategies.length === 3 ? "This session now has direct UI evidence that the exact blueprint and all three complete strategy records appeared in the operator-scoped ledger." : "This session has a synthesis receipt, but the exact blueprint plus all three complete strategy records are required before persistence is verified." : "No live synthesis has been run from this page session yet."}</p>
       </div>
 
+      <details className="manifest-secondary"><summary>Advanced · System architecture and roadmap</summary>
       <div className="glass-card research-card">
         <div className="panel-title"><span>MANIFEST INTELLIGENCE · SYSTEM ARCHITECTURE</span><span className="live-pill">IMPLEMENTATION MAP</span></div>
         <p className="muted-copy">The long-term design is a governed operating system for goals: turn intent into artifacts, independently verify what happened, and use measured outcomes to improve the next attempt. These are implementation states, not claims of AGI or superintelligence.</p>
@@ -262,7 +281,9 @@ function ManifestIntelligencePage() {
           ].map(([title, detail]) => <article className="workflow-step" key={title}><span className="workflow-step-mark">→</span><span className="workflow-step-copy"><strong>{title}</strong><small>{detail}</small></span></article>)}
         </div>
       </div>
+      </details>
 
+      <details className="manifest-secondary"><summary>Advanced · Saved research evidence</summary>
       <div className="glass-card research-card" aria-labelledby="manifest-source-evidence-title">
         <div className="panel-title"><span id="manifest-source-evidence-title">SOURCE-BACKED RESEARCH CONTEXT</span><span className="live-pill">{researchEvidenceRows?.length ?? 0} RECORDS</span></div>
         <p className="muted-copy">Research Oracle results saved to missions you own, with retrieved citation URLs and mission provenance. AI summaries are interpretations of the listed sources, not primary sources themselves. Only HTTPS citation URLs are shown; check source content and dates before relying on them.</p>
@@ -272,7 +293,9 @@ function ManifestIntelligencePage() {
           <span className="workflow-step-state">{row.citations.length} SOURCE URL{row.citations.length === 1 ? '' : 'S'}</span>
         </article>)}
       </div>
+      </details>
 
+      <details className="manifest-secondary"><summary>Advanced · Assumptions and dependencies</summary>
       <div className="glass-card research-card" aria-labelledby="manifest-context-register-title">
         <div className="panel-title"><span id="manifest-context-register-title">WORLD CONTEXT · ASSUMPTION & DEPENDENCY REGISTER</span><span className="status-chip">{unresolvedAssumptionCount} UNRESOLVED</span></div>
         <p className="muted-copy">This register organizes prerequisites, unverified assumptions, and failure modes already present in saved candidate strategies. Generated statements remain hypotheses until an operator attaches a concrete evidence reference and records an observed result; this is not independent web research or automatic fact verification.</p>
@@ -297,6 +320,9 @@ function ManifestIntelligencePage() {
         <p className="muted-copy">Quality-review rule: authority, publication date, relevance, and claim match are operator-entered assessments—not automated source verification. Check methodology, source text, and recency yourself. A URL alone is not proof. Evidence is stored on the selected private strategy record; latest 30 references are retained.</p>
       </div>
 
+      </details>
+
+      <details className="manifest-secondary" id="manifest-strategy-ledger"><summary>Step 3 · Review strategies and record outcomes</summary>
       <div className="glass-card research-card">
         <div className="panel-title"><span>STRATEGY & OUTCOME LEDGER</span><span className="live-pill">{strategies.length} RECORDS</span></div>
         <p className="muted-copy">Structured strategies are saved separately from blueprint prose. Record observed outcomes only after an experiment has run, and attach a measurement source or evidence reference. Estimated value is not actual value.</p>
@@ -321,7 +347,9 @@ function ManifestIntelligencePage() {
         </div> : null}
         {strategies.length > 0 ? <button className="primary-button" disabled={outcomeBusy || !selectedStrategyId || actualResult.trim().length < 3 || outcomeEvidence.trim().length < 3 || (actualCost.trim() !== '' && (!Number.isFinite(Number(actualCost)) || Number(actualCost) < 0 || Number(actualCost) > 1000000))} onClick={() => void saveOutcome()}>{outcomeBusy ? 'Saving measured outcome…' : 'Save measured outcome'}</button> : null}
       </div>
+      </details>
 
+      <details className="manifest-secondary"><summary>Advanced · Linked experiment evidence</summary>
       <div className="glass-card research-card">
         <div className="panel-title"><span>LINKED EXPERIMENT EVIDENCE</span><span className="live-pill">{experiments.filter(row => { try { return Boolean((JSON.parse(row.value) as { linkedManifestStrategy?: { id?: string } }).linkedManifestStrategy?.id) } catch { return false } }).length} LINKED</span></div>
         <p className="muted-copy">Comparison records are linked by private strategy ID. Their measured metrics and evidence stay visible here; recording a comparison does not automatically change the strategy outcome or promote a candidate.</p>
@@ -354,7 +382,9 @@ function ManifestIntelligencePage() {
         })}
         <div className="hero-actions"><Link className="secondary-button" to="/learning">Open Verified Learning Engine →</Link></div>
       </div>
+      </details>
 
+      <details className="manifest-secondary"><summary>Advanced · Saved blueprint history</summary>
       <div className="glass-card research-card">
         <div className="panel-title"><span>PRIVATE BLUEPRINT MEMORY</span><span className="live-pill">{history.length} SAVED</span></div>
         <p className="muted-copy">Saved plans help preserve continuity. A saved plan is not proof that its proposed work has been executed or that its goals have been achieved.</p>
@@ -367,6 +397,7 @@ function ManifestIntelligencePage() {
           </button>
         })}
       </div>
+      </details>
     </section>
   </WorkspaceLayout>
 }
