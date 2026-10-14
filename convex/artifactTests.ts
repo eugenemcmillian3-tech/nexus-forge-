@@ -5,7 +5,7 @@ import { internal } from './_generated/api'
 import { requireOperator, requireOwnedMission } from './permissions'
 import { browserRunnerVersion, extractAcceptanceCriteria, summarizeBrowserRun } from './artifactTestPlan'
 
-const action = v.union(v.literal('fill'), v.literal('click'), v.literal('assertText'), v.literal('assertValue'), v.literal('assertVisible'), v.literal('assertInvalid'))
+const action = v.union(v.literal('fill'), v.literal('click'), v.literal('assertText'), v.literal('assertTextEquals'), v.literal('assertValue'), v.literal('assertVisible'), v.literal('assertInvalid'))
 const planValidator = v.array(v.object({ criterionIndex: v.number(), steps: v.array(v.object({ action, selector: v.string(), value: v.string() })) }))
 const resultsValidator = v.array(v.array(v.object({ status: v.union(v.literal('pass'), v.literal('fail'), v.literal('not_run')), detail: v.string() })))
 const row = v.object({
