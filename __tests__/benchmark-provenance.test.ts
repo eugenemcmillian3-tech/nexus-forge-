@@ -35,9 +35,8 @@ describe('benchmark provenance boundaries', () => {
   })
   it('does not relabel a historical v1 job as v2 evidence', () => {
     const { run, jobs } = metadata()
-    jobs.jobs[0].name = 'Artifact DOM benchmarks v1'
-    jobs.jobs[0].steps[0].name = 'Run artifact DOM benchmark suite v1'
-    expect(() => verifyBenchmarkMetadata(runId, run, jobs)).toThrow(/no completed/)
+    const historical = { ...jobs, jobs: [{ ...jobs.jobs[0], name: 'Artifact DOM benchmarks v1', steps: [{ name: 'Run artifact DOM benchmark suite v1', conclusion: 'success' }] }] }
+    expect(() => verifyBenchmarkMetadata(runId, run, historical)).toThrow(/no completed/)
   })
   it('rejects wrong workflows, commits, unfinished runs, and missing benchmark jobs', () => {
     const { run, jobs } = metadata()
