@@ -1,4 +1,5 @@
 import { v } from 'convex/values'
+import type { Id } from './_generated/dataModel'
 import { action, internalMutation, query } from './_generated/server'
 import { internal } from './_generated/api'
 import { requireOperator } from './permissions'
@@ -29,7 +30,7 @@ export const recordInternal = internalMutation({
 })
 export const verifyRun = action({
   args: { runUrl: v.string() }, returns: v.id('benchmarkReceipts'),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Id<'benchmarkReceipts'>> => {
     const operatorId = await ctx.runQuery(internal.permissions.currentOperator, {})
     if (!operatorId) throw new Error('Authenticated operator session required')
     const { runId } = parseBenchmarkRunUrl(args.runUrl)
