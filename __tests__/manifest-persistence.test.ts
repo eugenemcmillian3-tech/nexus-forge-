@@ -170,10 +170,14 @@ describe("Manifest provider-to-ledger persistence", () => {
   it("persists the provider blueprint and structured strategies to the authenticated owner's private ledger", async () => {
     const t = convexTest(schema, modules);
     vi.stubEnv("GROQ_API_KEY", "test-provider-key");
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(
-      JSON.stringify({ choices: [{ message: { content: generated } }] }),
+    const fetchMock = vi.fn(async () => new Response(
+      JSON.stringify({
+        choices: [{ message: { content: generated } }],
+        usage: { prompt_tokens: 120, completion_tokens: 340, total_tokens: 460, cost: 0.00042 },
+      }),
       { status: 200, headers: { "content-type": "application/json" } },
-    )));
+    ));
+    vi.stubGlobal("fetch", fetchMock);
 
     const operator = t.withIdentity(identity("manifest-owner-a"));
     const result = await operator.action(api.manifestIntelligence.synthesize, {
@@ -187,9 +191,26 @@ describe("Manifest provider-to-ledger persistence", () => {
 
     expect(result).toMatchObject({ saved: true, strategyCount: 3, strategyBlockValid: true });
     expect(result.blueprint).toContain("A bounded proposal");
+    expect(result.blueprintKey).toMatch(/^manifest:/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const blueprints = await operator.query(api.manifestIntelligence.listBlueprints, {});
     const strategies = await operator.query(api.manifestIntelligence.listStrategies, {});
+    const usage = await operator.query(api.manifestIntelligence.listProviderUsage, {});
+    expect(blueprints).toHaveLength(1);
+    expect(blueprints[0].key).toBe(result.blueprintKey);
+    expect(strategies).toHaveLength(3);
+    expect(strategies.every(row => row.key.startsWith(`${result.blueprintKey}:strategy:`))).toBe(true);
+    expect(usage).toHaveLength(1);
+    expect(usage[0]).toMatchObject({
+      provider: "groq",
+      model: "openai/gpt-oss-20b",
+      promptTokens: 120,
+      completionTokens: 340,
+      totalTokens: 460,
+      reportedCostUsd: 0.00042,
+      costStatus: "provider-reported",
+    });
     const otherOwner = t.withIdentity(identity("manifest-owner-b"));
     const otherOwnerBlueprints = await otherOwner.query(api.manifestIntelligence.listBlueprints, {});
     const otherOwnerStrategies = await otherOwner.query(api.manifestIntelligence.listStrategies, {});
