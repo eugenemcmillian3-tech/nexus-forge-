@@ -154,7 +154,7 @@ function RoadmapPage() {
   const done = roadmap.filter(item => item.status === 'done')
   const partial = roadmap.filter(item => item.status === 'partial')
   const deferred = roadmap.filter(item => item.status === 'later')
-  return <WorkspaceLayout><section className="workspace dark-section">
+  return <WorkspaceLayout title="Project roadmap" eyebrow="NEXUS FORGE / PROGRESS"><section className="workspace dark-section">
     <div className="workspace-head"><div><div className="section-kicker">PROJECT / ROADMAP</div><h1>What shipped. What remains.</h1></div><span className="status-chip">24 MILESTONES</span></div>
     <p>The roadmap tracks complete capabilities. A working page or a passing test does not complete a whole milestone. All 16 workspaces remain in the guide; mission evidence follows its own checkpoints.</p>
     <div className="hero-actions"><Link className="primary-button" to="/workflow">Continue guided workflow →</Link><Link className="secondary-button" to="/evidence">Review research evidence →</Link><Link className="secondary-button" to="/incidents">Review recovery →</Link></div>
