@@ -3,148 +3,175 @@ import { WorkspaceLayout } from '../components/workspace-layout'
 
 export const Route = createFileRoute('/roadmap')({ component: RoadmapPage })
 
-type Item = { n: number; title: string; status: 'done' | 'partial' | 'next' | 'later'; detail: string }
-
-const roadmap: { section: string; items: Item[] }[] = [
-  { section: 'PART 1 · FOUNDATION & CORE INTELLIGENCE', items: [
-    { n: 1, title: 'Verify current live platform', status: 'partial', detail: 'Production deployment is READY; on 2026-10-11, strict diagnostics, all 79 tests across 12 files, and the production build passed in Macaly. GitHub main CI is now confirmed green after the security merge: run 38175948004 on main, commit 6d3c2a15b2114d28969b3942b0d2b6f5885e5c6a (install, tests, and production build all succeeded). Security PR #9 internalized the workflow-evidence writer and routes callback writes through the bearer-secret-validated HTTP handler, matching the live Macaly source. Keep Macaly as production source of truth; GitHub main is currently a clean baseline, not a complete mirror of Macaly-only Readiness/Manifest Intelligence work. The live HTTP callback now rejects malformed GitHub Actions run URLs, invalid 40-character commit SHAs, unknown workflow conclusions, non-HTTPS deployment URLs, and oversized summaries before accepting evidence. Strict TypeScript, full tests, and production build pass after this change. GitHub PR #12 is now merged (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/12): it guards public delivery listing and preparation by mission ownership and fixes the approval handler to bind its ownership check to the authenticated operator ID. PR CI run 38178915952 and post-merge main CI run 38179022359 both passed. GitHub PR #13 is merged: it adds the protected deployment-result callback, validates public HTTPS deployment targets and redirect hops, checks HTML/readiness criteria, and binds deployment evidence to the prior successful workflow URL and commit. Post-merge CI run 38179628571 succeeded (install, tests, and production build). GitHub PR #14 is merged: it ports the operator-scoped readiness runner/history APIs and routes the deployment callback through canonical readiness so individual check evidence persists; main CI run 38180662458 passed (install, tests, production build). Delivery-triggered readiness runs now use the owning mission operator ID so the history is visible to the right operator. GitHub PR #15 is merged: it restores the operator-owned delivery.correctTarget mutation and internal recordExecutionFailure recovery API; PR CI run 38180805782 passed (install, tests, production build), with post-merge main CI in progress. GitHub PR #17 is now merged as commit 24c399f1f69ab7289c8014500f92f09032a1af73 after green CI run 38192603632: public research history/search/synthesis now enforce mission ownership, synthesis memory ownership comes from the stored mission, and the synthesis-only query is internal. A follow-up audit found the same owner-isolation gap in GitHub\'s audit and incident history queries; PR #18 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/18) adds mission-owner checks and anonymous/cross-owner regression tests. PR #18 was merged as commit 498054fa1787cdc106d544dd4fb3eaf369796e41 after green CI run 38193701295. PR #19 is also merged as commit 368810ac096baa5dbf22ec8751d12a33bb5e8415; CI run 38195302857 passed install, tests, and production build. GitHub PR #36 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/36) ports the governed Mission Console route, adds sidebar navigation and metadata, preserves owner-scoped mission APIs and explicit approval-before-execution, and merged as 53439e41e2c84eabc4f6207dca9d3d39ce426abb after CI run 38287664509 passed install, tests, and production build. GitHub main CI run 38287746049 passed install, tests, and production build. Macaly revalidation on 2026-10-12 passed 87 tests across 13 files, strict TypeScript (zero errors), CSS checks, and a production build. The latest Macaly production publish is READY and the live URL remains https://bphntw8kdojl9qvuifywyjtk.macaly.app. On 2026-10-13, fresh production smoke checks for /, /roadmap, /manifest, /evidence, and /readiness all returned HTTP 200 with NEXUS FORGE branding. Latest Macaly validation again passed all 87 tests across 13 files, strict TypeScript, CSS checks, and production build. Source-parity audit corrected: current GitHub main contains convex/manifestIntelligence.ts, convex/manifestStrategyParser.ts, convex/aiProvider.ts, src/routes/manifest.tsx, and convex/research.ts; the earlier note claiming these files were absent was stale. This confirms file presence, not complete behavioral parity. GitHub PR #55 is also merged: Manifest bounded structured-only retry now matches Macaly mainline; PR CI run 38428396143 passed install, automated tests, and production build, merge commit 0377bc9eeebd33b37b1a2425dfb3c47f5e60a908. GitHub PR #56 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/56) is merged as 42fadbcf162705718d18efa9a103da0256b4bbed after CI run 38433544761 passed tests and production build; it restores parser parity for JSON-only and fenced JSON strategy responses and adds a regression for preserving readable blueprints when retry output is invalid. GitHub PR #57 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/57) is merged as caec4d754c1a79b466f47b78703f27f8afa27ed5; it syncs the package manifest, repairs the npm lockfile, and adds a production dependency audit gate. Before the lockfile repair, npm audit reported 3 production-graph vulnerabilities (1 high, 2 critical); after compatible lockfile-only remediation, npm audit reported 0 vulnerabilities. Macaly clean npm install, 125 tests across 16 files, strict TypeScript, and production build passed. GitHub PR checks did not appear in the connector for this PR, so treat the Macaly validation as the available test evidence, not as a claimed GitHub CI run. The pnpm lockfile has now been regenerated from the Macaly package manifest and verified: pnpm install --frozen-lockfile, pnpm audit --prod (no known vulnerabilities), 125 tests across 16 files, strict TypeScript diagnostics, and production build all passed. GitHub PR #58 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/58) is merged as da3a19a285ad663af7a0ccd0fe2aab21dd4014b6. It makes pnpm 12.10.1 canonical for GitHub delivery, adds this regenerated lockfile and matching pnpm-workspace.yaml, switches CI to frozen pnpm install plus pnpm audit, and removes the duplicate npm lockfile. The GitHub connector returned no CI status for this PR, so Macaly validation is the available evidence and a GitHub CI pass is not claimed. With package-manager parity merged, continue the dependency-aware comparison of implementations, generated Convex types, route wiring, and runtime behavior before further ports; do not overwrite main or duplicate existing modules. Macaly revalidation on 2026-10-12 passed all 87 tests across 13 files, strict TypeScript (zero errors), CSS checks, and production build. The Macaly live app remains READY. GitHub PR #60 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/60) is merged as 8e5bf084c83fc69ef4265a974e4ebf7cd1cd2fcb after green GitHub CI run 38440292031: it blocks the legacy public missionRunner.start endpoint from bypassing the governed Portfolio decision path and checks already-complete mission state before timeout escalation. CI also uncovered and fixed a real build parity gap: src/styles.css imports @tailwindcss/typography, but the GitHub manifest omitted it; the dependency and complete pnpm lockfile are now synchronized. GitHub CI passed frozen install, production dependency audit (no known vulnerabilities), automated tests, and production build. Macaly validation on 2026-10-13 passed frozen install, production audit, 130 tests across 17 files, strict TypeScript, and production build. The updated Macaly app is published and READY; smoke checks returned HTTP 200 for /, /roadmap, /manifest, /evidence, /readiness, /workflow, /providers, and /portfolio. GitHub PR #61 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/61) is merged as 4f7780480413c9db6b65a8c11c5620e8fb29918e after green CI run 38440952191. Automatic failover is now restricted to Cloudflare Workers AI, Groq, and Cerebras; OpenRouter and Hugging Face remain outside automatic mission execution while deprioritized. Regression tests confirm no request is sent to OpenRouter/Hugging Face when no currently healthy provider is configured. Macaly validation passed 130 tests across 17 files, strict TypeScript, and production build; the production publish is READY. The matching Macaly Convex functions were also deployed to production at https://tame-rat-826.eu-west-1.convex.cloud. The dedicated convex/tsconfig.json is now merged through GitHub PR #62 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/62), with green CI run 38442140475. It includes Node types for server-side process.env use. The Convex CLI dry-run typecheck passed, and the production Convex functions were successfully deployed with --typecheck enable to https://tame-rat-826.eu-west-1.convex.cloud. Next priorities: run a real provider-backed Manifest synthesis and confirm private structured strategy persistence; then collect a fresh end-to-end delivery record through the latest provenance/readiness gates. Follow-up route-tree audit found that GitHub had 16 route files but registered only four; PR #39 corrected this by registering all 16 existing destinations, adding metadata for every route, and exposing the pages in the sidebar. PR #39 merged as d04d23e1ea265f8845c19abb672f9d05656f55f8 after CI run 38294327311 passed install, tests, and production build.' },
-    { n: 2, title: 'Finish Manifest Intelligence outcome system', status: 'partial', detail: 'The page documents the eight-layer target architecture and six-stage expansion path. Intent synthesis and private blueprint memory persist proposals; synthesis requests a machine-readable strategy block and stores valid candidates as structured private records. A dedicated parser now has regression coverage for valid candidates, missing blocks, malformed JSON, and incomplete records; malformed optional data falls back to the readable blueprint. The page exposes a private strategy ledger and authenticated outcome form for succeeded/partial/failed/inconclusive status, observed result, evidence source, and optional actual cost. Outcome records remain operator-entered evidence, not proof of causality. PR #27 is merged and the live UI reports structured strategy count and parse status. A new Convex integration regression test now stubs a provider response and verifies the authenticated synthesis action persists one private blueprint plus three structured strategies, isolates another operator\'s ledger, and rejects anonymous synthesis before provider invocation. GitHub PR #35 is merged as 89ae9515a7c9f4dc9cb11cd62e49b12146d83f66 after CI run 38284376436 passed install, tests, and production build. Manifest backend now makes one bounded structured-only retry when the provider returns readable blueprint prose but omits the optional strategy JSON; the blueprint is preserved and only validated candidate objects are written to the private ledger. Macaly validation on 2026-10-13 passed dependency audit, 125 tests across 16 files, strict TypeScript, and production build. Latest release validation on 2026-10-13: frozen pnpm install passed, production dependency audit reports no known vulnerabilities, all 131 tests across 17 files passed, strict TypeScript reported no errors, and the production build succeeded. The current Macaly production deployment is confirmed READY. GitHub PRs #63, #64, and #65 are merged; PR #65 adds the guided live-provider verification checklist. Production provider-to-ledger execution remains unverified until a real synthesis receipt and private persisted records are observed in the signed-in workspace. GitHub PR #59 was not merged because its branch diverged from main (5 commits ahead, 6 behind). Its governance changes were reconciled onto fresh PR #66 from current main, excluding stale workflow edits. PR #66 merged as 24c1c47446d3b22a26eb011063dbeaa52e8e63d8 after GitHub Actions run 38447767033 passed frozen install, production dependency audit, automated tests, and production build. The patch adds mission ownership enforcement for portfolio decisions/execution, blocking dependency checks, exclusive resource conflict checks, unresolved escalation stops, resource reservation plus audit evidence, and five regression tests. The existing approval and matching decision requirements remain intact. World context, automatic metric ingestion, runtime cost accounting, and verified adaptive learning remain partial. GitHub PR #55 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/55) is merged after CI run 38428396143 passed install, automated tests, and production build; merge commit 0377bc9eeebd33b37b1a2425dfb3c47f5e60a908. Macaly revalidation on 2026-10-13 passes 125 tests across 16 files, strict TypeScript, production dependency audit, and production build. A real live-provider synthesis and strategy-ledger run remains unverified; world context, automatic metric ingestion, runtime cost accounting, and verified adaptive learning remain partial.' },
-    { n: 3, title: 'Stabilize AI providers and routing', status: 'partial', detail: 'Routing, health history, timeouts and failover safeguards exist. Successful live inference across managed providers is not yet confirmed.' },
-    { n: 4, title: 'Build Unified Intelligence Orchestrator', status: 'partial', detail: 'Orchestrator page and shared intent contract are implemented; real provider-backed execution still needs an end-to-end run.' },
-    { n: 5, title: 'Add structured Intent Compiler', status: 'done', detail: 'Shared parser validates required contract fields and competing strategies; six focused tests added.' },
-    { n: 6, title: 'Competing strategies and task-aware model selection', status: 'partial', detail: 'Intent contract supports multiple strategies and a recommended strategy. Runtime model selection needs further measured validation.' },
-    { n: 7, title: 'Independent verification and safety', status: 'partial', detail: 'Artifact quality checks and governed delivery checks exist. Measured outcome scoring now validates structured workflow, deployment, commit, and canonical readiness fields; a real live end-to-end delivery remains to confirm the full trust chain.' },
-  ]},
-  { section: 'PART 2 · INTELLIGENCE IMPROVEMENT LOOP', items: [
-    { n: 8, title: 'Verified Learning Engine', status: 'partial', detail: 'GitHub PR #38 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/38) is merged as 049d37ada364dba870eee2903f8942718baaf06b after CI run 38293852554 passed install, automated tests, and production build. It ports the dedicated /learning route, owner-scoped Convex experiment history, deterministic metric comparisons, evidence requirements, safety gates, and regression tests for ownership isolation and no automatic promotion. Evidence references remain operator-provided until independently verified; structured provenance and benchmark coverage remain next gaps.' },
-    { n: 9, title: 'Persistent, searchable knowledge', status: 'partial', detail: 'Convex memory and research records are persisted. The Verified Learning Engine now captures operator-reviewed lessons linked to a private Manifest strategy, applicability notes, and at least two evidence references. Mission orchestration already retrieves owner-scoped learning lessons as advisory context; relevance ranking and measured reuse effectiveness remain to be benchmarked.' },
-    { n: 10, title: 'Connect missions to real-world outcomes', status: 'partial', detail: 'Live delivery callbacks validate workflow-run URL shape, commit SHA format, workflow conclusion, HTTPS deployment URL, and summary length before invoking internal evidence writers; deployment callbacks also require canonical readiness to pass. Confirm repository/commit binding and the full evidence chain on a new live delivery.' },
-    { n: 11, title: 'Checkpoints and long-horizon execution', status: 'partial', detail: 'Mission runner, retries, incidents and checkpoints are present. Reliability across longer real runs needs validation.' },
-    { n: 12, title: 'Capability benchmark and experiment lab', status: 'partial', detail: 'Learning comparisons can record experiments; a repeatable benchmark suite with grounded results remains to build.' },
-    { n: 13, title: 'Capability and Reliability Dashboard', status: 'partial', detail: 'Dedicated dashboard exists. Metrics need to be tied to verified run data rather than manual estimates.' },
-  ]},
-  { section: 'PART 3 · VENTURE-BUILDING EXPANSION', items: [
-    { n: 14, title: 'Automated research and opportunity discovery', status: 'partial', detail: 'Research and opportunity recommendation surfaces exist. Improve citation quality and validate the discovery-to-mission loop.' },
-    { n: 15, title: 'Safe capability expansion', status: 'partial', detail: 'Approval gates, artifact quality checks and delivery allowlisting exist. Expand only with auditable tests.' },
-    { n: 16, title: 'Cost and resource intelligence', status: 'partial', detail: 'Budget fields and provider diagnostics exist; measured per-run cost accounting is still needed.' },
-    { n: 17, title: 'Multimodal creation and perception', status: 'later', detail: 'Deferred until foundation reliability is demonstrated.' },
-    { n: 18, title: 'Product and venture delivery pipeline', status: 'partial', detail: 'Artifact-to-GitHub Actions-to-deployment pipeline is implemented and has a successful recorded delivery. Improve artifact functionality and proof quality.' },
-  ]},
-  { section: 'PART 4 · POSTPONED UNTIL THE FOUNDATION PROVES ITSELF', items: [
-    { n: 19, title: 'Advanced security and resilience at scale', status: 'later', detail: 'Postponed by the roadmap; retain existing governance and hardening work.' },
-    { n: 20, title: 'Multi-user and enterprise governance', status: 'later', detail: 'Postponed until core single-operator execution is reliable.' },
-    { n: 21, title: 'External agent and developer ecosystem', status: 'later', detail: 'Postponed until stable contracts and repeatable integration tests exist.' },
-    { n: 22, title: 'Competitive validation and genuine novelty', status: 'later', detail: 'Requires reproducible baselines and measured comparisons before making advantage claims.' },
-    { n: 23, title: 'Frontier scientific research', status: 'later', detail: 'Postponed until foundation and benchmarking mature.' },
-    { n: 24, title: 'AGI-oriented generality and superintelligence research', status: 'later', detail: 'Long-term research direction only; claims must remain tied to benchmark evidence.' },
-  ]},
-]
-
-type Coverage = { area: string; status: 'present' | 'partial' | 'gap' | 'deferred'; evidence: string; next: string }
-
-const buildStages = [
-  { n: 1, title: 'FEATURES', status: 'ACTIVE', detail: 'Audit every roadmap feature against the actual UI, backend, persisted data, and workflow. Implement missing feature behavior before expanding functions.' },
-  { n: 2, title: 'FUNCTIONS', status: 'QUEUED', detail: 'Audit and complete callable actions, queries, mutations, validation, persistence, error handling, and provider routing after the feature inventory is satisfied.' },
-  { n: 3, title: 'COMPONENTS', status: 'QUEUED', detail: 'Audit reusable UI and backend components, states, loading/error/empty views, accessibility, and consistent navigation after functions are complete.' },
-  { n: 4, title: 'CAPABILITIES', status: 'QUEUED', detail: 'Verify integrated capabilities work across boundaries and produce persisted, independently checkable evidence. Keep unreliable providers isolated.' },
-  { n: 5, title: 'FULL END-TO-END TEST', status: 'LOCKED', detail: 'Run the full workflow only after stages 1–4 are complete; verify a real governed mission through evidence, artifact, delivery callback, deployment, and canonical readiness.' },
-]
-
-const featureCoverage: Coverage[] = [
-  { area: 'Mission workspace and ordered workflow', status: 'partial', evidence: 'Dedicated mission, workflow, overview, and Council pages; stale/deleted active mission IDs recover cleanly. Workflow completion requires persisted successful workflow provenance plus matching deployment commit and passing canonical readiness. The Autonomous Workflow next-step panel links to the first unverified stage; the Mission Console now guides users to define a contract, review a pending mission, or continue an approved mission to Council. Approval remains separate from execution.', next: 'Audit AI Council transitions next, then compare each dashboard count and status against persisted evidence and mission approval state.' },
-  { area: 'Manifest Intelligence and blueprint memory', status: 'partial', evidence: 'Macaly has the live synthesis form, private blueprint history, strategy ledger, and authenticated evidence-backed outcome capture. GitHub PR #25 and PR #27 are merged. PR #35 added a mocked-provider Convex integration test proving authenticated synthesis saves a private blueprint and structured strategies. PR #55 is merged (CI 38428396143), adding one bounded structured-only retry without discarding a readable blueprint; only validated candidates persist. PR #62 (CI 38442140475) added convex/tsconfig.json and production Convex deployment now succeeds with typechecking enabled. PR #63 (CI 38443318221; merge commit be093e3a51f12059ed8296dfbd2e5a447dbbfc9a) extends privacy regression coverage: a different operator and anonymous queries see neither blueprints nor strategies. PR #64 (CI run 38444264393, passed; merge commit e75a30ba5f6ff5014b069840771c6adcc16c1104) adds a provider-outage regression proving failed synthesis does not write a blueprint or strategy records. PR #65 (CI run 38445082005 passed; merge commit d0294c9db327bebd6762f8427433485bd860a257) adds an on-page three-step guide for real provider verification and explicitly distinguishes automated tests from production inference. Macaly full validation passed 131 tests across 17 files, production dependency audit with no known vulnerabilities, strict TypeScript, and production build. Runtime provider-to-ledger persistence against a real configured provider remains unverified; no live synthesis was claimed.', next: 'Next: run one real authenticated synthesis and inspect the resulting private strategy ledger receipt; mocked tests are not live-inference evidence. World context, automatic metric ingestion, and measured resource accounting remain partial.' },
-  { area: 'Intent compiler and strategy comparison', status: 'present', evidence: 'Structured intent contract, acceptance criteria, risks, and selectable strategies are implemented with focused tests.', next: 'Preserve existing behavior; broader runtime validation belongs to later stages.' },
-  { area: 'Unified orchestration and specialist Council', status: 'partial', evidence: 'Orchestrator and Council surfaces exist; agents and orchestration records are persisted. GitHub PR #33 ports the governed Council page; PR #34 adds the dedicated readiness evidence workspace. GitHub PR #37 ports the dedicated Intelligence Orchestrator route, sidebar entry, metadata, backend intent compiler, bounded mission-specification parser, and parser regression tests; it merged as 088b9befd2a3b9a764cb853094a6b60975a93bcf after CI run 38289071295 passed locked dependency installation, tests, and production build. The route creates a governed draft only; approval and execution remain separate.', next: 'Verify the authenticated Manifest provider-to-ledger path, then continue remaining dependency-aware route parity.' },
-  { area: 'Managed AI provider routing and health', status: 'partial', evidence: 'Provider routing and health history surfaces exist; the old gateway has recorded 402/429 failures.', next: 'Keep OpenRouter, Groq, Mistral, and Cerebras isolated behind server-side adapters; one failing provider must not block unrelated features.' },
-  { area: 'Research, citations, and opportunity discovery', status: 'partial', evidence: 'Research storage and opportunity recommendations are present. GitHub PR #40 is merged as 18cc351c3be7d3fb3b9c1d536f4326bb32135790: Research Oracle now uses the server-side provider router, bounded DuckDuckGo snippets, URL/hostname validation, citation allowlisting, and owner checks. PR CI run 38301838231 passed automated tests and the production build. Post-merge main CI for PR #40 passed (run 38302094326). Follow-up PR #41 (https://github.com/eugenemcmillian3-tech/nexus-forge-/pull/41) adds a narrow citation-integrity fix and was squash-merged as d2f936538ff7b11256e8cdc35328cbbbce96a223 after PR CI run 38304261053 passed. Macaly Research Oracle was further hardened with bounded response-body reads, stricter DNS hostname validation, content-type checks before parsing fetched pages, disabled redirects for the search endpoint, a 500-character query limit, and strict validation that extracted search-result links originate from DuckDuckGo and include an explicit result target. Focused result-origin regression coverage now has 9 passing cases, including off-origin URLs, missing explicit targets, non-HTTPS targets, IP literals, credentials, and nonstandard ports. The full suite now passes 96 tests across 14 files; strict TypeScript, CSS checks, and production build pass after the hardening. A Macaly parity audit found an over-escaped DNS hostname separator in the Research Oracle allowlist; this was corrected and validated against ordinary public DNS names, subdomains, localhost, IP literals, and malformed labels. The Macaly source-fetch limits, redirect checks, and HTML content-type checks remain in place. After the correction, strict TypeScript and CSS checks passed, all 87 tests across 13 files passed, and the production build passed. The latest production publish reached READY on 2026-10-12; smoke checks for /, /roadmap, /manifest, /evidence, and /readiness all returned HTTP 200 with NEXUS FORGE branding. GitHub main CI run 38313074308 passed on commit d2f936538ff7b11256e8cdc35328cbbbce96a223. The latest project audit caught a strict TypeScript regression in the Capability dashboard verification-row inference; its consumed fields are now explicitly typed, strict TypeScript/CSS checks pass, all 87 tests across 13 files pass, and the production build succeeds. Convex code generation was run, but it did not remove the underlying inference issue; the focused UI typing fix did. A new mocked Convex integration regression verifies authenticated research result persistence, citation allowlisting, owner isolation, and anonymous rejection before external requests. The current Macaly sandbox suite passes 121 tests across 16 files, strict TypeScript/CSS checks, and production build. Operator acceptance evidence records a successful authenticated Research Oracle query, two real persisted citation records, and egressHealth configured/healthy. GitHub PR #54 brings the gateway-only implementation and egress policy regression tests into main; mocked provider tests remain distinct from live Manifest inference evidence.', next: 'Verify live Manifest synthesis and strategy-ledger persistence against a real configured provider response, then make the research-to-mission handoff explicit; generated text alone is not verified research.' },
-  { area: 'Persistent memory and verified learning', status: 'partial', evidence: 'Convex memory and learning records exist. GitHub PR #38 ports the dedicated Verified Learning Engine page and owner-scoped experiment backend; CI run 38293852554 passed. PR #94 added evidence-backed Manifest outcome signals and PR #95 added repeatable baseline comparisons. PR #96 adds an operator-reviewed lesson capture flow with strategy linkage, applicability, and at least two evidence references; the existing mission orchestrator retrieves learning-lesson memory as advisory context. Macaly tests/build and GitHub CI run 38493069719 passed; production publish is READY and core route smoke checks returned HTTP 200. Resolved 2026-10-14: explicit handler parameter annotations in convex/portfolio.ts reduced excessive generic inference. Convex dry-run and production deployment both passed with CLI typechecking enabled; project strict checks, 150 tests, and production build also passed.', next: 'Measure whether later missions actually retrieve and apply relevant reviewed lessons, then compare their real outcomes against baseline evidence. Keep lesson reuse advisory and owner-scoped; do not auto-promote strategies.' },
-  { area: 'Portfolio intelligence and prioritization', status: 'partial', evidence: 'Portfolio surface and decision records exist.', next: 'Trace recommendations to persisted mission evidence and expose accept/defer/reject outcomes.' },
-  { area: 'Artifact generation, quality, and approval', status: 'partial', evidence: 'Artifact forge, quality checks, and human approval state exist.', next: 'Improve artifact usability and make verification findings actionable before approval.' },
-  { area: 'Governed GitHub Actions delivery', status: 'partial', evidence: 'Delivery records and workflow callback endpoint exist; a prior delivery succeeded.', next: 'Retain human approval and exact repository/run/commit binding; confirm the newer provenance guard on a fresh run later.' },
-  { area: 'Deployment readiness and evidence chain', status: 'partial', evidence: 'Readiness checker, operator-scoped audit history, delivery evidence, and canonical readiness fields exist. URL probes reject unsupported schemes, credentials, IP literals, internal/local hostnames, and nonstandard ports; redirects are manually validated with a bounded hop count. Strict checks, tests, and production build passed. DNS rebinding/public-host-to-private-IP resolution was not fully mitigated by application-level URL normalization alone, so on 2026-10-13 the Research Oracle egress gateway (Cloudflare Worker nexus-forge-research-egress) added DNS-over-HTTPS pre-validation of every hop against private/reserved/metadata ranges plus the managed fetch proxy\'s connection-time refusal of private, link-local, and loopback destinations, recorded in deployed acceptance tests; source retrieval now fails closed without it.', next: 'Back every displayed success with matching run, commit, deployment URL, and readiness evidence. Research Oracle gateway acceptance is recorded; the next acceptance target is live Manifest synthesis/strategy persistence.' },
-  { area: 'Incidents, retries, and checkpoints', status: 'partial', evidence: 'Mission runner, incidents, retries, and checkpoint-related state exist. Diagnosis parsing is extracted into a pure helper with regression tests for multiline sections, confidence boundaries, and safe fallbacks.', next: 'Clarify recoverable versus human-review-blocked states and preserve the rule that governance-blocked runs never auto-resume.' },
-  { area: 'Authenticated owner scoping and legacy workspace data', status: 'partial', evidence: 'Mission creation derives ownerKey from the authenticated operator; mission lookup/approval, public agent-run history, readiness history/details, portfolio decisions/recommendations, memory reads/writes, provider-health history, artifact verification, incident diagnosis, audit reads, and delivery dispatch have owner-scoping guards. Macaly Research Oracle now rejects unsafe URL forms and manually validates redirect hops; source-page retrieval is routed exclusively through the deployed egress gateway (DoH pre-validation plus managed-proxy connection-time private-destination refusal, evidenced 2026-10-13) with a fail-closed client. GitHub PR #17 added mission ownership checks to its distinct research implementation and anonymous/cross-owner regression tests; it is merged. PR #18 and PR #19 subsequently hardened audit/incident histories, memory, artifact/verification reads, and portfolio query scoping. Legacy records remain unchanged.', next: 'Continue the remaining public-handler audit and design a non-destructive legacy-workspace claim flow. Keep the Macaly and GitHub implementations explicitly reconciled before porting feature code.' },
-  { area: 'Capability/reliability dashboard and benchmarking', status: 'partial', evidence: 'Capability dashboard and experiment comparisons exist.', next: 'Add repeatable evidence-backed benchmarks and never present estimates as measured facts.' },
-  { area: 'Authentication, audit, and human governance', status: 'present', evidence: 'Auth wrapper, sign-in surface, audit records, and approval gates are present; approval is already known to work.', next: 'Preserve this behavior and avoid redundant approval-gate testing unless a regression is found.' },
-  { area: 'Dedicated pages, sidebar, and project roadmap', status: 'present', evidence: 'Macaly production and GitHub source both have the 16 dedicated route files. GitHub PR #39 registers all 16 in the generated route tree, adds per-route metadata, and exposes all existing destinations in the sidebar; it merged as d04d23e1ea265f8845c19abb672f9d05656f55f8 after CI run 38294327311 passed install, tests, and production build. Route registration is complete; full feature/function parity remains under review.', next: 'Continue dependency-aware backend parity audits. GitHub PR #54 now routes Research Oracle source-page retrieval through the authenticated egress gateway, fails closed without direct-fetch fallback, and tracks the worker/policy/tests in main; next verify live Manifest strategy persistence and reconcile remaining missionRunner/runtime contracts.' },
-  { area: 'Multimodal, enterprise, external ecosystem, frontier research', status: 'deferred', evidence: 'These are explicitly postponed in the 24-milestone roadmap.', next: 'Do not start these until core features, functions, components, and capabilities have evidence of reliability.' },
-]
-
-const coverageLabels = { present: 'BASE EXISTS', partial: 'GAP REVIEW', gap: 'MISSING', deferred: 'DEFERRED' }
-const labels = { done: 'COMPLETED', partial: 'IN PROGRESS', next: 'NEXT PRIORITY', later: 'POSTPONED' }
-const symbols = { done: '✓', partial: '◐', next: '→', later: '—' }
+const roadmap = [
+  {
+    "n": 1,
+    "title": "Verify current live platform",
+    "status": "partial",
+    "detail": "Finish the source parity audit and broader runtime validation."
+  },
+  {
+    "n": 2,
+    "title": "Finish Manifest Intelligence outcome system",
+    "status": "partial",
+    "detail": "Add world context, automatic outcome metrics, complete resource accounting, and measured adaptive improvement."
+  },
+  {
+    "n": 3,
+    "title": "Stabilize AI providers and routing",
+    "status": "partial",
+    "detail": "Validate provider reliability across workloads. OpenRouter remains manual-only; Mistral and Hugging Face are deferred."
+  },
+  {
+    "n": 4,
+    "title": "Build Unified Intelligence Orchestrator",
+    "status": "partial",
+    "detail": "Complete integrated orchestration runtime validation. Dependency/resource preflight is implemented; remaining Mission Control recovery and adaptive-preflight parity needs review."
+  },
+  {
+    "n": 5,
+    "title": "Add structured Intent Compiler",
+    "status": "done",
+    "detail": "Implemented: structured mission intent and acceptance contract."
+  },
+  {
+    "n": 6,
+    "title": "Competing strategies and task-aware model selection",
+    "status": "partial",
+    "detail": "Measure strategy comparisons and task-aware model selection against repeatable outcomes."
+  },
+  {
+    "n": 7,
+    "title": "Independent verification and safety",
+    "status": "partial",
+    "detail": "Expand independent functional verification beyond existing evidence and safety gates."
+  },
+  {
+    "n": 8,
+    "title": "Verified Learning Engine",
+    "status": "partial",
+    "detail": "Broaden verified learning evidence and benchmark coverage."
+  },
+  {
+    "n": 9,
+    "title": "Persistent, searchable knowledge",
+    "status": "partial",
+    "detail": "Measure memory relevance, ranking quality, and reuse effectiveness."
+  },
+  {
+    "n": 10,
+    "title": "Connect missions to real-world outcomes",
+    "status": "partial",
+    "detail": "Ingest actual product and business outcomes beyond readiness receipts."
+  },
+  {
+    "n": 11,
+    "title": "Checkpoints and long-horizon execution",
+    "status": "partial",
+    "detail": "Validate checkpoint recovery and long-horizon reliability across repeated runs."
+  },
+  {
+    "n": 12,
+    "title": "Capability benchmark and experiment lab",
+    "status": "partial",
+    "detail": "Build a repeatable capability benchmark and experiment suite."
+  },
+  {
+    "n": 13,
+    "title": "Capability and Reliability Dashboard",
+    "status": "partial",
+    "detail": "Ground capability and reliability metrics in broader measured evidence."
+  },
+  {
+    "n": 14,
+    "title": "Automated research and opportunity discovery",
+    "status": "partial",
+    "detail": "Improve discovery evidence quality and integrated research validation."
+  },
+  {
+    "n": 15,
+    "title": "Safe capability expansion",
+    "status": "partial",
+    "detail": "Add more capabilities with explicit tests and governed expansion evidence."
+  },
+  {
+    "n": 16,
+    "title": "Cost and resource intelligence",
+    "status": "partial",
+    "detail": "Automate per-run usage, cost collection, and resource intelligence; budgets and recorded costs already exist."
+  },
+  {
+    "n": 17,
+    "title": "Multimodal creation and perception",
+    "status": "later",
+    "detail": "Build multimodal creation and perception workflows."
+  },
+  {
+    "n": 18,
+    "title": "Product and venture delivery pipeline",
+    "status": "partial",
+    "detail": "Validate artifact functionality and the latest integrated delivery pipeline; governed artifact delivery already exists."
+  },
+  {
+    "n": 19,
+    "title": "Advanced security and resilience at scale",
+    "status": "later",
+    "detail": "Build advanced security and resilience capabilities for scale."
+  },
+  {
+    "n": 20,
+    "title": "Multi-user and enterprise governance",
+    "status": "later",
+    "detail": "Build multi-user workspaces and enterprise governance."
+  },
+  {
+    "n": 21,
+    "title": "External agent and developer ecosystem",
+    "status": "later",
+    "detail": "Build external agent integrations and a developer ecosystem."
+  },
+  {
+    "n": 22,
+    "title": "Competitive validation and genuine novelty",
+    "status": "later",
+    "detail": "Establish comparative benchmarks and evidence of useful novelty."
+  },
+  {
+    "n": 23,
+    "title": "Frontier scientific research",
+    "status": "later",
+    "detail": "Develop and evaluate frontier scientific research capabilities."
+  },
+  {
+    "n": 24,
+    "title": "AGI-oriented generality and superintelligence research",
+    "status": "later",
+    "detail": "Research broader generality with explicit evaluations. This is a research direction, not an implemented AGI or superintelligence claim."
+  }
+] as const
 
 function RoadmapPage() {
-  const items = roadmap.flatMap(section => section.items)
-  const done = items.filter(item => item.status === 'done').length
-  const active = items.filter(item => item.status === 'partial').length
-  const nextPriority = 'NEXT PRIORITY: finish the page-by-page handoff audit, starting with mission-control/preflight UI parity and the remaining recorded source differences. Callback count contracts, HTTP input validation, and routing descriptions are reconciled. Preserve the accepted live Research and Manifest receipts; validate new changes with focused tests.'
-  return <WorkspaceLayout title="Master Roadmap" eyebrow="PROJECT CONTROL / 24 MILESTONES">
-    <section className="workspace">
-      <div className="glass-card research-card"><div className="panel-title"><span>SOURCE INVENTORY · 2026-10-14</span><span className="status-chip">RECONCILIATION IN PROGRESS</span></div><p>Baseline GitHub main: 183ae101a3a304098273765013ebebfb2d6bb405. Compared tracked src, convex, and tests, excluding UI primitives.</p><div className="decision-line"><strong>81 identical files</strong><span>25 content differences · 4 missing files at baseline</span></div><p>Focused repair restores orchestration and three missing regression files, reconciles session error handling, and adds owner checks to resource acquisition/release. Content differences require individual review; they are not all defects.</p><details><summary>Baseline files requiring content review</summary><ul><li>__tests__/app/page.test.tsx</li><li>__tests__/delivery-callback-replay.test.ts</li><li>__tests__/intent-contract.test.ts</li><li>__tests__/ownership-isolation.test.ts</li><li>__tests__/research-origin-safety.test.ts</li><li>__tests__/research-persistence.test.ts</li><li>convex/_generated/api.d.ts</li><li>convex/_generated/server.d.ts</li><li>convex/_generated/server.js</li><li>convex/aiProvider.ts</li><li>convex/audit.ts</li><li>convex/delivery.ts</li><li>convex/http.ts</li><li>convex/incidents.ts</li><li>convex/intentContract.ts</li><li>convex/researchData.ts</li><li>convex/tsconfig.json</li><li>src/components/error-boundary.tsx</li><li>src/components/mission-control.tsx</li><li>src/components/workspace-layout.tsx</li><li>src/metadata.json</li><li>src/routes/__root.tsx</li><li>src/routes/council.tsx</li><li>src/routes/readiness.tsx</li><li>src/routes/roadmap.tsx</li></ul></details><p>Next: compare runtime contracts in delivery/http, provider routing, and mission-control/preflight wiring before the final end-to-end acceptance run.</p></div>
-      <div className="glass-card research-card"><div className="panel-title"><span>LATEST COMPLETED · 2026-10-14</span><span className="live-pill">WORKFLOW REPAIR</span></div><ul><li>All 16 pages are included in the guide; GitHub PR #104 is merged.</li><li>Mission selection updates page controls and guidance together.</li><li>Delivery callbacks use explicit canonical readiness counts, validate integer totals, and reject malformed request-body types. HTTP validation and provider-policy descriptions are reconciled between sources.</li><li>Seven mission workspaces now wait for saved evidence with an accessible loading view, rather than flashing missing-record or approval warnings.</li><li>Portfolio actions surface failures and restore controls; created drafts have direct Mission Console continuation. Provider guidance matches the actual manual-only/deferred routing policy.</li><li>Mission Control now surfaces action errors above its panels and links to recovery pages. Outcome, approval, authorization, and runner-start controls recover after rejected requests; GitHub’s missing outcome-recording control is restored.</li><li>Reviewed lessons can create mission drafts carrying their source receipt, applicability, and evidence references. Unreviewed learning sources are rejected. Missing-strategy guidance links back to Manifest.</li><li>Manifest and Orchestrator drafts retain owner-checked source receipt links. Mission Console shows the receipt; Overview records linked intelligence provenance. Orchestrator selects newly created drafts.</li><li>The 16-page overview distinguishes loading, complete, ready, blocked, waiting, optional, and reference states. Completion counts exclude blocked recovery and optional pages without mission-linked evidence.</li><li>Overview and Guided Workflow share next-action guidance, including recovery for a newer blocked delivery. Mission completion is separate from the 16-page feature inventory.</li><li>Successful artifact re-verification preserves approval; failed or rejected artifacts cannot silently re-enter delivery.</li><li>Delivery approval cannot reset records after dispatch or recorded workflow/deployment evidence.</li><li>Matching callback repeats preserve saved delivery state and audit history; conflicting receipts cannot replace verified provenance.</li><li>Outcome guidance opens Workflow, where the measurement control lives, and completes from the saved governed delivery measurement.</li><li>Reviewed lessons accept evidence references on separate lines.</li><li>Research links lead to Artifact Forge with the selected mission; saved research is visible before generation.</li><li>Delivery requires selection of the exact approved artifact and displays artifact references on its records.</li><li>Builder generation and retry now read the saved mission contract and up to five mission-specific research records with citations. Regression coverage verifies context delivery and isolation; real-provider artifact quality remains a separate check.</li></ul><p>Validation: 187 tests across 32 files, strict TypeScript, production build, and production Convex deployment passed. Research context propagation is implemented. Artifact re-verification and delivery approval state preservation are repaired. Callback replay protection and ordering regression checks are implemented. Broader feature and runtime audits remain in progress.</p><p>Accepted Manifest receipt: manifest:kh7a55xqfcg63ezf8w8rr770bs8g84w3, with three strategy records reported for that exact synthesis. Earlier entries below are historical and may describe work completed afterward.</p></div>
-      <div className="hero-grid">
-        <div className="hero-copy">
-          <div className="eyebrow"><span /> LIVE PROJECT CHECKLIST</div>
-          <h2>Know what shipped, what is partial, and <em>what comes next.</em></h2>
-          <p className="hero-text">This roadmap is the persistent progress reference for NEXUS FORGE. A feature is only marked complete when there is implementation and supporting test evidence; a page existing does not mean the whole milestone is finished.</p>
-          <div className="hero-actions"><Link className="primary-button" to="/workflow">Resume mission workflow →</Link><Link className="secondary-button" to="/evidence">Review evidence →</Link></div>
-        </div>
-        <div className="glass-card research-card">
-          <div className="panel-title"><span>ROADMAP SNAPSHOT</span><span className="live-pill">24 MILESTONES</span></div>
-          <div className="decision-line"><span>Fully completed</span><strong>{done} / 24</strong></div>
-          <div className="decision-line"><span>In progress / partial</span><strong>{active} / 24</strong></div>
-          <div className="decision-line"><span>Postponed</span><strong>{items.filter(item => item.status === 'later').length} / 24</strong></div>
-          <p className="muted-copy">Counts reflect milestone status, not a percentage of overall intelligence or autonomy.</p>
-        </div>
-      </div>
-      <div className="glass-card research-card">
-        <div className="panel-title"><span>UP NEXT</span><span className="status-chip">FOUNDATION FIRST</span></div>
-        <h2>{nextPriority}</h2>
-        <p>GitHub source workflow PR #74 remains merged, and provider-usage validation PR #75 has now also merged after its CI job passed (workflow run 38468707079; merge commit b7f0894ba4ae516e35802e12238d0c9730313d75). The source repo now validates token counts, cost values, timestamps, owner keys, and provider/model metadata before persisting usage evidence, with regression coverage for malformed receipts. Fresh Macaly verification on 2026-10-13 passed frozen install, production dependency audit, strict TypeScript, all 138 tests across 18 test files, and the production build. Production publish is READY, and smoke checks returned HTTP 200 for /, /roadmap, /manifest, /evidence, /readiness, /workflow, /providers, and /portfolio. Research Oracle live acceptance is recorded, and issue #51 is closed. The next unresolved acceptance target is one real provider-backed Manifest synthesis with private strategy persistence and operator isolation. No live inference is claimed by mocked persistence tests. Preserve the existing human-approval and authentication flows; do not rerun those proven checks as routine build gates.</p>
-        <div className="workflow-step-list">
-          {['Manifest backend foundation and incident diagnosis parser are merged; PR CI passed (runs 38199482586 and 38199884926)', 'Incident restart safeguards merged in PR #22; focused PR CI run 38199973277 passed and post-merge main CI run 38200077146 passed install, tests, and production build', 'Route inventory is complete; GitHub PR #23 added and registered the dedicated roadmap route and was merged after CI passed', 'GitHub PR #24 shared responsive workspace shell is merged; PR #25 added the dedicated Manifest Intelligence route, strategy ledger, and evidence-backed outcome capture; CI run 38201352002 passed and the PR is merged.', 'GitHub PR #34 added the Launch Readiness route, evidence detail/history UI, API typings, metadata, styling, and sidebar entry; merged after green CI run 38283563689.', 'GitHub PR #35 adds an authenticated Manifest provider-to-ledger integration regression test; merged after green CI run 38284376436.', 'GitHub PR #37 ports Intelligence Orchestrator; merged commit 088b9befd2a3b9a764cb853094a6b60975a93bcf after CI run 38289071295 passed.', 'GitHub PR #38 ports Verified Learning Engine, its owner-scoped Convex backend, route metadata/navigation, and safety/evidence regression tests; merged commit 049d37ada364dba870eee2903f8942718baaf06b after CI run 38293852554 passed.', 'GitHub PR #39 fixed a route registration gap: all 16 existing page files are now registered in the route tree, all have metadata, and all appear as sidebar links; merged commit d04d23e1ea265f8845c19abb672f9d05656f55f8 after CI run 38294327311 passed.', 'Done: GitHub PR #40 replaced the legacy Research Oracle gateway path with the server-side provider router and bounded safe retrieval; PR CI run 38301838231 and post-merge main CI run 38302094326 passed. PR #41 citation-integrity fix is now merged as d2f936538ff7b11256e8cdc35328cbbbce96a223 after PR CI run 38304261053 passed; post-merge main CI run 38313074308 passed on the exact merge commit (push event, conclusion success). Done: added the Research Oracle mocked persistence regression on Macaly (2/2 tests pass), including citation allowlisting and owner isolation; the full suite now passes 98 tests across 15 files, production build passes, and strict TypeScript/CSS checks pass. GitHub PR #43 is merged as 7907f0cb01833714cfeab79469d78710dce56251 after its PR CI passed (run 38330127305). GitHub PR #44 is merged as dc67bea50e4ba532abe6aaea0860bac96fb53ef1 after CI run 38334935485 passed tests and production build. It adds bounded source-page retrieval and manually validated redirect hops while preserving auth/ownership and provider routing. PR #45 adds a regression proving redirects to localhost are never fetched; it merged as 583add2817d0e2f18e204f78c2287de70302e048 after CI run 38335267694 passed tests and production build. PR #46 adds measured Manifest outcome persistence and cross-operator overwrite protection, merged as df54ec4bd184719487675b3df256015798ac3492 after CI run 38335797629 passed tests and production build. PR #47 adds a regression proving Research Oracle redirect chains stop at the four-hop cap and never fetch the next destination; merged as f63b34e16c6dededd0f9d6ee4fc8a86b67995f7e after CI run 38336210319 passed tests and production build. Macaly revalidation on 2026-10-13 passes 101 tests across 15 files, the production build, and strict TypeScript/CSS checks. GitHub PR #47 CI run 38336210319 passed automated tests and production build. These mocked integration tests are not live-provider evidence. A noncanonical npm audit produced misleading results because this project declares pnpm; the correct `pnpm audit --prod --audit-level high` reports no known production vulnerabilities. No dependency changes were applied. At the time of that historical entry, network-level DNS-rebinding/egress protection remained open. That gap is now addressed by the separately recorded Cloudflare Research Oracle egress gateway deployment and fail-closed Convex integration. Current acceptance order: (1) run one real Research Oracle query in the already signed-in operator session and verify the persisted evidence row and citation URLs; (2) verify live Manifest synthesis and strategy persistence. Mocked provider tests do not count as live inference evidence. Issue #51 is closed based on the operator-provided live Research Oracle acceptance record. GitHub PR #74 is merged as 0dcb132fbae6bd9d27fd4b86abd8a6e416ec85f8 after CI run 38467309572 passed. It standardizes the delivery workflow on pnpm for build and tests. Macaly validation on 2026-10-13: frozen install passed, production dependency audit reported no known vulnerabilities, strict TypeScript passed, 138 tests across 18 files passed, production build passed, and eight published routes returned HTTP 200. Next: verify live Manifest provider-to-ledger synthesis and persistence; do not repeat human approval/authentication tests.'].map((step, index) => <div className="workflow-step" key={step}><span className="workflow-step-mark">{index + 1}</span><span className="workflow-step-copy"><strong>{step}</strong></span><span className="workflow-step-state">LOGGED</span></div>)}
-        </div>
-      </div>
-      <div className="glass-card research-card">
-        <div className="panel-title"><span>REQUIRED BUILD ORDER</span><span className="status-chip">NO STAGE SKIPS</span></div>
-        <p className="muted-copy">The order below is the active execution contract. A stage advances only after its inventory is reviewed and missing items are implemented; end-to-end testing stays locked until stages 1–4 are complete.</p>
-        <div className="workflow-step-list">
-          {buildStages.map(stage => <article className={`workflow-step ${stage.n === 1 ? 'is-current' : ''}`} key={stage.n}>
-            <span className="workflow-step-mark">{stage.n}</span>
-            <span className="workflow-step-copy"><strong>{stage.title}</strong><small>{stage.detail}</small></span>
-            <span className="workflow-step-state">{stage.status}</span>
-          </article>)}
-        </div>
-      </div>
-      <div className="glass-card research-card">
-        <div className="panel-title"><span>MASTER FEATURE INVENTORY · STAGE 1</span><span className="live-pill">{featureCoverage.length} AREAS</span></div>
-        <p className="muted-copy">This is an implementation audit, not a claim that every listed feature is finished. “Base exists” means code is present; “Gap review” means complete behavior still needs work or evidence.</p>
-        <div className="workflow-step-list">
-          {featureCoverage.map((feature, index) => <article className={`workflow-step ${feature.status === 'present' ? 'is-done' : feature.status === 'partial' ? 'is-current' : ''}`} key={feature.area}>
-            <span className="workflow-step-mark">{index + 1}</span>
-            <span className="workflow-step-copy"><strong>{feature.area}</strong><small>{feature.evidence}</small><small><b>Next:</b> {feature.next}</small></span>
-            <span className="workflow-step-state">{coverageLabels[feature.status]}</span>
-          </article>)}
-        </div>
-      </div>
-      {roadmap.map(section => <div className="glass-card research-card" key={section.section}>
-        <div className="panel-title"><span>{section.section}</span><span className="status-chip">{section.items.filter(item => item.status === 'done').length} COMPLETE</span></div>
-        <div className="workflow-step-list">
-          {section.items.map(item => <article className={`workflow-step ${item.status === 'done' ? 'is-done' : item.status === 'next' ? 'is-current' : ''}`} key={item.n}>
-            <span className="workflow-step-mark">{symbols[item.status]}</span>
-            <span className="workflow-step-copy"><strong>{item.n}. {item.title}</strong><small>{item.detail}</small></span>
-            <span className="workflow-step-state">{labels[item.status]}</span>
-          </article>)}
-        </div>
-      </div>)}
-      <div className="glass-card research-card">
-        <div className="panel-title"><span>STATUS KEY</span><span className="live-pill">TRANSPARENT PROGRESS</span></div>
-        <div className="decision-line"><strong>✓ Completed</strong><span>Implementation and focused checks exist for the stated milestone.</span></div>
-        <div className="decision-line"><strong>◐ In progress</strong><span>Some features shipped; end-to-end proof or coverage remains.</span></div>
-        <div className="decision-line"><strong>→ Next priority</strong><span>The immediate build target, worked in the order shown above.</span></div>
-        <div className="decision-line"><strong>— Postponed</strong><span>Intentionally deferred until the core foundation is reliable.</span></div>
-      </div>
-    </section>
-  </WorkspaceLayout>
+  const done = roadmap.filter(item => item.status === 'done')
+  const partial = roadmap.filter(item => item.status === 'partial')
+  const deferred = roadmap.filter(item => item.status === 'later')
+  return <WorkspaceLayout><section className="workspace dark-section">
+    <div className="workspace-head"><div><div className="section-kicker">PROJECT / ROADMAP</div><h1>What shipped. What remains.</h1></div><span className="status-chip">24 MILESTONES</span></div>
+    <p>The roadmap tracks complete capabilities. A working page or a passing test does not complete a whole milestone. All 16 workspaces remain in the guide; mission evidence follows its own checkpoints.</p>
+    <div className="hero-actions"><Link className="primary-button" to="/workflow">Continue guided workflow →</Link><Link className="secondary-button" to="/evidence">Review research evidence →</Link><Link className="secondary-button" to="/incidents">Review recovery →</Link></div>
+    <div className="stats-strip compact"><div><strong>{done.length}</strong><span>Completed milestone</span></div><div><strong>{partial.length}</strong><span>Partially implemented</span></div><div><strong>{deferred.length}</strong><span>Deferred / not implemented</span></div></div>
+    <div className="glass-card research-card"><div className="panel-title"><span>NEXT WORK · FOUNDATION FIRST</span><span className="status-chip">IN PROGRESS</span></div>
+      <ol><li>Finish Mission Control parity: review remaining adaptive guidance, runner status, and escalation recovery differences.</li><li>Audit the remaining source differences by behavior, preserving environment-specific integration files.</li><li>Validate integrated artifact functionality and delivery with saved evidence, then expand benchmark and outcome coverage.</li></ol>
+      <p>Dependency and resource preflight checks block execution in the backend. Mission Control displays blockers, advisories, and resource availability; authorization and execution wait for ready preflight and incident clearance.</p>
+    </div>
+    <div className="glass-card research-card"><div className="panel-title"><span>IMPLEMENTED FOUNDATION</span><span className="live-pill">SAVED EVIDENCE</span></div>
+      <ul><li>All 16 pages share ordered guidance, selected-mission state, honest progress states, and recovery links.</li><li>Mission drafts retain owner-checked Manifest, Orchestrator, and reviewed-learning provenance.</li><li>Artifact generation receives saved mission requirements and mission-specific research; delivery requires an explicitly selected approved artifact.</li><li>Artifact re-verification preserves valid approval. Dispatch state cannot be rewound by approval, and matching callbacks are idempotent while conflicting receipts are rejected.</li><li>Measured outcome recording and action-error recovery are available. Seven mission pages wait for evidence before showing missing-record guidance.</li><li>Readiness counts and HTTP callback types are validated; provider descriptions match routing policy.</li></ul>
+      <p>Research, Manifest, and the earlier LocalBoost delivery have accepted live receipts. These are retained evidence, not a requirement to repeat authentication or approvals for routine maintenance. Manifest receipt: manifest:kh7a55xqfcg63ezf8w8rr770bs8g84w3, with three linked strategy records.</p>
+    </div>
+    {[
+      { title: 'Not implemented yet · deferred expansions', items: deferred },
+      { title: 'Partially implemented · remaining work', items: partial },
+      { title: 'Completed milestone', items: done },
+    ].map(group => <div className="glass-card research-card" key={group.title}><h2>{group.title}</h2>{group.items.map(item => <div className="guard-item" key={item.n}><span>{item.n}</span><div><strong>{item.title}</strong><p>{item.detail}</p></div><span className="status-chip">{item.status === 'later' ? 'DEFERRED' : item.status === 'done' ? 'COMPLETE' : 'PARTIAL'}</span></div>)}</div>)}
+    <p className="muted-copy">Implementation history remains in GitHub pull requests. This page describes the current capability gaps rather than repeating superseded status notes.</p>
+  </section></WorkspaceLayout>
 }
