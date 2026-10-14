@@ -20,12 +20,10 @@ export const workspaceGroups = [
     ],
   },
   {
-    title: '03 · BUILD & LEARN',
-    intro: 'Create artifacts, verify quality, and improve from measured outcomes.',
+    title: '03 · BUILD',
+    intro: 'Create artifacts and verify quality before delivery.',
     pages: [
       { path: '/artifacts', title: 'Artifact Forge', icon: '▣', purpose: 'Generate, inspect, verify, and review artifacts.', use: 'After planning and research.', output: 'A saved artifact with quality findings and its approval state.' },
-      { path: '/learning', title: 'Verified Learning Engine', icon: '↻', purpose: 'Compare measured results and capture reviewed lessons.', use: 'When comparable baseline and candidate evidence exists.', output: 'Evidence-linked comparisons and advisory lessons.' },
-      { path: '/portfolio', title: 'Portfolio Intelligence', icon: '◇', purpose: 'Prioritize opportunities and record operator decisions across missions.', use: 'When reviewing outcomes or selecting the next opportunity.', output: 'Recorded prioritization decisions.' },
     ],
   },
   {
@@ -33,6 +31,14 @@ export const workspaceGroups = [
     intro: 'Deliver through the governed pipeline and verify the resulting evidence.',
     pages: [
       { path: '/delivery', title: 'Delivery Pipeline', icon: '↗', purpose: 'Inspect target, authorization, workflow run, commit, deployment, and readiness evidence.', use: 'After artifact verification and required delivery authorization.', output: 'Traceable delivery evidence.' },
+    ],
+  },
+  {
+    title: '05 · MEASURE & LEARN',
+    intro: 'Review outcomes after delivery, then compare evidence and capture lessons.',
+    pages: [
+      { path: '/portfolio', title: 'Portfolio Intelligence', icon: '◇', purpose: 'Prioritize opportunities and record operator decisions across missions.', use: 'When reviewing outcomes or selecting the next opportunity.', output: 'Recorded prioritization decisions.' },
+      { path: '/learning', title: 'Verified Learning Engine', icon: '↻', purpose: 'Compare measured results and capture reviewed lessons.', use: 'When comparable baseline and candidate evidence exists.', output: 'Evidence-linked comparisons and advisory lessons.' },
     ],
   },
   {
