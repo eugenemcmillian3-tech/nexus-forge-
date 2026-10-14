@@ -98,7 +98,7 @@ const roadmap = [
     "n": 16,
     "title": "Cost and resource intelligence",
     "status": "partial",
-    "detail": "Automate per-run usage, cost collection, and resource intelligence; budgets and recorded costs already exist."
+    "detail": "Provider response metadata is recorded by supported stages with validated counts and charges; accounting failures no longer replay successful inference. Complete per-run attribution, billing reconciliation and resource intelligence remain open."
   },
   {
     "n": 17,
