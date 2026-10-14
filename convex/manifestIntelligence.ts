@@ -106,6 +106,10 @@ export const attachAssumptionEvidence = mutation({
     evidenceType: v.union(v.literal("supports"), v.literal("contradicts"), v.literal("inconclusive")),
     url: v.string(),
     note: v.string(),
+    sourcePublishedDate: v.optional(v.string()),
+    sourceAuthority: v.union(v.literal("official_primary"), v.literal("peer_reviewed"), v.literal("reputable_reporting"), v.literal("industry_source"), v.literal("other")),
+    relevance: v.string(),
+    claimMatch: v.union(v.literal("matches_claim"), v.literal("partially_matches"), v.literal("does_not_match"), v.literal("not_reviewed")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -121,12 +125,28 @@ export const attachAssumptionEvidence = mutation({
     }
     const note = args.note.trim().slice(0, 1000);
     if (note.length < 3) throw new Error("Describe how this source relates to the assumption.");
+    const relevance = args.relevance.trim().slice(0, 1000);
+    if (relevance.length < 3) throw new Error("Describe why the source is relevant to this specific claim.");
+    const sourcePublishedDate = args.sourcePublishedDate?.trim();
+    if (sourcePublishedDate && (!/^\d{4}-\d{2}-\d{2}$/.test(sourcePublishedDate) || Number.isNaN(Date.parse(sourcePublishedDate)) || new Date(sourcePublishedDate).toISOString().slice(0, 10) !== sourcePublishedDate)) {
+      throw new Error("Source publication date must be a real date in YYYY-MM-DD format.");
+    }
     let strategy: Record<string, unknown>;
     try { strategy = JSON.parse(row.value) as Record<string, unknown>; } catch { throw new Error("Stored strategy record is invalid; evidence was not saved."); }
     const existing = Array.isArray(strategy.assumptionEvidence)
       ? strategy.assumptionEvidence.filter((item): item is Record<string, unknown> => !!item && typeof item === "object")
       : [];
-    const evidence = { evidenceType: args.evidenceType, url, note, addedAt: Date.now() };
+    const evidence = {
+      evidenceType: args.evidenceType,
+      url,
+      note,
+      sourcePublishedDate: sourcePublishedDate || null,
+      sourceAuthority: args.sourceAuthority,
+      relevance,
+      claimMatch: args.claimMatch,
+      reviewedAt: Date.now(),
+      addedAt: Date.now(),
+    };
     await ctx.db.patch(row._id, {
       value: JSON.stringify({ ...strategy, assumptionEvidence: [...existing, evidence].slice(-30) }),
     });
