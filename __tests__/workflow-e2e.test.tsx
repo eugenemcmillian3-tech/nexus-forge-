@@ -50,7 +50,7 @@ describe("isolated end-to-end workflow journey", () => {
     expect(screen.getByRole("heading", { name: "QA test mission" })).toBeInTheDocument();
     expect(screen.getByText("38%")).toBeInTheDocument();
     expect(screen.getByText("6/16")).toBeInTheDocument();
-    expect(screen.getByText("Continue through the remaining workspaces and review measured outcomes.")).toBeInTheDocument();
+    expect(screen.getAllByText(/On this page, use Outcome Verification/).length).toBeGreaterThan(0);
   });
 
   it("renders the ordered workflow with every stage complete only with verified deployment evidence", () => {
@@ -80,6 +80,19 @@ describe("isolated end-to-end workflow journey", () => {
     view.rerender(<WorkflowPage />);
     expect(screen.getByText("9/9 RECORDED")).toBeInTheDocument();
     activeMission.measurements = [];
+  });
+
+  it("routes Overview and Workflow to recovery for a newer blocked delivery", () => {
+    const previous = activeMission.deliveries;
+    activeMission.deliveries = [{ ...previous[0], stage: "blocked", status: "Execution blocked: branch missing", workflowRunUrl: "", deploymentRunUrl: "" }, ...previous];
+    const view = render(<OverviewPage />);
+    expect(screen.getByRole("heading", { name: "Resolve blocked delivery" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open stage →" })).toHaveAttribute("href", "/delivery");
+    view.unmount();
+    render(<WorkflowPage />);
+    expect(screen.getByRole("link", { name: /Continue mission sequence/ })).toHaveAttribute("href", "/delivery");
+    expect(screen.getByText("Resolve blocked delivery")).toBeInTheDocument();
+    activeMission.deliveries = previous;
   });
 
   it("does not mark a build/test-only delivery as production verified", () => {

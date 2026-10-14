@@ -14,5 +14,11 @@ export function useMissionGuide() {
     { title: 'Verify delivery provenance and readiness', done: deliveries.some(row => row.stage === 'verified' && row.readinessStatus === 'pass' && typeof row.readinessTotalCount === 'number' && row.readinessTotalCount > 0 && row.readinessPassedCount === row.readinessTotalCount && !!row.workflowRunUrl && !!row.workflowCommitSha && !!row.deploymentRunUrl && row.deploymentCommitSha?.toLowerCase() === row.workflowCommitSha?.toLowerCase() && !!row.deploymentUrl), path: '/delivery', note: 'Require matching workflow/deployment provenance and passing canonical readiness evidence.' },
     { title: 'Measure outcome and capture learning', done: (state.measurements ?? []).some(row => row.metric === 'governed delivery readiness' && row.status === 'pass' && !!row.verificationId && row.actual >= row.target && row.target === 1), path: '/workflow', note: 'On this page, use Outcome Verification to record the delivery measurement and reusable lesson. Then continue to Learning Engine for comparisons.' },
   ]
-  return { ...state, stages, nextStage: stages.find(stage => !stage.done), completed: stages.filter(stage => stage.done).length }
+  const pendingStage = stages.find(stage => !stage.done)
+  const latestDelivery = deliveries[0]
+  const recovery = latestDelivery?.stage === 'blocked' && stages.slice(0, 6).every(stage => stage.done)
+    ? { title: 'Resolve blocked delivery', done: false, path: '/delivery', note: latestDelivery.status + '. Review the delivery record and recovery controls before continuing.' }
+    : undefined
+  return { ...state, stages, nextStage: recovery ?? pendingStage, completed: stages.filter(stage => stage.done).length, recovery }
+
 }
