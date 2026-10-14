@@ -1,3 +1,4 @@
+import { CouncilMemoryInspection } from "../components/council-memory-inspection"
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction, useMutation } from 'convex/react'
 import { useState } from 'react'
@@ -42,6 +43,7 @@ export function CouncilPage() {
       {agents.length === 0 ? <div className="empty-state"><h3>No Council run yet</h3><p>Approve the mission, then explicitly execute planning.</p></div> : agents.map(run => <div className="guard-item" key={run._id}><span>{run.status === 'complete' ? '✓' : run.status === 'running' ? '◌' : '!'}</span><div><strong>{run.agent} · {run.role}</strong><small>{run.note}</small><small>{run.progress}% complete</small></div><span className="status-chip">{run.status.toUpperCase()}</span></div>)}
       {councilComplete ? <p className="receipt">All current agent runs are complete. Research and evidence is the next stage.</p> : agents.length > 0 && <p className="warning">Council is not yet fully complete. Resolve blocked agents before moving to downstream creation.</p>}
     </div>
+    {missionId && <CouncilMemoryInspection key={missionId} missionId={missionId} />}
     <div className="hero-actions"><Link className="secondary-button" to="/evidence">{hasResearch ? 'Review research & memory →' : 'Continue to research & memory →'}</Link></div></section>
   </WorkspaceLayout>
 }
