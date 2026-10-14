@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
+import { MemoryRetrievalEvaluation } from '../components/memory-retrieval-evaluation'
 import { MemoryBrowser } from '../components/memory-browser'
 import { WorkspaceLoading } from '../components/workspace-loading'
 import { WorkspaceLayout } from '../components/workspace-layout'
@@ -36,6 +37,7 @@ export function EvidencePage() {
       {research.length === 0 ? <div className="empty-state"><h3>No evidence stored for this mission</h3><p>Run a research query after Council planning completes.</p></div> : research.map((row: any) => <article className="evidence-item" key={row._id}><span className="time">SOURCE</span><div><b>{row.query}</b><p>{row.result}</p>{(row.citations ?? []).map((citation: string, index: number) => <p key={index}><a href={citation} target="_blank" rel="noreferrer">{citation}</a></p>)}</div></article>)}
     </div>
     <MemoryBrowser key={missionId ?? "all-memories"} missionId={missionId} />
+    <MemoryRetrievalEvaluation key={"evaluation-" + (missionId ?? "all")} missionId={missionId} />
     <div className="hero-actions">{research.length > 0 ? <><p>Saved research belongs to the selected mission. Review its sources, then continue to artifact generation.</p><Link className="primary-button" to="/artifacts">Continue with saved research →</Link></> : <p>Save mission-specific research above before continuing to Artifact Forge.</p>}</div></section>
   </WorkspaceLayout>
 }

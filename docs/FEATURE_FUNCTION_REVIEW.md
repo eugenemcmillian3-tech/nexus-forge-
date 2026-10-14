@@ -38,3 +38,7 @@ The nine mission lifecycle checkpoints remain separate from the 16-page product 
 Criterion-linked browser interaction checks are now available on Artifact Forge; see [usage and evidence boundaries](ARTIFACT_BROWSER_CHECKS.md). The versioned DOM fixture suite and GitHub-verified CI receipts now exist; see [CI benchmark scope](BENCHMARK_CI_EVIDENCE.md). Exact artifact-snapshot Chromium CI is now available; see [workflow and limits](EXACT_ARTIFACT_CI.md). Next broaden criterion and integration coverage. Keep the existing accepted Research, Manifest, and LocalBoost evidence; do not repeat authentication or approval exercises as a routine maintenance gate.
 
 The remaining 16 partial milestones and seven deferred expansions stay partial/deferred. Search availability alone does not complete the persistent-knowledge milestone; semantic relevance, ranking evaluation, and measured reuse effectiveness remain open.
+
+## Lesson retrieval evaluation update
+
+Research & Memory now includes saved server-observed top-five content-search versus newest-five lesson comparisons. Operator-selected expected IDs provide relevance labels; receipts retain scope, rankings, precision/recall/reciprocal rank and reviewed-lesson strategy links. See [operating details and limits](MEMORY_RETRIEVAL_EVALUATION.md). Actual Council context retrieval and strategy reuse outcome effectiveness remain partial. All 16 feature pages remain in the guide.
