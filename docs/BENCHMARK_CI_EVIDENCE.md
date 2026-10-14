@@ -42,4 +42,4 @@ No artifact approval, delivery state, or mission completion changes when recordi
 
 Tests cover positive and negative fixture behavior, canonical URL boundaries, wrong workflow/commit/incomplete jobs, exact attempts, duplicate imports, separate reruns, operator isolation, failed lookups, and UI recovery.
 
-Next extend trusted CI execution to exact generated artifact and criterion snapshots, add broader browser/integration benchmark cases, and measure retrieval/strategy effectiveness. Roadmap milestones 7, 12, 13, and 18 remain partial.
+Exact saved-artifact Chromium CI is now implemented separately; see [snapshot CI](EXACT_ARTIFACT_CI.md). Next add broader browser/integration benchmark cases and measure retrieval/strategy effectiveness. Roadmap milestones 7, 12, 13, and 18 remain partial.
