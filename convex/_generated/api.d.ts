@@ -43,7 +43,10 @@ import type * as verification from "../verification.js";
 
 import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
 
+import type * as productEvidenceImport from "../productEvidenceImport.js";
+
 declare const fullApi: ApiFromModules<{
+  productEvidenceImport: typeof productEvidenceImport;
   ResendOTP: typeof ResendOTP;
   aiProvider: typeof aiProvider;
   artifactCi: typeof artifactCi;
