@@ -2,13 +2,14 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction, useMutation } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
+import { WorkspaceLoading } from '../components/workspace-loading'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useActiveMission } from '../hooks/use-active-mission'
 
 export const Route = createFileRoute('/council')({ component: CouncilPage })
 
-function CouncilPage() {
-  const { missionId, mission, agents, councilComplete, hasResearch } = useActiveMission()
+export function CouncilPage() {
+  const { evidenceLoading, missionId, mission, agents, councilComplete, hasResearch } = useActiveMission()
   const orchestrate = useAction(api.forge.orchestrate)
   const remember = useMutation(api.memory.remember)
   const [busy, setBusy] = useState(false)
@@ -51,6 +52,7 @@ function CouncilPage() {
     }
   }
 
+  if (evidenceLoading) return <WorkspaceLoading title="AI Council Workspace" />
   return <WorkspaceLayout title="AI Council Workspace" eyebrow="STAGE 02 / PLAN & ORCHESTRATE">
     <section className="workspace">
       <div className="glass-card research-card">
