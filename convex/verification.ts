@@ -1,3 +1,4 @@
+import { trafficFields, trafficSnapshot, trafficSite } from "./siteTrafficModel"
 import { paginationOptsValidator, paginationResultValidator } from "convex/server"
 import { productOutcomeFields, productOutcomeInput, productImportReceipt, evaluateProductOutcome } from "./productOutcomeModel"
 import { v } from "convex/values"
@@ -60,5 +61,26 @@ export const importProductOutcomeInternal = internalMutation({
     const recordedAt = Date.now()
     const result = evaluateProductOutcome(input, recordedAt)
     return ctx.db.insert("productOutcomes", { ...input, ...result, ownerKey, recordedAt, provenance: "github-report", importKey, importReceipt: receipt })
+  },
+})
+
+
+export const saveTrafficInternal = internalMutation({
+  args: { missionId: v.id("missions"), ...trafficSnapshot }, returns: v.id("siteTrafficReceipts"),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx)
+    await requireOwnedMission(ctx, args.missionId)
+    if (args.siteId !== trafficSite) throw new Error("Traffic source site mismatch.")
+    const sourceKey = args.missionId + ":" + args.periodStart + ":" + args.periodEnd + ":" + args.reportSha256
+    const existing = await ctx.db.query("siteTrafficReceipts").withIndex("by_owner_source", q => q.eq("ownerKey", ownerKey).eq("sourceKey", sourceKey)).unique()
+    if (existing) return existing._id
+    return ctx.db.insert("siteTrafficReceipts", { ...args, ownerKey, sourceKey, retrievedAt: Date.now(), source: "macaly-site-analytics" })
+  },
+})
+export const siteTrafficHistory = query({
+  args: { paginationOpts: paginationOptsValidator }, returns: paginationResultValidator(v.object({ _id: v.id("siteTrafficReceipts"), _creationTime: v.number(), ...trafficFields })),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx)
+    return ctx.db.query("siteTrafficReceipts").withIndex("by_owner", q => q.eq("ownerKey", ownerKey)).order("desc").paginate(args.paginationOpts)
   },
 })

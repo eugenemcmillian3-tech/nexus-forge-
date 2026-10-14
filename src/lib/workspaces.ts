@@ -37,7 +37,7 @@ export const workspaceGroups = [
     title: '05 · MEASURE & LEARN',
     intro: 'Review outcomes after delivery, then compare evidence and capture lessons.',
     pages: [
-      { path: '/portfolio', title: 'Portfolio Intelligence', icon: '◇', purpose: 'Prioritize opportunities, record decisions and inspect observed product outcomes across missions.', use: 'When reviewing outcomes or selecting the next opportunity.', output: 'Prioritization decisions and evidence-linked product observations.' },
+      { path: '/portfolio', title: 'Portfolio Intelligence', icon: '◇', purpose: 'Prioritize opportunities, record decisions and inspect observed product outcomes across missions.', use: 'When reviewing outcomes or selecting the next opportunity.', output: 'Prioritization decisions, product observations and site-wide traffic receipts.' },
       { path: '/learning', title: 'Verified Learning Engine', icon: '↻', purpose: 'Compare measured results and capture reviewed lessons.', use: 'When comparable baseline and candidate evidence exists.', output: 'Evidence-linked comparisons and advisory lessons.' },
     ],
   },
