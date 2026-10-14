@@ -33,6 +33,12 @@ describe('benchmark provenance boundaries', () => {
     fail.jobs.jobs[0].steps = []
     expect(verifyBenchmarkMetadata(runId, fail.run, fail.jobs).outcome).toBe('not_run')
   })
+  it('does not relabel a historical v1 job as v2 evidence', () => {
+    const { run, jobs } = metadata()
+    jobs.jobs[0].name = 'Artifact DOM benchmarks v1'
+    jobs.jobs[0].steps[0].name = 'Run artifact DOM benchmark suite v1'
+    expect(() => verifyBenchmarkMetadata(runId, run, jobs)).toThrow(/no completed/)
+  })
   it('rejects wrong workflows, commits, unfinished runs, and missing benchmark jobs', () => {
     const { run, jobs } = metadata()
     expect(() => verifyBenchmarkMetadata(runId, { ...run, path: '.github/workflows/other.yml' }, jobs)).toThrow(/workflow/)
@@ -58,7 +64,7 @@ describe('GitHub-verified operator-private receipts', () => {
     expect(fetchMock.mock.calls[1][0]).toContain('/attempts/1/jobs?per_page=100')
     const rows = await owner.query(api.benchmarks.history, {})
     expect(rows).toHaveLength(1)
-    expect(rows[0]).toMatchObject({ outcome: 'passed', runId, attempt: 1, commitSha: 'a'.repeat(40), suiteVersion: 'artifact-dom-v1' })
+    expect(rows[0]).toMatchObject({ outcome: 'passed', runId, attempt: 1, commitSha: 'a'.repeat(40), suiteVersion: 'artifact-dom-v2' })
     expect(await t.withIdentity(identity('owner-b')).query(api.benchmarks.history, {})).toEqual([])
   })
   it('records failed suite evidence instead of accepting an overall workflow claim', async () => {
