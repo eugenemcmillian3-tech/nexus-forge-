@@ -17,6 +17,7 @@ describe(benchmarkSuite.version + ' controlled behavior suite', () => {
       expect(results).toHaveLength(fixture.plan.length)
       const observed = results.flat().some(step => step.status === 'fail') ? 'fail' : results.flat().every(step => step.status === 'pass') ? 'pass' : 'not_run'
       expect(observed).toBe(fixture.expected)
+      if (fixture.id === 'unsupported-fill-control') expect(results[0].map(step => step.status)).toEqual(['fail', 'not_run'])
     } finally { dom.window.close() }
   })
 })
