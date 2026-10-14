@@ -1,4 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
+import { WorkspaceGuide } from './workspace-guide'
 import { AuthWrapper } from './auth-wrapper'
 import { workspaceGroups } from '../lib/workspaces'
 
@@ -35,7 +36,8 @@ export function WorkspaceLayout({ title, eyebrow, children }: { title: string; e
         <section className="workspace">
           <div className="section-kicker">{eyebrow}</div><h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mt-2">{title}</h1>
           <p className="hero-text">Dedicated workspace pages follow a governed sequence. Every destination is registered in the route tree and uses the shared governed shell.</p>
-          {children}
+          <WorkspaceGuide />
+          <div id="workspace-controls">{children}</div>
         </section>
       </div>
     </main>
