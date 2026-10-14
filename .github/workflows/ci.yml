@@ -47,7 +47,7 @@ jobs:
         run: pnpm build
 
   artifact-benchmarks:
-    name: Artifact DOM benchmarks v2
+    name: Artifact DOM benchmarks v3
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -62,12 +62,22 @@ jobs:
           cache: pnpm
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
-      - name: Run artifact DOM benchmark suite v2
-        run: pnpm exec vitest run __tests__/artifact-behavior-benchmark.test.ts --reporter=default --reporter=json --outputFile=artifact-dom-v2.json
+      - name: Run artifact DOM benchmark suite v3
+        run: pnpm exec vitest run __tests__/artifact-behavior-benchmark.test.ts --reporter=default --reporter=json --outputFile=artifact-dom-v3.json
+      - name: Install isolated Chromium tooling
+        run: |
+          npm install --prefix /tmp/nexus-benchmark-browser --no-save --ignore-scripts playwright@1.56.1
+          /tmp/nexus-benchmark-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Run isolated Chromium benchmark suite v3
+        env:
+          NEXUS_BROWSER_PACKAGE: /tmp/nexus-benchmark-browser
+        run: node --experimental-strip-types scripts/run-artifact-benchmarks.mjs
       - name: Save benchmark report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: artifact-dom-v2-report
-          path: artifact-dom-v2.json
+          name: artifact-dom-v3-report
+          path: |
+            artifact-dom-v3.json
+            artifact-dom-v3-chromium.json
           if-no-files-found: warn
