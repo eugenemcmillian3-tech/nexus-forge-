@@ -62,5 +62,12 @@
   "/roadmap": {
     "title": "Master Roadmap — NEXUS FORGE",
     "description": "Verified build progress, current priorities and queued route parity work."
+  },
+  "default": {
+    "title": "NEXUS FORGE",
+    "description": "Manifested intelligence OS. Human governed. Evidence first. Multi-model Council.",
+    "openGraph": {
+      "images": "https://assets.macaly-user-data.dev/a7122926vj2ys4x7zsc7e0sj/bphntw8kdojl9qvuifywyjtk/9JW4kw1Ijwp1qyfM2L09h/generated-3u8Zbs_7.png"
+    }
   }
 }
