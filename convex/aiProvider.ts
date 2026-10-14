@@ -20,7 +20,7 @@ const routes: Record<ChatRole, ProviderName> = {
   research: "groq",
 };
 
-// Keep automatic routing on the four providers currently confirmed usable. Mistral is rate-limited and Hugging Face is unconfigured, so neither should add latency to mission execution. They remain visible for manual diagnostics and can be re-enabled here when ready.
+// Keep automatic routing limited to the three providers selected for routine execution: Cloudflare, Groq, and Cerebras. Mistral is rate-limited, Hugging Face is unconfigured, and OpenRouter is not in the automatic fallback array; these remain visible for manual diagnostics without adding latency to mission execution.
 const fallbacks: ProviderName[] = ["cloudflare", "groq", "cerebras"];
 
 function text(data: any): string {
@@ -117,7 +117,7 @@ export const AI_PROVIDER_PLAN = {
   wave2: "Cerebras with Cloudflare Workers AI fallback",
   critic: "Cerebras with Cloudflare Workers AI fallback",
   research: "Groq with Cloudflare Workers AI fallback",
-  openrouter: "OpenRouter free-model fallback chain: GPT-OSS 120B Free → Llama 3.3 70B Free → openrouter/free; availability and rate limits are not guaranteed",
+  openrouter: "Manual diagnostic configuration only; not included in automatic routing until inference and quota reliability are confirmed",
   huggingface: "Deferred from automatic routing until a key is configured and inference is verified",
-  fallbackOrder: "Role primary (Groq/Cerebras) → Cloudflare Workers AI → other confirmed configured provider (OpenRouter); Mistral and Hugging Face are deferred",
+  fallbackOrder: "Role primary (Groq/Cerebras) → Cloudflare Workers AI → the other selected primary provider (Cerebras/Groq); OpenRouter is manual-only, while Mistral and Hugging Face are deferred",
 } as const;
