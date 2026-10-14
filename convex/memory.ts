@@ -1,4 +1,5 @@
-import { councilMemoryItem, councilSelectionFields, councilEvaluationFields } from "./councilMemoryModel"
+import { rankCouncilCandidate } from "./councilMemoryCandidate"
+import { councilMemoryItem, councilSelectionFields, councilEvaluationFields, councilCandidate, councilPolicyFields } from "./councilMemoryModel"
 import { internal } from "./_generated/api"
 import type { PaginationResult } from "convex/server"
 import type { Doc, Id } from "./_generated/dataModel"
@@ -299,8 +300,8 @@ function formatLearningRow(row: Doc<"memories">) {
 }
 
 export const getCouncilMemorySelection = internalQuery({
-  args: { missionId: v.id("missions") },
-  returns: v.object({ learning: v.object({ ownerKey: v.string(), outcomes: v.array(signal), lessons: v.array(signal) }), adaptive: preflight, corpusCutoff: v.number(), selected: v.array(councilMemoryItem) }),
+  args: { missionId: v.id("missions"), missionText: v.optional(v.string()) },
+  returns: v.object({ learning: v.object({ ownerKey: v.string(), outcomes: v.array(signal), lessons: v.array(signal) }), adaptive: preflight, corpusCutoff: v.number(), selected: v.array(councilMemoryItem), candidate: v.optional(councilCandidate) }),
   handler: async (ctx, args) => {
     const mission = await ctx.db.get(args.missionId)
     if (!mission) throw new Error("Mission not found")
@@ -315,12 +316,14 @@ export const getCouncilMemorySelection = internalQuery({
     const routes = new Map<Id<"memories">, string[]>()
     for (const [channel, items] of [["learning-outcome", outcomes], ["learning-lesson", lessons], ["adaptive-risk", failures], ["adaptive-recovery", recovery], ["adaptive-reuse", reuse]] as const) for (const row of items) routes.set(row._id, [...(routes.get(row._id) ?? []), channel])
     const selected = rows.filter(row => routes.has(row._id)).map(row => ({ memoryId: row._id, key: row.key, category: row.category, source: row.source, confidence: row.confidence, value: row.value, ...(lessons.some(item => item._id === row._id) ? { learningValue: formatLearningRow(row).value } : {}), routes: routes.get(row._id)! }))
-    return { corpusCutoff: rows[0]?._creationTime ?? 0, learning: { ownerKey: mission.ownerKey, outcomes: outcomes.map(row => ({ value: row.value, source: row.source, confidence: row.confidence })), lessons: lessons.map(formatLearningRow) }, adaptive: buildPreflight(args.missionId, rows), selected }
+    const ranked = rankCouncilCandidate(rows, args.missionText ?? mission.mission, selected.length)
+    const candidate = { policyVersion: "council-lexical-same-corpus-v1" as const, budget: selected.length, missionTerms: ranked.terms, selected: ranked.rows.map(row => ({ memoryId: row._id, key: row.key, category: row.category, source: row.source, confidence: row.confidence, value: row.value, routes: ["candidate-only"] })) }
+    return { candidate, corpusCutoff: rows[0]?._creationTime ?? 0, learning: { ownerKey: mission.ownerKey, outcomes: outcomes.map(row => ({ value: row.value, source: row.source, confidence: row.confidence })), lessons: lessons.map(formatLearningRow) }, adaptive: buildPreflight(args.missionId, rows), selected }
   },
 })
 
 export const recordCouncilMemorySelection = internalMutation({
-  args: { missionId: v.id("missions"), missionText: v.string(), corpusCutoff: v.number(), selected: v.array(councilMemoryItem), learningContext: v.string(), preflightContext: v.string() }, returns: v.id("councilMemoryReceipts"),
+  args: { missionId: v.id("missions"), missionText: v.string(), corpusCutoff: v.number(), selected: v.array(councilMemoryItem), candidate: v.optional(councilCandidate), learningContext: v.string(), preflightContext: v.string() }, returns: v.id("councilMemoryReceipts"),
   handler: async (ctx, args) => {
     const mission = await ctx.db.get(args.missionId)
     if (!mission) throw new Error("Mission not found")
@@ -367,5 +370,37 @@ export const councilMemoryEvaluations = query({
     if (!receipt || receipt.ownerKey !== ownerKey) throw new ConvexError("Council memory receipt not found.")
     await requireOwnedMission(ctx, receipt.missionId)
     return ctx.db.query("councilMemoryEvaluations").withIndex("by_receipt", q => q.eq("receiptId", args.receiptId)).order("desc").take(20)
+  },
+})
+
+export const compareCouncilMemoryPolicy = mutation({
+  args: { evaluationId: v.id("councilMemoryEvaluations") }, returns: v.id("councilPolicyComparisons"),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx)
+    const evaluation = await ctx.db.get(args.evaluationId)
+    if (!evaluation || evaluation.ownerKey !== ownerKey) throw new ConvexError("Evaluation not found in your private history.")
+    const receipt = await ctx.db.get(evaluation.receiptId)
+    if (!receipt || receipt.ownerKey !== ownerKey) throw new ConvexError("Context receipt not found.")
+    await requireOwnedMission(ctx, receipt.missionId)
+    if (!receipt.candidate) throw new ConvexError("This historical receipt has no captured candidate; a future planning attempt is required.")
+    const existing = await ctx.db.query("councilPolicyComparisons").withIndex("by_evaluation", q => q.eq("evaluationId", args.evaluationId)).unique()
+    if (existing) return existing._id
+    const score = (items: typeof receipt.selected) => {
+      const selected = new Set(items.map(item => item.memoryId))
+      const hits = evaluation.expectedIds.filter(id => selected.has(id)).length
+      return { hits, selectedCount: selected.size, precision: selected.size ? hits / selected.size : 0, recall: hits / evaluation.expectedIds.length }
+    }
+    const baseline = score(receipt.selected), candidate = score(receipt.candidate.selected)
+    return ctx.db.insert("councilPolicyComparisons", { ...args, ownerKey, missionId: receipt.missionId, receiptId: receipt._id, expectedIds: evaluation.expectedIds, baselinePolicy: receipt.policyVersion, candidatePolicy: receipt.candidate.policyVersion, baseline, candidate, precisionDelta: candidate.precision - baseline.precision, recallDelta: candidate.recall - baseline.recall, recordedAt: Date.now() })
+  },
+})
+export const councilPolicyComparisons = query({
+  args: { receiptId: v.id("councilMemoryReceipts") }, returns: v.array(v.object({ _id: v.id("councilPolicyComparisons"), _creationTime: v.number(), ...councilPolicyFields })),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx)
+    const receipt = await ctx.db.get(args.receiptId)
+    if (!receipt || receipt.ownerKey !== ownerKey) throw new ConvexError("Context receipt not found.")
+    await requireOwnedMission(ctx, receipt.missionId)
+    return ctx.db.query("councilPolicyComparisons").withIndex("by_receipt", q => q.eq("receiptId", args.receiptId)).order("desc").take(20)
   },
 })
