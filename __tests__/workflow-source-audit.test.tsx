@@ -10,7 +10,7 @@ vi.mock('@tanstack/react-router', () => ({
   useRouter: () => ({ navigate: mocks.navigate }),
 }))
 vi.mock('@convex-dev/auth/react', () => ({ useAuthActions: () => ({ signOut: mocks.signOut }) }))
-vi.mock('convex/react', () => ({ useAction: () => mocks.orchestrate, useMutation: () => mocks.remember }))
+vi.mock('convex/react', () => ({ useAction: () => mocks.orchestrate, useMutation: () => mocks.remember, useQuery: () => [] }))
 vi.mock('../src/components/auth-wrapper', () => ({ AuthWrapper: ({ children }: any) => children }))
 vi.mock('../src/components/workspace-guide', () => ({ WorkspaceGuide: () => null }))
 vi.mock('../src/hooks/use-active-mission', () => ({ useActiveMission: () => ({
