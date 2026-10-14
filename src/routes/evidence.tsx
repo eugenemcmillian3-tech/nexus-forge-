@@ -2,13 +2,14 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
+import { WorkspaceLoading } from '../components/workspace-loading'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useActiveMission } from '../hooks/use-active-mission'
 
 export const Route = createFileRoute('/evidence')({ component: EvidencePage })
 
-function EvidencePage() {
-  const { missionId, mission, councilComplete, research } = useActiveMission()
+export function EvidencePage() {
+  const { evidenceLoading, missionId, mission, councilComplete, research } = useActiveMission()
   const search = useAction(api.research.search)
   const [query, setQuery] = useState('current market opportunities for small AI products')
   const [busy, setBusy] = useState(false)
@@ -21,6 +22,7 @@ function EvidencePage() {
     catch (e) { setError(e instanceof Error ? e.message : 'Research failed.') } finally { setBusy(false) }
   }
   const allowed = !!missionId && !!mission?.approved && councilComplete
+  if (evidenceLoading) return <WorkspaceLoading title="Research & Memory" />
   return <WorkspaceLayout title="Research & Memory" eyebrow="STAGE 03 / EVIDENCE & LEARNING">
     <section className="workspace"><div className="glass-card research-card"><div className="panel-title"><span>RESEARCH ORACLE</span><span className={allowed ? 'live-pill' : 'status-chip'}>{allowed ? 'READY' : 'WAITING FOR COUNCIL'}</span></div>
       {!missionId ? <><h3>No active mission</h3><Link className="primary-button" to="/mission">Select a mission →</Link></> : !mission?.approved ? <><h3>Mission approval required</h3><Link className="primary-button" to="/mission">Review mission →</Link></> : !councilComplete ? <><h3>Research is next, but the Council is not complete</h3><p>Finish the plan and resolve any blocked agents before gathering mission-specific evidence.</p><Link className="primary-button" to="/council">Review Council →</Link></> : <>
