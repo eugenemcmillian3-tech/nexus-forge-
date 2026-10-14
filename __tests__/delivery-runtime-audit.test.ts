@@ -45,7 +45,7 @@ describe("audited delivery runtime contracts", () => {
     vi.stubGlobal("fetch", fetchMock)
     await expect(owner.action(api.delivery.executeApproved, { id })).rejects.toThrow(/Repository not found/)
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect((await t.run(ctx => ctx.db.get(id)))?.stage).toBe("blocked")
+    expect((await t.run(ctx => ctx.db.get("deliveries", id)))?.stage).toBe("blocked")
   })
   it("records inaccessible branches before attempting artifact writes or dispatch", async () => {
     const { t, owner, args } = await fixture()
@@ -56,7 +56,7 @@ describe("audited delivery runtime contracts", () => {
     vi.stubGlobal("fetch", fetchMock)
     await expect(owner.action(api.delivery.executeApproved, { id })).rejects.toThrow(/Branch.*not found/)
     expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect((await t.run(ctx => ctx.db.get(id)))?.stage).toBe("blocked")
+    expect((await t.run(ctx => ctx.db.get("deliveries", id)))?.stage).toBe("blocked")
   })
   it("supports the separate dispatch repository after repository and branch preflight", async () => {
     const { t, owner, args } = await fixture()
@@ -76,6 +76,6 @@ describe("audited delivery runtime contracts", () => {
     expect(fetchMock.mock.calls[1][0]).toContain("/branches/main")
     expect(fetchMock.mock.calls[3][1]?.method).toBe("PUT")
     expect(fetchMock.mock.calls[4][1]?.method).toBe("POST")
-    expect((await t.run(ctx => ctx.db.get(id)))?.status).toBe("GitHub Actions dispatched")
+    expect((await t.run(ctx => ctx.db.get("deliveries", id)))?.status).toBe("GitHub Actions dispatched")
   })
 })
