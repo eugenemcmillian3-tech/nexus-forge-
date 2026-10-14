@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ProductOutcomeMeasurements } from '../src/components/product-outcome-measurements'
 import type { Id } from '../convex/_generated/dataModel'
 const mocks = vi.hoisted(() => ({ record: vi.fn(), loadMore: vi.fn() }))
-vi.mock('convex/react', () => ({ useMutation: () => mocks.record, usePaginatedQuery: () => ({ results: [], status: 'Exhausted', loadMore: mocks.loadMore }) }))
+vi.mock('convex/react', () => ({ useMutation: () => mocks.record, useAction: () => vi.fn(), usePaginatedQuery: () => ({ results: [], status: 'Exhausted', loadMore: mocks.loadMore }) }))
 vi.mock('@tanstack/react-router', () => ({ Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a> }))
 beforeEach(() => { mocks.record.mockReset() })
 const missionId = 'mission-one' as Id<'missions'>
