@@ -8,9 +8,10 @@ const artifact = { _id: 'artifact-test' as Id<'artifacts'>, content: '<p id="res
 const mission = 'ACCEPTANCE CRITERIA:\n- Show the correct result'
 beforeEach(() => { cleanup(); vi.clearAllMocks(); state.history = []; state.record.mockResolvedValue('receipt-test') })
 afterEach(() => { vi.useRealTimers(); cleanup() })
-function configure() {
+function configure(exact = false) {
   fireEvent.click(screen.getByText('Browser checks against saved acceptance criteria'))
   fireEvent.click(screen.getByRole('button', { name: 'Add criterion check' }))
+  if (exact) fireEvent.change(screen.getByLabelText('STEP 1 ACTION'), { target: { value: 'assertTextEquals' } })
   fireEvent.change(screen.getByLabelText('CSS SELECTOR'), { target: { value: '#result' } })
   fireEvent.change(screen.getByLabelText('INPUT / EXPECTED VALUE'), { target: { value: '14' } })
   fireEvent.click(screen.getByRole('button', { name: 'Run browser checks & save evidence' }))
@@ -38,6 +39,13 @@ describe('artifact browser evidence UI', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('receipt-test')
     expect(state.record).toHaveBeenCalledWith(expect.objectContaining({ artifactId: artifact._id, missionSnapshot: mission, artifactSnapshot: artifact.content }))
     expect(screen.queryByTitle('Isolated artifact test browser')).not.toBeInTheDocument()
+  })
+  it('offers exact text equality and submits that selected action', async () => {
+    render(<ArtifactBrowserChecks artifact={artifact} missionContract={mission} />)
+    const { frame, nonce } = configure(true)
+    expect(screen.getByText(/14 will not match 140/)).toBeInTheDocument()
+    act(() => report(frame, nonce))
+    await waitFor(() => expect(state.record).toHaveBeenCalledWith(expect.objectContaining({ plan: [{ criterionIndex: 0, steps: [{ action: 'assertTextEquals', selector: '#result', value: '14' }] }] })))
   })
   it('preserves completed evidence for retry after a failed save', async () => {
     state.record.mockRejectedValueOnce(new Error('Evidence save unavailable'))
