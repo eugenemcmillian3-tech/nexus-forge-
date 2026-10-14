@@ -29,6 +29,7 @@ const initialMetrics: MetricDraft[] = [
 
 function LearningEnginePage() {
   const recordExperiment = useMutation(api.learningEngine.recordExperiment);
+  const captureReviewedLesson = useMutation(api.memory.remember);
   const savedRows = useQuery(api.learningEngine.listExperiments, {});
   const manifestRows = useQuery(api.manifestIntelligence.listStrategies, {});
   const [name, setName] = useState("Strategy comparison");
@@ -43,6 +44,40 @@ function LearningEnginePage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<{ decision: string; rationale: string; improved: number; regressed: number; unchanged: number } | null>(null);
+  const [lessonStrategyId, setLessonStrategyId] = useState("");
+  const [lessonText, setLessonText] = useState("");
+  const [lessonApplicability, setLessonApplicability] = useState("");
+  const [lessonEvidence, setLessonEvidence] = useState("");
+  const [lessonBusy, setLessonBusy] = useState(false);
+  const [lessonMessage, setLessonMessage] = useState("");
+
+  const saveReviewedLesson = async () => {
+    setLessonMessage("");
+    const references = lessonEvidence.split("\\n").map(item => item.trim()).filter(Boolean);
+    if (!lessonStrategyId) { setLessonMessage("Choose the Manifest strategy this lesson belongs to."); return; }
+    if (references.length < 2) { setLessonMessage("Add at least two evidence references on separate lines."); return; }
+    setLessonBusy(true);
+    try {
+      await captureReviewedLesson({
+        category: "learning-lesson",
+        key: "reviewed-lesson-pending",
+        value: lessonText,
+        confidence: 0.6,
+        source: "operator-reviewed-manifest-learning",
+        manifestStrategyId: lessonStrategyId as any,
+        applicability: lessonApplicability,
+        evidenceReferences: references,
+      });
+      setLessonMessage("Saved reviewed lesson. Future mission planning can retrieve it as advisory context.");
+      setLessonText("");
+      setLessonApplicability("");
+      setLessonEvidence("");
+    } catch (e) {
+      setLessonMessage(e instanceof Error ? e.message : "Could not save the reviewed lesson.");
+    } finally {
+      setLessonBusy(false);
+    }
+  };
 
   const updateMetric = (index: number, field: keyof MetricDraft, value: string | number) => {
     setMetrics(current => current.map((metric, i) => i === index ? { ...metric, [field]: value } : metric));
@@ -164,6 +199,29 @@ function LearningEnginePage() {
             : comparisons.map(item => <article className="portfolio-row" key={item.strategyId}><div className="portfolio-main"><strong>{item.strategyName}</strong><p>{item.experimentCount} saved experiment(s) · {item.comparableMetricCount} compatible metric(s) · {item.improvedRuns} improved run(s) · {item.regressedRuns} regressed run(s) · {item.inconclusiveRuns} excluded/incomparable run(s)</p>{item.metricSummary.map(summary => <small key={summary}>{summary}</small>)}<p className="muted-copy">{item.recommendation}</p></div><div className="portfolio-cell"><small>COMPARABLE</small><b>{item.experimentCount - item.inconclusiveRuns}/{item.experimentCount}</b></div></article>);
         })()}
         <p className="muted-copy">These are deterministic summaries of operator-entered observations, not independent verification, statistical significance, or causal proof. Human review remains required before reuse.</p>
+      </div>
+
+      <div className="glass-card research-card">
+        <div className="panel-title"><span>REUSABLE LEARNING MEMORY</span><span className="live-pill">OPERATOR REVIEW REQUIRED</span></div>
+        <p className="muted-copy">Promote a finding into reusable memory only after reviewing its evidence. Saved lessons are owner-scoped and become advisory context for future Council planning; they do not execute actions or automatically change a strategy.</p>
+        <label htmlFor="reviewed-lesson-strategy">MANIFEST STRATEGY</label>
+        <select id="reviewed-lesson-strategy" value={lessonStrategyId} onChange={e => setLessonStrategyId(e.target.value)}>
+          <option value="">Choose a strategy…</option>
+          {(manifestRows ?? []).map(row => {
+            let strategy: { name?: string } = {};
+            try { strategy = JSON.parse(row.value) as { name?: string }; } catch { /* Use the ledger key below. */ }
+            return <option key={row._id} value={row._id}>{strategy.name ?? row.key}</option>;
+          })}
+        </select>
+        <label htmlFor="reviewed-lesson-text">REUSABLE LESSON</label>
+        <textarea id="reviewed-lesson-text" rows={3} maxLength={1600} value={lessonText} onChange={e => setLessonText(e.target.value)} placeholder="What did the evidence teach us that another mission should consider?" />
+        <label htmlFor="reviewed-lesson-applicability">WHEN DOES THIS APPLY?</label>
+        <textarea id="reviewed-lesson-applicability" rows={2} maxLength={1000} value={lessonApplicability} onChange={e => setLessonApplicability(e.target.value)} placeholder="Scope, prerequisites, and situations where this lesson may not apply" />
+        <label htmlFor="reviewed-lesson-evidence">EVIDENCE REFERENCES · ONE PER LINE · AT LEAST TWO</label>
+        <textarea id="reviewed-lesson-evidence" rows={3} value={lessonEvidence} onChange={e => setLessonEvidence(e.target.value)} placeholder="Run ID, report, artifact, or source reference&#10;Second independent/comparable reference" />
+        <div className="hero-actions"><button className="primary-button" type="button" disabled={lessonBusy} onClick={saveReviewedLesson}>{lessonBusy ? "Saving lesson…" : "Save reviewed lesson"}</button></div>
+        {lessonMessage && <p className="muted-copy" role="status">{lessonMessage}</p>}
+        <p className="muted-copy">Evidence references and applicability are operator-provided. The engine preserves the review label and limitations; it does not independently validate sources or infer causality.</p>
       </div>
 
       <div className="glass-card research-card">
