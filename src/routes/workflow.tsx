@@ -2,7 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { MissionControl } from '../components/mission-control'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useMissionGuide } from '../lib/use-mission-guide'
-import { primaryWorkspaces } from '../lib/workspaces'
+import { guidedWorkspaces } from '../lib/workspaces'
 
 export const Route = createFileRoute('/workflow')({ component: WorkflowPage })
 
@@ -39,18 +39,18 @@ export function WorkflowPage() {
       </div>
 
       <div className="glass-card research-card" id="full-platform-tour">
-        <div className="panel-title"><span>CORE FEATURE TOUR · IN ORDER</span><span className="live-pill">{primaryWorkspaces.length} PAGES</span></div>
-        <p className="muted-copy">This is the core product path. Each feature keeps its own page and controls; specialist diagnostics are available in the support-tools section below. The tour is generated from the same registry as the main navigation.</p>
-        {[{ title: 'CORE FEATURES', intro: 'The primary product pages, in a recommended order.', pages: primaryWorkspaces }].map((group) => <section key={group.title} className="workspace-tour-group">
+        <div className="panel-title"><span>FULL FEATURE GUIDE · IN ORDER</span><span className="live-pill">{guidedWorkspaces.length} PAGES</span></div>
+        <p className="muted-copy">This guide includes all 16 product and support pages. Each feature keeps its own page and controls; specialist diagnostics are available in the support-tools section below. The guide uses the shared workspace registry. Page exploration does not mark mission evidence complete.</p>
+        {[{ title: 'ALL FEATURE PAGES', intro: 'All 16 dedicated pages, in a recommended exploration order.', pages: guidedWorkspaces }].map((group) => <section key={group.title} className="workspace-tour-group">
           <div className="panel-title"><span>{group.title}</span><span className="live-pill">{group.pages.length} WORKSPACES</span></div>
           <p className="muted-copy">{group.intro}</p>
           <div className="workflow-step-list">{group.pages.map((page) => {
-            const index = primaryWorkspaces.findIndex(item => item.path === page.path)
-            const nextPage = primaryWorkspaces[index + 1]
+            const index = guidedWorkspaces.findIndex(item => item.path === page.path)
+            const nextPage = guidedWorkspaces[index + 1]
             return <article className="workflow-step" key={page.path}>
               <span className="workflow-step-mark">{String(index + 1).padStart(2, '0')}</span>
               <span className="workflow-step-copy"><strong>{page.title}</strong><small>{page.purpose}</small><small><b>When to use:</b> {page.use}</small><small><b>Expected output:</b> {page.output}</small></span>
-              <span className="workflow-tour-links"><Link className="primary-button small" to={page.path}>{page.path === '/workflow' ? 'Open this guide →' : 'Open workspace →'}</Link>{nextPage ? <Link className="ghost-button" to={nextPage.path}>Next: {nextPage.title} →</Link> : <Link className="ghost-button" to={primaryWorkspaces[0].path}>Tour complete · Start again ↻</Link>}</span>
+              <span className="workflow-tour-links"><Link className="primary-button small" to={page.path}>{page.path === '/workflow' ? 'Open this guide →' : 'Open workspace →'}</Link>{nextPage ? <Link className="ghost-button" to={nextPage.path}>Next: {nextPage.title} →</Link> : <Link className="ghost-button" to={guidedWorkspaces[0].path}>Tour complete · Start again ↻</Link>}</span>
             </article>
           })}</div>
         </section>)}
