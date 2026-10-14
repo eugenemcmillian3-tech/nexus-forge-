@@ -1,0 +1,21 @@
+export type ReleaseStatus = 'verified' | 'partial' | 'blocked'
+export type ReleaseGate = { id: string; title: string; status: ReleaseStatus; evidence: string; exit: string; reference: string }
+const repo = 'https://github.com/eugenemcmillian3-tech/nexus-forge-'
+export const releaseAudit = {
+  date: '2026-10-14',
+  baselineCommit: '69637006dc7ff1839665f78d4f6aa309768040bc',
+  scope: 'Current operator workflow across 16 pages; advanced roadmap expansions are outside this release audit.',
+  gates: [
+    { id: 'validation', title: 'Automated build and safety checks', status: 'verified', evidence: 'Baseline release: 379 GitHub tests, types, build and dual-engine fixtures passed. Ownership, unsafe-source and callback replay cases are included.', exit: 'Keep the release PR checks green; review failures before publishing.', reference: repo + '/actions/runs/38638221509' },
+    { id: 'public-runtime', title: 'Live routes and responsive shell', status: 'verified', evidence: '32/32 HTTP shell checks passed, with p95 98 ms at concurrency two. Chromium passed 16 desktop and four mobile shell checks; anonymous mission access was denied.', exit: 'Repeat current probes after publication. This evidence does not establish authenticated end-to-end behavior or sustained capacity.', reference: repo + '/tree/main/docs/evidence' },
+    { id: 'workflow', title: 'Integrated workflow and recovery', status: 'partial', evidence: 'Accepted Research, Manifest and LocalBoost receipts are retained. Automated guide, provider failure, replay and recovery tests exist.', exit: 'Record an integrated review of changed stages, interrupted-run recovery and remaining handoffs; reuse accepted evidence for unchanged stages.', reference: repo + '/blob/main/docs/PRODUCTION_RELEASE_CHECKLIST.md' },
+    { id: 'monitoring', title: 'Monitoring and alert delivery', status: 'partial', evidence: 'Release workflow adds hourly bounded public probes and retained reports. Failed jobs are visible in GitHub Actions.', exit: 'Confirm a successful main-branch run and notification delivery to the operator. Scheduling can be delayed; this is not continuous uptime coverage.', reference: repo + '/actions/workflows/production-release.yml' },
+    { id: 'backup', title: 'Backup and isolated restore', status: 'blocked', evidence: 'Platform documentation supports table snapshot export/import through the Database UI; no completed restore drill or retention evidence is available.', exit: 'Export Live securely; restore into isolated Testing; verify rows, ownership and separate uploaded-file recovery; record retention and recovery targets.', reference: repo + '/blob/main/docs/PRODUCTION_OPERATIONS.md#backup-and-restore' },
+    { id: 'rollback', title: 'Rollback rehearsal', status: 'blocked', evidence: 'Code history and a known-good release exist. A code restore does not restore database data or uploaded files.', exit: 'Rehearse recovery in Testing, verify backend compatibility, publish recovery and rerun probes; record elapsed recovery and resulting data integrity.', reference: repo + '/blob/main/docs/PRODUCTION_OPERATIONS.md#rollback' },
+    { id: 'capacity', title: 'Expected workload and resource bounds', status: 'partial', evidence: 'The live read-only burst passed with two concurrent requests. Provider metadata validation and no-replay accounting are implemented.', exit: 'Define expected users/missions, run a representative sustained workload in Testing, and validate budget, rate and storage behavior. A small public burst is not a capacity test.', reference: repo + '/blob/main/docs/PRODUCTION_OPERATIONS.md#capacity-and-cost' },
+    { id: 'cost', title: 'Usage attribution and accounting gaps', status: 'partial', evidence: 'Supported stages record provider usage; missing amounts remain unknown and failed recording does not replay inference.', exit: 'Complete required per-run attribution and make persistence gaps reviewable before promising complete cost accounting or cost-based guarantees.', reference: repo + '/blob/main/docs/PROVIDER_USAGE_RECORDING.md' },
+  ] satisfies ReleaseGate[],
+}
+export function releaseReady(gates: readonly { status: ReleaseStatus }[]) {
+  return gates.length > 0 && gates.every(gate => gate.status === 'verified')
+}

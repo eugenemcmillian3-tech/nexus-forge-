@@ -1,0 +1,59 @@
+name: NEXUS FORGE Production Release Checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-release:
+    name: Live public release probes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RELEASE_BACKEND_URL: https://tame-rat-826.eu-west-1.convex.cloud
+      RELEASE_PROBE_MODE: ${{ github.event_name == 'schedule' && 'monitor' || 'full' }}
+      RELEASE_REPORT_PATH: production-probe.json
+      RELEASE_BROWSER_REPORT_PATH: production-browser.json
+    steps:
+      - name: Check out probe source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check public routes and anonymous access denial
+        run: node --experimental-strip-types scripts/check-production.mjs
+      - name: Install isolated browser tooling
+        if: github.event_name != 'schedule'
+        run: |
+          npm install --prefix /tmp/nexus-release-browser --no-save --ignore-scripts playwright@1.56.1
+          /tmp/nexus-release-browser/node_modules/.bin/playwright install --with-deps chromium
+      - name: Check live desktop and mobile hydration
+        if: github.event_name != 'schedule'
+        env:
+          NEXUS_BROWSER_PACKAGE: /tmp/nexus-release-browser
+        run: node --experimental-strip-types scripts/check-production-browser.mjs
+      - name: Retain release observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-release-observations
+          path: |
+            production-probe.json
+            production-browser.json
+          retention-days: 14
+          if-no-files-found: warn

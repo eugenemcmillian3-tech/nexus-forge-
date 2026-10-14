@@ -1,0 +1,311 @@
+{
+  "version": "production-probe-v1",
+  "origin": "https://bphntw8kdojl9qvuifywyjtk.macaly.app",
+  "backendOrigin": "https://tame-rat-826.eu-west-1.convex.cloud",
+  "observedAt": "2026-10-14T21:26:02.544Z",
+  "mode": "full",
+  "scope": "Public HTML shells and one anonymous private-query denial; not authenticated end-to-end or sustained load certification",
+  "concurrency": 2,
+  "rounds": 2,
+  "rows": [
+    {
+      "path": "/",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19238,
+      "durationMs": 136,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/workflow",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19254,
+      "durationMs": 98,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/roadmap",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19382,
+      "durationMs": 60,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/manifest",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19387,
+      "durationMs": 47,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/orchestrator",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19407,
+      "durationMs": 41,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/mission",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19252,
+      "durationMs": 59,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/providers",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19392,
+      "durationMs": 45,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/council",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19252,
+      "durationMs": 41,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/artifacts",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19256,
+      "durationMs": 44,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/evidence",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19254,
+      "durationMs": 67,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/delivery",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19254,
+      "durationMs": 42,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/readiness",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19396,
+      "durationMs": 38,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/learning",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19387,
+      "durationMs": 46,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/portfolio",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19392,
+      "durationMs": 48,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/capabilities",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19407,
+      "durationMs": 40,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/incidents",
+      "round": 1,
+      "ok": true,
+      "status": 200,
+      "bytes": 19256,
+      "durationMs": 41,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19238,
+      "durationMs": 35,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/workflow",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19254,
+      "durationMs": 40,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/manifest",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19387,
+      "durationMs": 38,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/roadmap",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19382,
+      "durationMs": 49,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/orchestrator",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19407,
+      "durationMs": 38,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/mission",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19252,
+      "durationMs": 42,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/providers",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19392,
+      "durationMs": 42,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/council",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19252,
+      "durationMs": 39,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/evidence",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19254,
+      "durationMs": 39,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/artifacts",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19256,
+      "durationMs": 37,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/delivery",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19254,
+      "durationMs": 40,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/readiness",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19396,
+      "durationMs": 39,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/learning",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19387,
+      "durationMs": 38,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/portfolio",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19392,
+      "durationMs": 42,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/capabilities",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19407,
+      "durationMs": 42,
+      "detail": "Public HTML shell passed"
+    },
+    {
+      "path": "/incidents",
+      "round": 2,
+      "ok": true,
+      "status": 200,
+      "bytes": 19256,
+      "durationMs": 42,
+      "detail": "Public HTML shell passed"
+    }
+  ],
+  "anonymousAccess": {
+    "ok": true,
+    "detail": "Read-only anonymous mission access check; no private payload retained"
+  },
+  "summary": {
+    "total": 32,
+    "passed": 32,
+    "p95Ms": 98,
+    "passedWithinBudget": true
+  },
+  "passed": true
+}
