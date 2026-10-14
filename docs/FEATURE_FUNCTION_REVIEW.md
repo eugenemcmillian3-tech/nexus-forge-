@@ -42,3 +42,7 @@ The remaining 16 partial milestones and seven deferred expansions stay partial/d
 ## Lesson retrieval evaluation update
 
 Research & Memory now includes saved server-observed top-five content-search versus newest-five lesson comparisons. Operator-selected expected IDs provide relevance labels; receipts retain scope, rankings, precision/recall/reciprocal rank and reviewed-lesson strategy links. See [operating details and limits](MEMORY_RETRIEVAL_EVALUATION.md). Actual Council context retrieval and strategy reuse outcome effectiveness remain partial. All 16 feature pages remain in the guide.
+
+## Reviewed lesson reuse update
+
+Verified Learning Engine now records reviewed lesson + Manifest strategy + mission-source provenance against an earlier baseline and subsequent reuse-mission measurement. Runtime cost and delivery readiness comparisons preserve snapshots, signed change, regressions and explicit application/comparability attestation. See [reuse comparison details](STRATEGY_REUSE_OUTCOMES.md). This implements the observation link, not causal effectiveness or business-outcome validation; learning/outcome milestones remain partial.
