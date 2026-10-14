@@ -2,7 +2,7 @@ import { actionGeneric as action, internalMutationGeneric as internalMutation, m
 import { v } from "convex/values"
 import { requireOperator, requireOwnedMission } from "./permissions";
 import { internal } from "./_generated/api";
-import { callAiProvider } from "./aiProvider";
+import { callManagedAi } from "./providerAccounting";
 import { jsonrepair } from "jsonrepair";
 import { unresolvedEscalationBlock } from "./incidentSafety";
 
@@ -163,7 +163,7 @@ export const discoverOpportunities = action({
     const sources = await discoverSources(theme);
     if (!sources.length) throw new Error("Opportunity discovery returned no usable web sources.");
     const dossier = sources.map((s, i) => `SOURCE ${i + 1}\nTITLE: ${s.title}\nURL: ${s.url}\nCONTENT: ${s.snippet || "(content unavailable)"}`).join("\n\n");
-    const response = await callAiProvider("research", `You are the NEXUS FORGE Opportunity Scout. Use ONLY this retrieved web dossier. Identify three concrete, bounded venture opportunities suitable for human-governed execution. Do not invent facts or citations. Each opportunity must state a specific customer/problem, a testable digital product mission, why now, and key uncertainty. Return JSON exactly as {"recommendations":[{"title":"...","mission":"...","rationale":["..."],"evidence":["URL — evidence claim"]}]} and use only URLs present in the dossier.\n\nTHEME: ${theme}\n\nDOSSIER:\n${dossier.slice(0, 17000)}`, 1800);
+    const response = await callManagedAi(ctx, { ownerKey, stage: "opportunity-discovery", role: "research", prompt: `You are the NEXUS FORGE Opportunity Scout. Use ONLY this retrieved web dossier. Identify three concrete, bounded venture opportunities suitable for human-governed execution. Do not invent facts or citations. Each opportunity must state a specific customer/problem, a testable digital product mission, why now, and key uncertainty. Return JSON exactly as {"recommendations":[{"title":"...","mission":"...","rationale":["..."],"evidence":["URL — evidence claim"]}]} and use only URLs present in the dossier.\n\nTHEME: ${theme}\n\nDOSSIER:\n${dossier.slice(0, 17000)}`, maxTokens: 1800 });
     let parsed: any;
     try {
       parsed = parseJsonObject(response);
