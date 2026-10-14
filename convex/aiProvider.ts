@@ -73,13 +73,24 @@ async function call(provider: ProviderName, prompt: string, maxTokens: number, o
   const payload = JSON.parse(body);
   if (onUsage) {
     const usage = payload?.usage ?? payload?.result?.usage ?? {};
-    const rawCost = payload?.usage?.cost ?? payload?.cost ?? payload?.result?.cost;
-    const reportedCostUsd = typeof rawCost === "number" && Number.isFinite(rawCost) && rawCost >= 0 ? rawCost : undefined;
-    const promptTokens = Number.isFinite(usage.prompt_tokens) ? usage.prompt_tokens : Number.isFinite(usage.input_tokens) ? usage.input_tokens : undefined;
-    const completionTokens = Number.isFinite(usage.completion_tokens) ? usage.completion_tokens : Number.isFinite(usage.output_tokens) ? usage.output_tokens : undefined;
-    const totalTokens = Number.isFinite(usage.total_tokens) ? usage.total_tokens : promptTokens !== undefined || completionTokens !== undefined ? (promptTokens ?? 0) + (completionTokens ?? 0) : undefined;
-    if (promptTokens !== undefined || completionTokens !== undefined || reportedCostUsd !== undefined) {
-      await onUsage({ provider, model, promptTokens, completionTokens, totalTokens, reportedCostUsd, capturedAt: Date.now() });
+    const tokenCount = (value: unknown): number | undefined =>
+      typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= 100000000 ? value : undefined;
+    const rawCost = usage.cost ?? payload?.cost ?? payload?.result?.cost;
+    const reportedCostUsd = typeof rawCost === "number" && Number.isFinite(rawCost) && rawCost >= 0 && rawCost <= 1000000 ? rawCost : undefined;
+    const promptTokens = tokenCount(usage.prompt_tokens) ?? tokenCount(usage.input_tokens);
+    const completionTokens = tokenCount(usage.completion_tokens) ?? tokenCount(usage.output_tokens);
+    // A missing component is unknown, not zero. Derive totals only from both valid components.
+    const totalTokens = tokenCount(usage.total_tokens) ?? (promptTokens !== undefined && completionTokens !== undefined ? tokenCount(promptTokens + completionTokens) : undefined);
+    const responseModel = payload?.model ?? payload?.result?.model;
+    const measuredModel = typeof responseModel === "string" && responseModel.trim() && responseModel.trim().length <= 160 ? responseModel.trim() : model;
+    if (promptTokens !== undefined || completionTokens !== undefined || totalTokens !== undefined || reportedCostUsd !== undefined) {
+      try {
+        await onUsage({ provider, model: measuredModel, promptTokens, completionTokens, totalTokens, reportedCostUsd, capturedAt: Date.now() });
+      } catch {
+        // Accounting persistence is separate from inference. Never replay a successful
+        // request against another provider because its usage receipt could not be saved.
+        console.warn("AI provider usage receipt could not be saved; accounting may be incomplete. No inference retry was made for this recording failure.");
+      }
     }
   }
   return text(payload);

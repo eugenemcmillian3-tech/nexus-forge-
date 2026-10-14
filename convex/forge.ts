@@ -9,7 +9,7 @@ const agentShape = v.object({ _id: v.id("agentRuns"), _creationTime: v.number(),
 
 async function askCouncil(prompt: string, maxTokens = 700, model: keyof typeof COUNCIL_MODELS = "planner", ctx?: any, ownerKey?: string): Promise<string> {
   const recordUsage = ctx && ownerKey ? async (usage: any) => {
-    try { await ctx.runMutation((internal as any).manifestIntelligence.recordProviderUsageInternal, { ownerKey, ...usage }) } catch { /* Usage telemetry must not break a successful Council response. */ }
+    await ctx.runMutation((internal as any).manifestIntelligence.recordProviderUsageInternal, { ownerKey, ...usage })
   } : undefined
   return await callAiProvider(COUNCIL_MODELS[model], prompt, maxTokens, recordUsage)
 }
