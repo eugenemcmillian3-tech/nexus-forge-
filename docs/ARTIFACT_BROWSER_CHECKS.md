@@ -38,4 +38,4 @@ Browser reports never approve an artifact, dispatch delivery, or complete a miss
 
 Regression checks cover working/broken HTML, form validity, missing/invalid selectors, markup encoding, coverage, stale snapshots, ownership, unchanged approval state, parent result matching, timeouts, selector hints, plan reuse, and failed-save retries.
 
-The repeatable artifact-dom-v1 fixture suite and GitHub-verified CI receipts are implemented; see [benchmark evidence](BENCHMARK_CI_EVIDENCE.md). Next extend CI checks to exact generated-artifact snapshots and broader browser/integration behavior. The independent-verification and delivery milestones remain partial.
+The repeatable artifact-dom-v1 fixture suite and GitHub-verified CI receipts are implemented; see [benchmark evidence](BENCHMARK_CI_EVIDENCE.md). Exact saved artifact/mission/test-plan Chromium CI is now implemented; see [the exact CI workflow](EXACT_ARTIFACT_CI.md). Broader benchmark and external integration coverage remains open. The independent-verification and delivery milestones remain partial.
