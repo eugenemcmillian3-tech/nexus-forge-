@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction, useQuery } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
+import { ArtifactBenchmarkEvidence } from '../components/artifact-benchmark-evidence'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useActiveMission } from '../hooks/use-active-mission'
 
@@ -66,6 +67,7 @@ function CapabilityDashboard() {
         </div>
       </div>
 
+      <ArtifactBenchmarkEvidence />
       <div className="stats-strip">
         <div><strong>{missions ? missionRows.length : '—'}</strong><span>Recent missions</span></div>
         <div><strong>{missions ? running : '—'}</strong><span>Running</span></div>
