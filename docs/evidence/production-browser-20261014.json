@@ -1,0 +1,208 @@
+{
+  "version": "production-browser-v1",
+  "observedAt": "2026-10-14T21:25:13.619Z",
+  "scope": "Unauthenticated public shell hydration on sixteen desktop routes and four mobile routes. No OTP requested, no login, no mission execution.",
+  "rows": [
+    {
+      "path": "/",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/workflow",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/roadmap",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/manifest",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/orchestrator",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/mission",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/providers",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/council",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/evidence",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/artifacts",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/delivery",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/readiness",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/portfolio",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/learning",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/capabilities",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/incidents",
+      "viewport": 1280,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/",
+      "viewport": 375,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/workflow",
+      "viewport": 375,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/artifacts",
+      "viewport": 375,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    },
+    {
+      "path": "/delivery",
+      "viewport": 375,
+      "ok": true,
+      "status": 200,
+      "enabled": true,
+      "inputVisible": true,
+      "horizontalOverflow": false,
+      "uncaughtErrors": 0
+    }
+  ],
+  "passed": true
+}
