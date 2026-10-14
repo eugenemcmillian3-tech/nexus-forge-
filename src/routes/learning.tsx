@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { WorkspaceLayout } from "../components/workspace-layout";
+import { deriveManifestOutcomeSignals } from "../lib/manifest-outcome-signals";
 
 export const Route = createFileRoute("/learning")({ component: LearningEnginePage });
 
@@ -127,18 +128,10 @@ function LearningEnginePage() {
       </div>
 
       <div className="glass-card research-card">
-        <div className="panel-title"><span>MANIFEST OUTCOME SIGNALS</span><span className="live-pill">{(manifestRows ?? []).filter(row => { try { const record = JSON.parse(row.value); return Array.isArray(record.outcomeHistory) && record.outcomeHistory.length > 0 || typeof record.recordedAt === "number" && typeof record.actualResult === "string" && record.actualResult.length > 0; } catch { return false; } }).length} MEASURED STRATEGIES</span></div>
+        <div className="panel-title"><span>MANIFEST OUTCOME SIGNALS</span><span className="live-pill">{deriveManifestOutcomeSignals(manifestRows ?? []).length} EVIDENCE-BACKED STRATEGIES</span></div>
         <p className="muted-copy">This panel reads your private Manifest strategy ledger. Only recorded observations are counted; generated expectations are not treated as results.</p>
         {manifestRows === undefined ? <p>Loading Manifest outcome signals…</p> : (() => {
-          const measured = manifestRows.flatMap(row => {
-            try {
-              const record = JSON.parse(row.value) as { name?: string; outcomeStatus?: string; actualResult?: string; evidence?: string; actualCost?: number | null; recordedAt?: number | null; outcomeHistory?: Array<{ outcomeStatus?: string; actualResult?: string; evidence?: string; actualCost?: number | null; recordedAt?: number }>; };
-              const history = Array.isArray(record.outcomeHistory) ? record.outcomeHistory : [];
-              const latest = history.length ? history[history.length - 1] : record;
-              if (typeof latest.actualResult !== "string" || latest.actualResult.trim().length === 0) return [];
-              return [{ id: row._id, name: record.name ?? row.key, status: latest.outcomeStatus ?? "inconclusive", result: latest.actualResult, evidence: latest.evidence ?? "Evidence not recorded", cost: latest.actualCost, recordedAt: latest.recordedAt }];
-            } catch { return []; }
-          });
+          const measured = deriveManifestOutcomeSignals(manifestRows);
           const succeeded = measured.filter(item => item.status === "succeeded").length;
           const partial = measured.filter(item => item.status === "partial").length;
           const failed = measured.filter(item => item.status === "failed").length;
@@ -153,7 +146,8 @@ function LearningEnginePage() {
                 <div className="decision-line"><span>…</span><strong>{inconclusive} inconclusive</strong></div>
               </div>
               {failed > 0 ? <p className="warning">Learning signal: review failed strategies and their recorded failure evidence before repeating them. This is a review cue, not an automatic strategy change.</p> : succeeded > 0 && failed === 0 && inconclusive === 0 ? <p className="muted-copy">Learning signal: recorded successes are available for comparison. Confirm the evidence and compare against a baseline before reuse.</p> : <p className="muted-copy">Learning signal: collect additional comparable measurements before drawing a strong conclusion.</p>}
-              {measured.slice(0, 8).map(item => <article className="portfolio-row" key={item.id}><div className="portfolio-main"><strong>{item.name}</strong><p>{item.result}</p><small>Status: {item.status} · Evidence: {item.evidence}{item.cost == null ? "" : ` · Actual cost: ${item.cost}`}</small></div><div className="portfolio-cell"><small>RECORDED</small><b>{typeof item.recordedAt === "number" ? new Date(item.recordedAt).toLocaleDateString() : "DATE N/A"}</b></div></article>)}
+              {measured.slice(0, 8).map(item => <article className="portfolio-row" key={item.id}><div className="portfolio-main"><strong>{item.name}</strong><p>{item.result}</p><small>Status: {item.status} · {item.outcomeCount} evidence-backed outcome{item.outcomeCount === 1 ? "" : "s"} · Evidence: {item.evidence}{item.cost == null ? "" : ` · Actual cost: $${item.cost}`}</small><p className="muted-copy">{item.recommendation}</p>{item.blueprintKey && <small>Exact blueprint receipt: {item.blueprintKey}</small>}<small>Strategy record: {item.strategyKey}</small></div><div className="portfolio-cell"><small>RECORDED</small><b>{typeof item.recordedAt === "number" ? new Date(item.recordedAt).toLocaleDateString() : "DATE N/A"}</b></div></article>)}
+              <p className="muted-copy">Signals are deterministic prompts for the next experiment based on operator-recorded outcomes and evidence references. They are not independently verified findings, causal proof, or automatic strategy changes.</p>
               <Link className="secondary-button" to="/manifest">Review strategy ledger →</Link>
             </>;
         })()}
