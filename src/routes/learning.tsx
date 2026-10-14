@@ -50,6 +50,19 @@ function LearningEnginePage() {
   const [lessonEvidence, setLessonEvidence] = useState("");
   const [lessonBusy, setLessonBusy] = useState(false);
   const [lessonMessage, setLessonMessage] = useState("");
+  const [savedLesson, setSavedLesson] = useState<{ id: string; text: string; applicability: string; references: string[] } | null>(null);
+
+  const handoffSavedLesson = () => {
+    if (!savedLesson) return;
+    window.sessionStorage.setItem("nexus-forge-intelligence-handoff", JSON.stringify({
+      sourceLabel: "Reviewed lesson", sourceMemoryId: savedLesson.id,
+      intent: "Test and apply this reviewed lesson: " + savedLesson.text,
+      domain: "Evidence-led improvement", budget: 25, horizon: "14 days",
+      constraints: savedLesson.applicability,
+      acceptanceCriteria: "Confirm applicability and compare a new measured outcome against a baseline.",
+      blueprint: [savedLesson.text, "Applicability: " + savedLesson.applicability, "Evidence references:", ...savedLesson.references].join("\n"),
+    }));
+  };
 
   const saveReviewedLesson = async () => {
     setLessonMessage("");
@@ -58,7 +71,7 @@ function LearningEnginePage() {
     if (references.length < 2) { setLessonMessage("Add at least two evidence references on separate lines."); return; }
     setLessonBusy(true);
     try {
-      await captureReviewedLesson({
+      const id = await captureReviewedLesson({
         category: "learning-lesson",
         key: "reviewed-lesson-pending",
         value: lessonText,
@@ -68,6 +81,7 @@ function LearningEnginePage() {
         applicability: lessonApplicability,
         evidenceReferences: references,
       });
+      setSavedLesson({ id, text: lessonText, applicability: lessonApplicability, references });
       setLessonMessage("Saved reviewed lesson. Future mission planning can retrieve it as advisory context.");
       setLessonText("");
       setLessonApplicability("");
@@ -221,6 +235,8 @@ function LearningEnginePage() {
         <textarea id="reviewed-lesson-evidence" rows={3} value={lessonEvidence} onChange={e => setLessonEvidence(e.target.value)} placeholder="Run ID, report, artifact, or source reference&#10;Second independent/comparable reference" />
         <div className="hero-actions"><button className="primary-button" type="button" disabled={lessonBusy} onClick={saveReviewedLesson}>{lessonBusy ? "Saving lesson…" : "Save reviewed lesson"}</button></div>
         {lessonMessage && <p className="muted-copy" role="status">{lessonMessage}</p>}
+        {savedLesson && <div className="hero-actions"><Link className="primary-button" to="/mission" onClick={handoffSavedLesson}>Create mission from saved lesson →</Link></div>}
+        {manifestRows?.length === 0 && <p>No strategy is available for this lesson yet. <Link to="/manifest">Open Manifest Intelligence to create or review a strategy →</Link></p>}
         <p className="muted-copy">Evidence references and applicability are operator-provided. The engine preserves the review label and limitations; it does not independently validate sources or infer causality.</p>
       </div>
 

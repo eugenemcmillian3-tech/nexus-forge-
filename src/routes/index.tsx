@@ -19,6 +19,7 @@ export function OverviewPage() {
     '/mission': !!missionId && !!mission,
     '/manifest': sourceLinks.some(link => link.path === '/manifest'),
     '/orchestrator': sourceLinks.some(link => link.path === '/orchestrator'),
+    '/learning': sourceLinks.some(link => link.path === '/learning'),
     '/council': councilComplete,
     '/evidence': research.length > 0,
     '/artifacts': hasArtifact && hasVerified && hasArtifactApproval,
