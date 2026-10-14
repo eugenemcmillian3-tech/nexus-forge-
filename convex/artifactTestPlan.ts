@@ -1,7 +1,7 @@
-export type BrowserStep = { action: 'fill' | 'click' | 'assertText' | 'assertValue' | 'assertVisible' | 'assertInvalid'; selector: string; value: string }
+export type BrowserStep = { action: 'fill' | 'click' | 'assertText' | 'assertTextEquals' | 'assertValue' | 'assertVisible' | 'assertInvalid'; selector: string; value: string }
 export type BrowserCase = { criterionIndex: number; steps: BrowserStep[] }
 export type StepResult = { status: 'pass' | 'fail' | 'not_run'; detail: string }
-export const browserRunnerVersion = 'sandbox-dom-v1'
+export const browserRunnerVersion = 'sandbox-dom-v2'
 
 export function extractAcceptanceCriteria(contract: string): string[] {
   const lines = contract.split(/\r?\n/)
@@ -23,7 +23,7 @@ export function validateBrowserPlan(criteria: string[], plan: BrowserCase[]) {
   if (!criteria.length) throw new Error('The saved mission needs an explicit ACCEPTANCE CRITERIA section before browser checks can be recorded.')
   if (!plan.length || plan.length > 20) throw new Error('Choose between 1 and 20 criterion checks.')
   const used = new Set<number>()
-  const actions = new Set(['fill', 'click', 'assertText', 'assertValue', 'assertVisible', 'assertInvalid'])
+  const actions = new Set(['fill', 'click', 'assertText', 'assertTextEquals', 'assertValue', 'assertVisible', 'assertInvalid'])
   for (const test of plan) {
     if (!Number.isInteger(test.criterionIndex) || test.criterionIndex < 0 || test.criterionIndex >= criteria.length || used.has(test.criterionIndex)) throw new Error('Each check must map to one distinct saved acceptance criterion.')
     used.add(test.criterionIndex)
