@@ -29,7 +29,7 @@ try {
         const element = page.locator(step.selector)
         if (await element.count() !== 1) throw new Error('Selector must match exactly one element')
         let detail = ''
-        if (step.action === 'fill') { await element.fill(step.value); detail = 'Filled ' + step.selector }
+        if (step.action === 'fill') { if (await element.evaluate(element => element.tagName) === 'SELECT') await element.selectOption(step.value); else await element.fill(step.value); detail = 'Filled ' + step.selector }
         else if (step.action === 'click') { await element.click(); detail = 'Clicked ' + step.selector }
         else if (step.action === 'assertText') { const actual = await element.textContent(); if (!step.value.trim() || !String(actual).includes(step.value)) throw new Error('Expected ' + step.value + '; observed ' + actual); detail = 'Observed text: ' + actual }
         else if (step.action === 'assertValue') { const actual = await element.inputValue(); if (actual !== step.value) throw new Error('Expected value ' + step.value + '; observed ' + actual); detail = 'Observed value: ' + actual }
@@ -42,6 +42,7 @@ try {
     results.push(evidence)
   }
 } catch (cause) {
+  console.error(String(cause && cause.stack || cause))
   results = bundle.plan.map(test => test.steps.map(() => ({ status: 'not_run', detail: ('Runner error: ' + String(cause.message || cause)).slice(0, 120) })))
 } finally { if (browser) await browser.close() }
 const passed = results.filter(test => test.every(step => step.status === 'pass')).length
