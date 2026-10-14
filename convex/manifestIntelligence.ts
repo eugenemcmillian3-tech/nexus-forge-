@@ -399,7 +399,7 @@ Write specific, realistic guidance tailored to the intent. Do not describe the b
       try {
         const structuredResponse = await callAiProvider("planner", strategyPrompt, 1400, recordUsage);
         const retry = extractManifestStrategies(structuredResponse);
-        if (retry.validJson && retry.strategies.length > 0) {
+        if (retry.validJson && retry.strategies.length === 3) {
           strategies = retry.strategies;
           strategyBlockValid = true;
         }
