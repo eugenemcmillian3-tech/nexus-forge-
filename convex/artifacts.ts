@@ -56,9 +56,10 @@ export const verifyInternal = internalMutation({
 async function verifyArtifactInternal(ctx: any, id: any) {
   const artifact = await ctx.db.get("artifacts", id)
   if (!artifact) throw new Error("Artifact not found")
+  if (artifact.status === "rejected") throw new Error("Rejected artifacts must be regenerated before verification")
   const mission = await ctx.db.get("missions", artifact.missionId)
   const result = verifyChecks(artifact.content, mission?.mission ?? "")
-  await ctx.db.patch(id, { status: result.passed ? "verified" : "verification_failed" })
+  await ctx.db.patch(id, { status: result.passed ? (artifact.status === "ready" && !artifact.requiresApproval ? "ready" : "verified") : "verification_failed" })
   await ctx.runMutation(internal.audit.record, { missionId: artifact.missionId, type: "artifact", action: result.passed ? "artifact_verified" : "artifact_verification_failed", status: result.passed ? "verified" : "failed", detail: `Artifact verification ${result.passed ? "passed" : "failed"} at ${Math.round(result.score * 100)}%. ${result.checks.join(" | ")}` })
   return result
 }
