@@ -1,10 +1,10 @@
 import type { BrowserCase } from './artifactTestPlan'
 export const benchmarkSuite = {
-  version: 'artifact-dom-v1',
+  version: 'artifact-dom-v2',
   repository: 'eugenemcmillian3-tech/nexus-forge-',
   workflowPath: '.github/workflows/ci.yml',
-  jobName: 'Artifact DOM benchmarks v1',
-  stepName: 'Run artifact DOM benchmark suite v1',
+  jobName: 'Artifact DOM benchmarks v2',
+  stepName: 'Run artifact DOM benchmark suite v2',
 } as const
 export type ArtifactBenchmark = { id: string; title: string; purpose: string; html: string; plan: BrowserCase[]; expected: 'pass' | 'fail' }
 const field = '<input id="amount" required><button id="calculate">Double</button><output id="result"></output>'
@@ -18,4 +18,12 @@ export const artifactBenchmarks: ArtifactBenchmark[] = [
   { id: 'wrong-result-control', title: 'Detect incorrect computation', purpose: 'Negative control: a wrong implementation must fail its assertion.', html: field + '<script>document.querySelector("#calculate").onclick=()=>document.querySelector("#result").textContent=document.querySelector("#amount").value</script>', plan: check(step('fill', '#amount', '7'), step('click', '#calculate'), step('assertText', '#result', '14')), expected: 'fail' },
   { id: 'inert-button-control', title: 'Detect an inert control', purpose: 'Negative control: a button without behavior must not pass.', html: field, plan: check(step('fill', '#amount', '7'), step('click', '#calculate'), step('assertText', '#result', '14')), expected: 'fail' },
   { id: 'missing-output-control', title: 'Detect a missing output element', purpose: 'Negative control: missing targets must produce a failure.', html: '<p>No result element exists.</p>', plan: check(step('assertText', '#result', '14')), expected: 'fail' },
+  {"id":"textarea-value","title":"Retain multiline text","purpose":"Textarea fill and exact value assertion preserve line breaks.","html":"<textarea id=\"notes\"></textarea>","plan":[{"criterionIndex":0,"steps":[{"action":"fill","selector":"#notes","value":"First\nSecond"},{"action":"assertValue","selector":"#notes","value":"First\nSecond"}]}],"expected":"pass"},
+  {"id":"select-change","title":"React to selection changes","purpose":"Selection dispatches change and updates observable output.","html":"<select id=\"choice\"><option value=\"basic\">Basic</option><option value=\"pro\">Pro</option></select><output id=\"label\"></output><script>document.querySelector(\"#choice\").onchange=e=>document.querySelector(\"#label\").textContent=e.target.value</script>","plan":[{"criterionIndex":0,"steps":[{"action":"fill","selector":"#choice","value":"pro"},{"action":"assertValue","selector":"#choice","value":"pro"},{"action":"assertText","selector":"#label","value":"pro"}]}],"expected":"pass"},
+  {"id":"email-invalid","title":"Reject malformed email","purpose":"Native email validity rejects malformed content.","html":"<input id=\"email\" type=\"email\" required>","plan":[{"criterionIndex":0,"steps":[{"action":"fill","selector":"#email","value":"bad-address"},{"action":"assertInvalid","selector":"#email","value":""}]}],"expected":"pass"},
+  {"id":"range-invalid","title":"Reject out-of-range quantity","purpose":"Native numeric bounds reject values above the limit.","html":"<input id=\"quantity\" type=\"number\" min=\"1\" max=\"10\">","plan":[{"criterionIndex":0,"steps":[{"action":"fill","selector":"#quantity","value":"11"},{"action":"assertInvalid","selector":"#quantity","value":""}]}],"expected":"pass"},
+  {"id":"reset-value","title":"Restore field defaults","purpose":"Reset behavior restores the original field value.","html":"<form><input id=\"name\" value=\"Original\"><button id=\"reset\" type=\"reset\">Reset</button></form>","plan":[{"criterionIndex":0,"steps":[{"action":"fill","selector":"#name","value":"Changed"},{"action":"click","selector":"#reset","value":""},{"action":"assertValue","selector":"#name","value":"Original"}]}],"expected":"pass"},
+  {"id":"wrong-value-control","title":"Detect an incorrect field value","purpose":"Negative control requires exact value equality.","html":"<input id=\"value\" value=\"140\">","plan":[{"criterionIndex":0,"steps":[{"action":"assertValue","selector":"#value","value":"14"}]}],"expected":"fail"},
+  {"id":"valid-input-control","title":"Detect an invalid validation expectation","purpose":"A valid field must fail an assertion that expects invalid input.","html":"<input id=\"email\" type=\"email\" value=\"person@example.com\" required>","plan":[{"criterionIndex":0,"steps":[{"action":"assertInvalid","selector":"#email","value":""}]}],"expected":"fail"},
+  {"id":"unsupported-fill-control","title":"Reject filling a non-field","purpose":"Invalid interaction fails and subsequent assertions stay not run.","html":"<div id=\"target\">Ready</div>","plan":[{"criterionIndex":0,"steps":[{"action":"fill","selector":"#target","value":"Changed"},{"action":"assertText","selector":"#target","value":"Ready"}]}],"expected":"fail"},
 ]

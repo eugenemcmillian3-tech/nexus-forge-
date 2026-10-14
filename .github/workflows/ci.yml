@@ -47,7 +47,7 @@ jobs:
         run: pnpm build
 
   artifact-benchmarks:
-    name: Artifact DOM benchmarks v1
+    name: Artifact DOM benchmarks v2
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -62,12 +62,12 @@ jobs:
           cache: pnpm
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
-      - name: Run artifact DOM benchmark suite v1
-        run: pnpm exec vitest run __tests__/artifact-behavior-benchmark.test.ts --reporter=default --reporter=json --outputFile=artifact-dom-v1.json
+      - name: Run artifact DOM benchmark suite v2
+        run: pnpm exec vitest run __tests__/artifact-behavior-benchmark.test.ts --reporter=default --reporter=json --outputFile=artifact-dom-v2.json
       - name: Save benchmark report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: artifact-dom-v1-report
-          path: artifact-dom-v1.json
+          name: artifact-dom-v2-report
+          path: artifact-dom-v2.json
           if-no-files-found: warn
