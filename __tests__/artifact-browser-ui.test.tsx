@@ -49,6 +49,16 @@ describe('artifact browser evidence UI', () => {
     await waitFor(() => expect(state.record).toHaveBeenCalledTimes(2))
     expect(await screen.findByRole('status')).toHaveTextContent('Approval and delivery state are unchanged')
   })
+  it('offers artifact ID hints and can load a saved criterion plan', () => {
+    state.history = [{ _id: 'saved-report', allPassed: true, passed: 1, total: 1, covered: 1, failed: 0, notRun: 0, createdAt: 1, missionSnapshot: mission, artifactSnapshot: artifact.content, criteria: ['Show the correct result'], plan: [{ criterionIndex: 0, steps: [{ action: 'assertText', selector: '#result', value: '14' }] }], results: [[{ status: 'pass', detail: 'Observed 14' }]] }]
+    render(<ArtifactBrowserChecks artifact={artifact} missionContract={mission} />)
+    fireEvent.click(screen.getByText('Browser checks against saved acceptance criteria'))
+    fireEvent.click(screen.getByText('Available ID selectors from this artifact'))
+    expect(screen.getByText('#result')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Use saved test plan' }))
+    expect(screen.getByLabelText('CSS SELECTOR')).toHaveValue('#result')
+    expect(screen.getByLabelText('INPUT / EXPECTED VALUE')).toHaveValue('14')
+  })
   it('times out without recording a fabricated pass', () => {
     vi.useFakeTimers()
     render(<ArtifactBrowserChecks artifact={artifact} missionContract={mission} />)
