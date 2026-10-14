@@ -1,26 +1,13 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { MissionControl } from '../components/mission-control'
 import { WorkspaceLayout } from '../components/workspace-layout'
-import { useActiveMission } from '../hooks/use-active-mission'
+import { useMissionGuide } from '../lib/use-mission-guide'
 import { primaryWorkspaces } from '../lib/workspaces'
 
 export const Route = createFileRoute('/workflow')({ component: WorkflowPage })
 
 export function WorkflowPage() {
-  const { missionId, mission, agents, research, artifacts, deliveries } = useActiveMission()
-  const stages = [
-    { title: 'Define mission', done: !!missionId, path: '/mission', note: 'Confirm the intended outcome, scope, constraints, and budget.' },
-    { title: 'Review mission authorization', done: !!mission?.approved, path: '/mission', note: 'The mission approval record is a prerequisite for governed execution.' },
-    { title: 'Complete AI Council planning', done: agents.length > 0 && agents.every(row => row.status === 'complete'), path: '/council', note: 'Inspect agent results and resolve blockers before proceeding.' },
-    { title: 'Gather cited research', done: research.length > 0, path: '/evidence', note: 'Persist source-backed research against the mission when research is needed.' },
-    { title: 'Generate and verify artifact', done: artifacts.some(row => row.status === 'verified' || row.status === 'ready'), path: '/artifacts', note: 'Review quality findings; artifact verification and approval are separate states.' },
-    { title: 'Record artifact approval', done: artifacts.some(row => row.status === 'ready'), path: '/artifacts', note: 'Use the artifact page to review the recorded approval state before delivery.' },
-    { title: 'Prepare and authorize delivery', done: deliveries.some(row => row.approved), path: '/delivery', note: 'Check the exact target and delivery authorization in the delivery workspace.' },
-    { title: 'Verify delivery provenance and readiness', done: deliveries.some(row => row.stage === 'verified' && row.readinessStatus === 'pass' && typeof row.readinessTotalCount === 'number' && row.readinessTotalCount > 0 && row.readinessPassedCount === row.readinessTotalCount && !!row.workflowRunUrl && !!row.workflowCommitSha && !!row.deploymentRunUrl && row.deploymentCommitSha?.toLowerCase() === row.workflowCommitSha?.toLowerCase() && !!row.deploymentUrl), path: '/delivery', note: 'Require matching workflow/deployment provenance and passing canonical readiness evidence.' },
-    { title: 'Measure outcome and capture learning', done: false, path: '/portfolio', note: 'After delivery, record observed outcomes with evidence; use Learning Engine to compare results and capture reviewed lessons.' },
-  ]
-  const nextStage = stages.find(stage => !stage.done)
-  const completed = stages.filter(stage => stage.done).length
+  const { missionId, mission, stages, nextStage, completed } = useMissionGuide()
   return <WorkspaceLayout title="Guided Workflow & Feature Guide" eyebrow="OPERATOR HANDBOOK / START HERE">
     <section className="workspace">
       <div className="hero-grid">
