@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction, useMutation } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
+import { ArtifactBrowserChecks } from '../components/artifact-browser-checks'
 import { WorkspaceLoading } from '../components/workspace-loading'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useActiveMission } from '../hooks/use-active-mission'
@@ -48,6 +49,7 @@ export function ArtifactsPage() {
     <div className="glass-card research-card"><div className="panel-title"><span>SAVED ARTIFACTS</span><span className="live-pill">{artifacts.length} TOTAL</span></div>
       {artifacts.length === 0 ? <div className="empty-state"><h3>No artifacts yet</h3><p>Complete the mission prerequisites to generate the first draft.</p></div> : artifacts.map((row: any) => <article className="glass-card research-card" key={row._id}><div className="panel-title"><strong>{row.name}</strong><span className="status-chip">{String(row.status).replaceAll('_', ' ').toUpperCase()}</span></div><p>{row.summary || row.description || 'Stored artifact draft with quality verification.'}</p>{row.qualityChecks?.length > 0 && <ul>{row.qualityChecks.map((check: string, i: number) => <li key={i}>{check}</li>)}</ul>}<details><summary>Inspect artifact content</summary><pre className="whitespace-pre-wrap break-words">{row.content}</pre></details>
         <div className="hero-actions">{['awaiting_approval', 'verification_failed', 'verified'].includes(row.status) && <button className="secondary-button" disabled={!!busyId} onClick={() => void verifyArtifact(row._id)}>{busyId === String(row._id) ? 'Checking…' : 'Run verification'}</button>}{['awaiting_approval', 'verified'].includes(row.status) && <button className="primary-button" disabled={!!busyId} onClick={() => void approveArtifact(row._id)}>{busyId === String(row._id) ? 'Checking…' : 'Verify again & approve'}</button>}{row.status === 'ready' && <span className="receipt">Approved for governed delivery.</span>}</div>
+        <ArtifactBrowserChecks key={row._id} artifact={row} missionContract={mission?.mission ?? ""} />
       </article>)}
     </div>
     <div className="hero-actions">{artifacts.some(row => row.status === 'ready') ? <Link className="primary-button" to="/delivery">Choose approved artifact for delivery →</Link> : <p>Verify and approve an artifact above to continue to delivery.</p>}</div></section>
