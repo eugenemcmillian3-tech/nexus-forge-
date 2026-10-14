@@ -2,13 +2,14 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction, useMutation } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
+import { WorkspaceLoading } from '../components/workspace-loading'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useActiveMission } from '../hooks/use-active-mission'
 
 export const Route = createFileRoute('/delivery')({ component: DeliveryPage })
 
-function DeliveryPage() {
-  const { missionId, mission, artifacts, deliveries, hasApprovedArtifact } = useActiveMission()
+export function DeliveryPage() {
+  const { evidenceLoading, missionId, mission, artifacts, deliveries, hasApprovedArtifact } = useActiveMission()
   const prepare = useMutation(api.delivery.prepare)
   const approve = useMutation(api.delivery.approve)
   const correctTarget = useMutation(api.delivery.correctTarget)
@@ -44,6 +45,7 @@ function DeliveryPage() {
     try { const result = await execute({ id }); setReceipt(`GitHub Actions dispatch requested. Artifact path: ${result.artifactPath}. Workflow: ${result.workflowUrl}`) }
     catch (e) { setError(e instanceof Error ? e.message : 'GitHub Actions dispatch failed.') } finally { setBusy('') }
   }
+  if (evidenceLoading) return <WorkspaceLoading title="Delivery Pipeline" />
   return <WorkspaceLayout title="Delivery Pipeline" eyebrow="STAGE 05 / APPROVE · BUILD · VERIFY">
     <section className="workspace"><div className="glass-card research-card"><div className="panel-title"><span>DELIVERY PREFLIGHT</span><span className={allowed ? 'live-pill' : 'status-chip'}>{allowed ? 'READY TO PREPARE' : 'LOCKED'}</span></div>
       {!missionId ? <><p>Select a mission first.</p><Link className="primary-button" to="/mission">Open Mission Console →</Link></> : !mission?.approved ? <><p>Mission approval is required before delivery.</p><Link className="primary-button" to="/mission">Review mission →</Link></> : !hasApprovedArtifact ? <><p>Only a verified and human-approved artifact may enter delivery.</p><Link className="primary-button" to="/artifacts">Review artifacts →</Link></> : <>
