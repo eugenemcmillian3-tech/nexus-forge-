@@ -8,7 +8,8 @@ beforeEach(() => { cleanup(); vi.clearAllMocks(); state.history = undefined; sta
 describe('capability benchmark evidence', () => {
   it('separates defined fixtures from recorded CI evidence', () => {
     render(<ArtifactBenchmarkEvidence />)
-    expect(screen.getByText(/repeatable suite of 14 controlled DOM fixtures/)).toBeInTheDocument()
+    expect(screen.getByText(/repeatable suite of 20 controlled DOM fixtures/)).toBeInTheDocument()
+    expect(screen.getByText(/Both engines must match the expected outcomes/)).toBeInTheDocument()
     expect(screen.getByText('Loading saved CI evidence…')).toBeInTheDocument()
     expect(screen.queryByText(/No verified CI receipt saved/)).not.toBeInTheDocument()
   })
