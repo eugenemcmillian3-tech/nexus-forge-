@@ -17,6 +17,7 @@ const { activeMission } = vi.hoisted(() => ({
     research: [{ _id: "research_test" }],
     artifacts: [{ status: "ready" }],
     deliveries: [{ stage: "verified", status: "Production deployment verified", approved: true, workflowConclusion: "success", workflowRunUrl: "https://github.com/example/repo/actions/runs/123", workflowCommitSha: "a".repeat(40), workflowRecordedAt: 1, deploymentRunUrl: "https://github.com/example/repo/actions/runs/123", deploymentCommitSha: "a".repeat(40), deploymentUrl: "https://example.com", readinessStatus: "pass", readinessPassedCount: 6, readinessTotalCount: 6 }],
+    measurements: [] as Array<{ metric: string; status: string; verificationId: string; actual: number; target: number }>,
     councilComplete: true,
   },
 }));
@@ -68,6 +69,17 @@ describe("isolated end-to-end workflow journey", () => {
     expect(screen.getByRole("link", { name: /Next: Mission Console/ })).toHaveAttribute("href", "/mission");
     expect(screen.getByRole("link", { name: /Next: Master Roadmap/ })).toHaveAttribute("href", "/roadmap");
     expect(screen.getByRole("link", { name: /View build roadmap/ })).toHaveAttribute("href", "/roadmap");
+  });
+
+  it("completes the outcome checkpoint only after a persisted delivery measurement", () => {
+    activeMission.measurements = [{ metric: "actual runtime cost", status: "pass", verificationId: "v1", actual: 1, target: 1 }];
+    const view = render(<WorkflowPage />);
+    expect(screen.getByText("8/9 RECORDED")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Continue mission sequence/ })).toHaveAttribute("href", "/workflow");
+    activeMission.measurements = [{ metric: "governed delivery readiness", status: "pass", verificationId: "v1", actual: 1, target: 1 }];
+    view.rerender(<WorkflowPage />);
+    expect(screen.getByText("9/9 RECORDED")).toBeInTheDocument();
+    activeMission.measurements = [];
   });
 
   it("does not mark a build/test-only delivery as production verified", () => {
