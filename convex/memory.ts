@@ -33,6 +33,38 @@ export const list = query({
   },
 })
 
+
+/** Owner-scoped browsing and full-text content search; mission filters never grant access. */
+export const browse = query({
+  args: {
+    missionId: v.optional(v.id("missions")),
+    search: v.optional(v.string()),
+    category: v.optional(v.string()),
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: paginationResultValidator(memoryValidator),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx)
+    if (args.missionId) await requireOwnedMission(ctx, args.missionId)
+    const search = args.search?.trim() ?? ""
+    const category = args.category?.trim() ?? ""
+    if (search.length > 200) throw new Error("Search memory content with at most 200 characters.")
+    if (category.length > 100) throw new Error("Memory category is too long.")
+    if (search) {
+      return ctx.db.query("memories").withSearchIndex("search_value", q => {
+        let matches = q.search("value", search).eq("ownerKey", ownerKey)
+        if (args.missionId) matches = matches.eq("missionId", args.missionId)
+        if (category) matches = matches.eq("category", category)
+        return matches
+      }).paginate(args.paginationOpts)
+    }
+    let rows = ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", ownerKey)).order("desc")
+    if (args.missionId) rows = rows.filter(q => q.eq(q.field("missionId"), args.missionId))
+    if (category) rows = rows.filter(q => q.eq(q.field("category"), category))
+    return rows.paginate(args.paginationOpts)
+  },
+})
+
 export const getMissionSynthesis = internalQuery({
   args: { missionId: v.id("missions") },
   returns: v.union(v.object({ value: v.string(), confidence: v.number(), source: v.string() }), v.null()),
