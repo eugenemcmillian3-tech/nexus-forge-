@@ -49,8 +49,8 @@ export const orchestrateInternal = internalAction({
     await ctx.runMutation(internal.forge.createRuns, { missionId: args.missionId })
     try {
       const synthesis = await ctx.runQuery(internal.memory.getMissionSynthesis, { missionId: args.missionId })
-      const learning = await ctx.runQuery(internal.memory.getLearningContext, { missionId: args.missionId })
-      const adaptive = await ctx.runQuery(internal.memory.getAdaptivePreflight, { missionId: args.missionId })
+      const memorySelection = await ctx.runQuery(internal.memory.getCouncilMemorySelection, { missionId: args.missionId })
+      const { learning, adaptive } = memorySelection
       const researchRows = await ctx.runQuery(internal.researchData.listForSynthesisInternal, { missionId: args.missionId })
       const researchContext = researchRows.length
         ? `RESEARCH EVIDENCE — retrieved for this mission:
@@ -64,7 +64,9 @@ CITATIONS: ${row.citations.join(", ") || "none"}`).join("\n\n")}${synthesis ? `\
       const learningContext = learning.outcomes.length || learning.lessons.length ? `PRIOR LEARNING (directional only; owner-scoped retrieval):\n${learning.outcomes.map(o => `OUTCOME [${o.confidence}; source ${o.source}]: ${o.value}`).join("\n")}\n${learning.lessons.map(l => `LESSON [${l.confidence}; source ${l.source}]: ${l.value}`).join("\n\n")}\nFor every reviewed lesson, explicitly state whether its applicability matches this mission, why, and which evidence references support considering it. If applicability does not match or evidence is insufficient, mark it NOT APPLICABLE or INCONCLUSIVE and do not generalize it. Treat operator-entered references as leads, not independently verified facts. Do not change strategy automatically.` : "No prior verification outcomes or learning lessons exist. Do not invent historical lessons."
       const preflightContext = `ADAPTIVE PREFLIGHT — derived from persisted verified history; advisory only:\nRISKS:\n${adaptive.riskSignals.map(s => `- [${s.confidence}] ${s.value}`).join("\n") || "- No prior risk signal found."}\nREUSE PATTERNS:\n${adaptive.reusePatterns.map(s => `- [${s.confidence}] ${s.value}`).join("\n") || "- None found."}\nREQUIRED EVIDENCE:\n${adaptive.requiredEvidence.map(x => `- ${x}`).join("\n")}\nRECOVERY GUIDANCE:\n${adaptive.recoveryGuidance.map(x => `- ${x}`).join("\n")}\nRATIONALE:\n${adaptive.rationale.map(x => `- ${x}`).join("\n")}`
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Adaptive Preflight", message: preflightContext, score: adaptive.riskSignals.length ? 0.85 : 0.8, severity: "verified" })
+      const memoryReceiptId = await ctx.runMutation(internal.memory.recordCouncilMemorySelection, { missionId: args.missionId, missionText: args.mission, selected: memorySelection.selected, corpusCutoff: memorySelection.corpusCutoff, learningContext, preflightContext })
       const planner = await askCouncil(`You are the NEXUS FORGE Council Planner. Produce a governed execution plan. Never invent research. Clearly label unverified assumptions. Return OBJECTIVE, MILESTONES with acceptance evidence, RISKS with mitigation, AGENT ASSIGNMENTS, DEPENDENCY WAVES, HANDOFFS, NEXT ACTION, LEARNING INFLUENCE, APPROVAL GATE. Preserve human approval. Adaptive preflight is advisory and must not authorize execution.\n\nMission:\n${args.mission}\n\n${researchContext}\n\n${learningContext}\n\n${preflightContext}`, 1400, "planner", ctx, missionRecord.ownerKey)
+      await ctx.runMutation(internal.memory.markCouncilPlannerResponded, { receiptId: memoryReceiptId })
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Council Planner", message: `Model ${COUNCIL_MODELS.planner}\n${planner}`, score: 0.9, severity: "verified" })
       const common = `Mission:\n${args.mission}\n\n${researchContext}\n\n${learningContext}\n\n${preflightContext}\n\nCouncil Plan:\n${planner}`
       const wave1 = await Promise.all([
