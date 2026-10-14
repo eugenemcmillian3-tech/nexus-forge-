@@ -25,23 +25,23 @@ beforeEach(() => { cleanup(); state.preflight = undefined; state.escalated = fal
 describe('Mission Control execution preflight', () => {
   it('waits for preflight before enabling execution', () => {
     render(<MissionControl missionId={'mission-test' as Id<'missions'>} />)
-    expect(screen.getByRole('button', { name: 'Execute Approved Mission' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Execute Approved Mission|Start Autonomous Workflow|Blocked by orchestration|Human review required/ })).toBeDisabled()
     expect(screen.getByText('Loading dependency and resource preflight…')).toBeInTheDocument()
   })
   it('displays a resource blocker and keeps execution disabled', () => {
     state.preflight = { ...ready, ready: false, blockers: ['Deployment resource is held'], resources: [{ key: 'deployment', mode: 'exclusive', available: false, heldByMission: 'other-mission' }] }
     render(<MissionControl missionId={'mission-test' as Id<'missions'>} />)
     expect(screen.getByText('Deployment resource is held')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Execute Approved Mission' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Execute Approved Mission|Start Autonomous Workflow|Blocked by orchestration|Human review required/ })).toBeDisabled()
   })
   it('enables execution only after preflight is ready', () => {
     state.preflight = ready
     render(<MissionControl missionId={'mission-test' as Id<'missions'>} />)
-    expect(screen.getByRole('button', { name: 'Execute Approved Mission' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /Execute Approved Mission|Start Autonomous Workflow|Blocked by orchestration|Human review required/ })).toBeEnabled()
   })
   it('retains the incident gate even with ready resources', () => {
     state.preflight = ready; state.escalated = true
     render(<MissionControl missionId={'mission-test' as Id<'missions'>} />)
-    expect(screen.getByRole('button', { name: 'Execute Approved Mission' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Execute Approved Mission|Start Autonomous Workflow|Blocked by orchestration|Human review required/ })).toBeDisabled()
   })
 })
