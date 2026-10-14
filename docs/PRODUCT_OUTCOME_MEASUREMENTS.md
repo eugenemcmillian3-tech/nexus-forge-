@@ -9,7 +9,7 @@ Portfolio Intelligence now records mission-linked product/business observations 
 3. Choose active users, paying customers, USD revenue, task success rate or task completion time.
 4. Enter observed value, target, sample size, completed observation period, metric definition/method and 1–8 distinct evidence references. State limitations.
 5. Save and inspect the private receipt and reported target comparison. Browse selected-mission or all-owned history with pagination.
-6. Continue to Verified Learning Engine for comparison review. Product observations are not yet supported by the lesson-reuse comparison selector, which still compares cost/readiness only.
+6. Continue to Verified Learning Engine for comparison review. Choose Product / business observations in the lesson-reuse comparison selector to compare matched baseline and later product receipts; see [comparison rules](STRATEGY_REUSE_OUTCOMES.md).
 
 ## Metric contracts
 
@@ -32,4 +32,4 @@ Product outcomes do not write to the existing measurements table, alter delivery
 
 Controlled tests check server-derived rates, lower-is-better outcomes, unmet targets, private scope, pagination, future/invalid periods, impossible samples, finite values and distinct evidence. UI tests verify explicit reference/input submission and preserved drafts after rejected observations. These tests do not claim any real business results were entered or verified.
 
-Next: connect comparable product observations to strategy reuse, add authenticated evidence ingestion where supported, and evaluate representative real outcomes. Roadmap learning, outcome and capability milestones remain partial.
+Comparable product observations now link to reviewed-lesson reuse with retained provenance. Next add authenticated evidence ingestion where supported and evaluate representative repeated real outcomes. Roadmap learning, outcome and capability milestones remain partial.
