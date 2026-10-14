@@ -6,6 +6,7 @@ import { useState } from 'react'
 
 export function MissionControl({ missionId }: { missionId: Id<'missions'> | null }) {
   const mission = useQuery(api.missions.getById, missionId ? { id: missionId } : 'skip')
+  const orchestration = useQuery(api.orchestration.preflight, missionId ? { missionId } : 'skip')
   const incidents = useQuery(api.incidents.list, missionId ? { missionId } : 'skip')
   const verifications = useQuery(api.verification.list, missionId ? { missionId } : 'skip')
   const decision = useQuery(api.portfolio.decisionSnapshot)
@@ -43,14 +44,14 @@ export function MissionControl({ missionId }: { missionId: Id<'missions'> | null
   }
 
   async function authorizeExecution() {
-    if (!missionId) return
+    if (!missionId || !orchestration?.ready || escalated > 0) return
     setBusy('1:Execute approved mission'); setReceipt(null); setActionError(null)
     try { await recordDecision({ missionId, priorityRank: 1, action: 'Execute approved mission', decision: 'approve' }); setReceipt('Execution authorization recorded.') }
     catch (error) { setActionError(error instanceof Error ? error.message : 'Execution authorization failed. Review mission preflight and retry.') }
     finally { setBusy(null) }
   }
   async function execute() {
-    if (!missionId || !approved) return
+    if (!missionId || !approved || !orchestration?.ready || escalated > 0) return
     setBusy('execute'); setReceipt(null); setActionError(null)
     try {
       const confirmed = window.confirm(`Execute approved mission?\n\n${approved.action}\n\nThis starts the bounded 20-minute mission runner. Existing approval, retry, delivery, and verification gates remain active.`)
@@ -65,14 +66,95 @@ export function MissionControl({ missionId }: { missionId: Id<'missions'> | null
     <div className="workspace-head"><div><div className="section-kicker">OPERATIONS / 006</div><h2>Mission Control</h2></div><span className="status-chip">● GOVERNED</span></div>
     {actionError && <div className="glass-card research-card"><p role="alert">{actionError}</p><div className="hero-actions"><Link className="secondary-button" to="/incidents">Review incidents →</Link><Link className="secondary-button" to="/delivery">Review delivery evidence →</Link><Link className="secondary-button" to="/mission">Review mission →</Link></div></div>}
     {receipt && <p className="receipt" role="status">{receipt}</p>}
+    {missionId && <>      <div className="glass-card research-card">
+        <div className="panel-title">
+          <span>DEPENDENCY & RESOURCE ORCHESTRATION</span>
+          <span className="live-pill">● EXECUTION GATE</span>
+        </div>
+        {orchestration ? (
+          <>
+            <div className="decision-line">
+              <span>PREFLIGHT</span>
+              <strong>
+                {orchestration.ready
+                  ? "READY TO EXECUTE"
+                  : "BLOCKED — RESOLVE CONFLICTS"}
+              </strong>
+            </div>
+            <div className="stats-strip compact">
+              <div>
+                <strong>{orchestration.blockers.length}</strong>
+                <span>Blockers</span>
+              </div>
+              <div>
+                <strong>{orchestration.advisories.length}</strong>
+                <span>Advisories</span>
+              </div>
+              <div>
+                <strong>{orchestration.resources.length}</strong>
+                <span>Resources</span>
+              </div>
+              <div>
+                <strong>
+                  {orchestration.resources.filter((r) => r.available).length}
+                </strong>
+                <span>Available</span>
+              </div>
+            </div>
+            {orchestration.blockers.map((b, i) => (
+              <div className="guard-item" key={`block-${i}`}>
+                <span>!</span>
+                <div>
+                  <strong>Execution blocker</strong>
+                  <small>{b}</small>
+                </div>
+                <span className="status-chip">BLOCKED</span>
+              </div>
+            ))}
+            {orchestration.advisories.map((a, i) => (
+              <div className="guard-item" key={`advisory-${i}`}>
+                <span>i</span>
+                <div>
+                  <strong>Dependency advisory</strong>
+                  <small title={a}>{a.length > 240 ? `${a.slice(0, 240)}…` : a}</small>
+                </div>
+                <span className="status-chip">ADVISORY</span>
+              </div>
+            ))}
+            {orchestration.resources.map((r) => (
+              <div className="guard-item" key={r.key}>
+                <span>◈</span>
+                <div>
+                  <strong>{r.key}</strong>
+                  <small>
+                    {r.mode.toUpperCase()} resource ·{" "}
+                    {r.available ? "available" : `held by ${r.heldByMission}`}
+                  </small>
+                </div>
+                <span className="status-chip">
+                  {r.available ? "AVAILABLE" : "HELD"}
+                </span>
+              </div>
+            ))}
+            <p>
+              Blocking dependencies and exclusive/shared resource conflicts are
+              checked again at execution time on the backend. The UI cannot
+              bypass this gate.
+            </p>
+          </>
+        ) : (
+          <p>Loading dependency and resource preflight…</p>
+        )}
+      </div>
+</>}
     <div className="glass-card research-card">
       <div className="panel-title"><span>PORTFOLIO DECISION QUEUE</span><span className="live-pill">● HUMAN GATE</span></div>
       {decision ? <>
         <div className="stats-strip compact"><div><strong>{decision.totalMissions}</strong><span>Missions</span></div><div><strong>{Math.round(decision.completionRate * 100)}%</strong><span>Completion</span></div><div><strong>{decision.blocked}</strong><span>Needs review</span></div></div>
         <div className="decision-line"><span>RECOMMENDATION</span><strong>{decision.recommendation.toUpperCase()}</strong></div>
         {decision.priorities.map(p => <div className="guard-item" key={`${p.rank}-${p.action}`}><span>{p.rank}</span><div><strong>{p.action}</strong><small>{p.reason}</small></div><span className="status-chip">ADVISORY</span></div>)}
-        {missionId && mission && <div className="glass-card research-card execution-receipt"><div className="panel-title"><span>SELECTED MISSION GATE</span><span className="live-pill">● HUMAN GATE</span></div><p><strong>{mission.title}</strong> · {mission.status.toUpperCase()} · {mission.approved ? 'MISSION APPROVED' : 'MISSION NOT APPROVED'}</p>{!mission.approved ? <button className="secondary-button" onClick={approveSelectedMission} disabled={busy !== null}>Approve mission for execution</button> : !approved ? <button className="secondary-button" onClick={authorizeExecution} disabled={busy !== null}>{busy === '1:Execute approved mission' ? 'Saving…' : 'Authorize execution'}</button> : <><p><strong>Execution authorization recorded.</strong> Execution is still a separate explicit action.</p><button className="primary-button" onClick={execute} disabled={busy !== null}>{busy === 'execute' ? 'Starting…' : 'Execute Approved Mission'}</button></>}</div>}
-        <p>Recommendations are advisory. Approval records intent; execution requires the explicit action above and remains bounded by the Mission Runner.</p>
+        {missionId && mission && <div className="glass-card research-card execution-receipt"><div className="panel-title"><span>SELECTED MISSION GATE</span><span className="live-pill">● HUMAN GATE</span></div><p><strong>{mission.title}</strong> · {mission.status.toUpperCase()} · {mission.approved ? 'MISSION APPROVED' : 'MISSION NOT APPROVED'}</p>{!mission.approved ? <button className="secondary-button" onClick={approveSelectedMission} disabled={busy !== null}>Approve mission for execution</button> : !approved ? <button className="secondary-button" onClick={authorizeExecution} disabled={busy !== null || !orchestration?.ready || escalated > 0}>{busy === '1:Execute approved mission' ? 'Saving…' : 'Authorize execution'}</button> : <><p><strong>Execution authorization recorded.</strong> Execution is still a separate explicit action.</p><button className="primary-button" onClick={execute} disabled={busy !== null || !orchestration?.ready || escalated > 0}>{busy === 'execute' ? 'Starting…' : 'Execute Approved Mission'}</button></>}</div>}
+        {escalated > 0 && <p role="alert">Execution is blocked by escalated incidents. <Link to="/incidents">Review recovery →</Link></p>}<p>Recommendations are advisory. Approval records intent; execution requires the explicit action above and remains bounded by the Mission Runner.</p>
       </> : <p>Loading portfolio decision snapshot…</p>}
     </div>
 
