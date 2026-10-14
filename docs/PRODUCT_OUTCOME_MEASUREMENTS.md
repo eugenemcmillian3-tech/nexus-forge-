@@ -24,7 +24,7 @@ The backend derives actual rate, unit, direction, target comparison, authenticat
 
 ## Storage and evidence
 
-Append-only productOutcomes records retain raw observation, sample, period, metric/target, method, references, limitations and derived comparison. Indexes support owner-private and owned-mission pagination. References are stored as text and are not fetched, certified or automatically ingested. Repeated submissions create additional observations; corrections can be recorded as new observations with explanatory notes.
+Append-only productOutcomes records retain raw observation, sample, period, metric/target, method, references, limitations and derived comparison. Indexes support owner-private and owned-mission pagination. Underlying evidence references are stored as text and are not independently fetched or certified. A committed GitHub report can now be imported with exact-source provenance; see [GitHub evidence import](GITHUB_PRODUCT_EVIDENCE_IMPORT.md). Repeated submissions create additional observations; corrections can be recorded as new observations with explanatory notes.
 
 Product outcomes do not write to the existing measurements table, alter delivery-readiness interpretation, complete/approve missions, promote strategies or dispatch anything. Empty history remains missing evidence, never a pass.
 
@@ -32,4 +32,4 @@ Product outcomes do not write to the existing measurements table, alter delivery
 
 Controlled tests check server-derived rates, lower-is-better outcomes, unmet targets, private scope, pagination, future/invalid periods, impossible samples, finite values and distinct evidence. UI tests verify explicit reference/input submission and preserved drafts after rejected observations. These tests do not claim any real business results were entered or verified.
 
-Comparable product observations now link to reviewed-lesson reuse with retained provenance. Next add authenticated evidence ingestion where supported and evaluate representative repeated real outcomes. Roadmap learning, outcome and capability milestones remain partial.
+Comparable product observations now link to reviewed-lesson reuse with retained provenance. Authenticated commit-pinned GitHub report import is now available. Next add direct analytics-provider ingestion and evaluate representative repeated real outcomes. Roadmap learning, outcome and capability milestones remain partial.
