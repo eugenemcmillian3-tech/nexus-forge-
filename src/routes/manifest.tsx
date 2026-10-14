@@ -184,15 +184,6 @@ function ManifestIntelligencePage() {
 
   return <WorkspaceLayout title="Manifest Intelligence" eyebrow="RESEARCH FRONTIER / INTENT → POSSIBILITY">
     <section className="workspace">
-      <div className="manifest-start-here">
-        <div><span className="section-kicker">START HERE · FOLLOW IN ORDER</span><h2>One goal. One sequence.</h2><p>Do the main action first. Everything else is supporting evidence, only needed after a blueprint exists.</p></div>
-        <ol>
-          <li><strong>1. Define the outcome</strong><span>Complete the form below and synthesize one blueprint.</span></li>
-          <li><strong>2. Verify the receipt</strong><span>Confirm the saved blueprint and all three strategy records.</span></li>
-          <li><strong>3. Review the strategies</strong><span>Open the strategy section only after synthesis succeeds.</span></li>
-          <li><strong>4. Continue the work</strong><span>Create a governed mission or open Artifact Forge to build.</span></li>
-        </ol>
-      </div>
       <div className="manifest-brief"><span className="section-kicker">OUTCOME SYNTHESIS</span><p>Describe one result you want. NEXUS FORGE will draft a blueprint and save its evidence. Nothing is deployed or executed from this page.</p></div>
 
       <section className="glass-card research-card manifest-next-step" aria-live="polite" aria-labelledby="manifest-next-step-title">
