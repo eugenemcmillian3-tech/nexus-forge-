@@ -182,38 +182,19 @@ function ManifestIntelligencePage() {
 
   return <WorkspaceLayout title="Manifest Intelligence" eyebrow="RESEARCH FRONTIER / INTENT → POSSIBILITY">
     <section className="workspace">
-      <div className="hero-grid">
-        <div className="hero-copy">
-          <div className="eyebrow"><span /> OUTCOME SYNTHESIS ENGINE</div>
-          <h2>Imagine beyond the prompt. <em>Design what comes next.</em></h2>
-          <p className="hero-text">Translate a meaningful intention into an original, testable blueprint by combining generative creation, cross-domain planning, compounding learning, and specialist critique. Real capability is measured by evidence—not by claiming AGI or superintelligence.</p>
-          <div className="hero-actions"><Link className="secondary-button" to="/council">Open AI Council →</Link><Link className="secondary-button" to="/artifacts">Build an artifact →</Link></div>
-        </div>
-        <div className="glass-card research-card">
-          <div className="panel-title"><span>THE FOUR-WAY SYNTHESIS</span><span className="live-pill">DESIGN MODEL</span></div>
-          <div className="decision-line"><span>01 / GENERATIVE</span><strong>Create tangible possibilities</strong></div>
-          <div className="decision-line"><span>02 / COMPOUNDING</span><strong>Learn from verified outcomes</strong></div>
-          <div className="decision-line"><span>03 / GENERALITY</span><strong>Transfer methods across domains</strong></div>
-          <div className="decision-line"><span>04 / SPECIALISTS</span><strong>Compare and critique approaches</strong></div>
-          <p className="muted-copy">Synthesis: one governed goal loop, independent verification, reusable evidence, and human authority.</p>
-        </div>
-      </div>
+      <div className="manifest-brief"><span className="section-kicker">OUTCOME SYNTHESIS</span><p>Describe one result you want. NEXUS FORGE will draft a blueprint and save its evidence. Nothing is deployed or executed from this page.</p></div>
 
       <div className="console-grid">
         <div className="glass-card research-card">
           <div className="panel-title"><span>INTENT COMPILER</span><span className="live-pill">BOUNDED AI RUN</span></div>
-          <label htmlFor="manifest-intent">WHAT DO YOU WANT TO MAKE POSSIBLE?</label>
-          <textarea id="manifest-intent" rows={6} maxLength={3000} value={intent} onChange={e => setIntent(e.target.value)} placeholder="Describe the outcome, who it helps, and what success would look like." />
-          <div className="field-grid">
-            <div><label htmlFor="manifest-domain">DOMAIN</label><select id="manifest-domain" value={domain} onChange={e => setDomain(e.target.value)}><option>AI product / venture</option><option>Software and automation</option><option>Creative media and art</option><option>Scientific research</option><option>Education and learning</option><option>Business operations</option><option>Personal project</option><option>Cross-domain exploration</option></select></div>
-            <div><label htmlFor="manifest-budget">BUDGET CAP · USD</label><input id="manifest-budget" type="number" min={0} max={500} value={budget} onChange={e => setBudget(Math.max(0, Math.min(500, Number(e.target.value))))} /></div>
-          </div>
-          <label htmlFor="manifest-horizon">TIME HORIZON</label>
-          <select id="manifest-horizon" value={horizon} onChange={e => setHorizon(e.target.value)}><option>48 hours</option><option>7 days</option><option>14 days</option><option>30 days</option><option>90 days</option><option>Exploratory / no fixed deadline</option></select>
-          <label htmlFor="manifest-constraints">CONSTRAINTS & ASSUMPTIONS</label>
-          <textarea id="manifest-constraints" rows={3} maxLength={2000} value={constraints} onChange={e => setConstraints(e.target.value)} placeholder="Budget limits, existing stack, access restrictions, privacy or safety requirements…" />
-          <label htmlFor="manifest-criteria">MEASURABLE ACCEPTANCE CRITERIA</label>
-          <textarea id="manifest-criteria" rows={3} maxLength={2000} value={acceptanceCriteria} onChange={e => setAcceptanceCriteria(e.target.value)} placeholder="What must be true for this mission to count as successful?" />
+          <label htmlFor="manifest-intent">1. WHAT DO YOU WANT TO MAKE POSSIBLE?</label>
+          <textarea id="manifest-intent" rows={4} maxLength={3000} value={intent} onChange={e => setIntent(e.target.value)} placeholder="Describe the outcome, who it helps, and what success would look like." />
+          <details className="manifest-settings"><summary>Optional planning settings <span>Defaults are already filled in</span></summary>
+          <label htmlFor="manifest-domain">DOMAIN</label><select id="manifest-domain" value={domain} onChange={e => setDomain(e.target.value)}><option>AI product / venture</option><option>Software and automation</option><option>Creative media and art</option><option>Scientific research</option><option>Education and learning</option><option>Business operations</option><option>Personal project</option><option>Cross-domain exploration</option></select>
+          <div className="field-grid"><div><label htmlFor="manifest-budget">BUDGET CAP · USD</label><input id="manifest-budget" type="number" min={0} max={500} value={budget} onChange={e => setBudget(Math.max(0, Math.min(500, Number(e.target.value))))} /></div><div><label htmlFor="manifest-horizon">TIME HORIZON</label><select id="manifest-horizon" value={horizon} onChange={e => setHorizon(e.target.value)}><option>48 hours</option><option>7 days</option><option>14 days</option><option>30 days</option><option>90 days</option><option>Exploratory / no fixed deadline</option></select></div></div>
+          <label htmlFor="manifest-constraints">CONSTRAINTS & ASSUMPTIONS</label><textarea id="manifest-constraints" rows={3} maxLength={2000} value={constraints} onChange={e => setConstraints(e.target.value)} placeholder="Budget limits, existing stack, access restrictions, privacy or safety requirements…" />
+          <label htmlFor="manifest-criteria">MEASURABLE ACCEPTANCE CRITERIA</label><textarea id="manifest-criteria" rows={3} maxLength={2000} value={acceptanceCriteria} onChange={e => setAcceptanceCriteria(e.target.value)} placeholder="What must be true for this mission to count as successful?" />
+          </details>
           <button className="primary-button" disabled={busy} onClick={() => void generate()}>{busy ? 'Synthesizing blueprint…' : 'Synthesize a new blueprint ↗'}</button>
           <p className="muted-copy">Uses the configured NEXUS FORGE AI provider router. Output is saved to your authenticated workspace memory. No deployment, external write, or purchase is triggered.</p>
           {error && <p className="warning" role="alert">{error}</p>}
