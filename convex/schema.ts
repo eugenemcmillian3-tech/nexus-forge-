@@ -1,3 +1,4 @@
+import { councilSelectionFields, councilEvaluationFields } from "./councilMemoryModel"
 import { trafficFields } from "./siteTrafficModel"
 import { productOutcomeFields } from "./productOutcomeModel"
 import { artifactCiState } from "./artifactCiValidators"
@@ -11,6 +12,8 @@ export default defineSchema({
   missionRuns: defineTable({ missionId: v.id("missions"), startedAt: v.number(), deadlineAt: v.number(), maxRetries: v.number(), retries: v.number(), status: v.union(v.literal("running"), v.literal("paused"), v.literal("blocked"), v.literal("complete")), currentStage: v.string(), nextActionAt: v.number(), lastError: v.optional(v.string()) }).index("by_mission", ["missionId"]),
   agentRuns: defineTable({ missionId: v.id("missions"), agent: v.string(), role: v.string(), status: v.string(), progress: v.number(), note: v.string() }).index("by_mission", ["missionId"]),
   evidence: defineTable({ missionId: v.id("missions"), agent: v.string(), message: v.string(), score: v.number(), severity: v.string() }).index("by_mission", ["missionId"]),
+  councilMemoryReceipts: defineTable(councilSelectionFields).index("by_mission", ["missionId"]),
+  councilMemoryEvaluations: defineTable(councilEvaluationFields).index("by_receipt", ["receiptId"]),
   memories: defineTable({ ownerKey: v.string(), missionId: v.optional(v.id("missions")), category: v.string(), key: v.string(), value: v.string(), confidence: v.number(), source: v.string() }).index("by_owner", ["ownerKey"]).index("by_owner_category", ["ownerKey", "category"]).searchIndex("search_value", { searchField: "value", filterFields: ["ownerKey", "missionId", "category"] }),
   research: defineTable({ missionId: v.id("missions"), query: v.string(), result: v.string(), citations: v.array(v.string()), createdAt: v.number() }).index("by_mission", ["missionId"]),
   artifactTestRuns: defineTable({
