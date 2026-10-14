@@ -1,5 +1,6 @@
 import { artifactCiState } from './artifactCiValidators'
 import { v } from 'convex/values'
+import type { Infer } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
 import { requireOperator, requireOwnedMission } from './permissions'
@@ -13,7 +14,22 @@ const row = v.object({
   runnerVersion: v.string(), missionSnapshot: v.string(), artifactSnapshot: v.string(), criteria: v.array(v.string()),
   ci: v.optional(artifactCiState), plan: planValidator, results: resultsValidator, passed: v.number(), failed: v.number(), notRun: v.number(), covered: v.number(), total: v.number(), allPassed: v.boolean(), createdAt: v.number(),
 })
+// Keep the pre-v2 return contract for already loaded clients. Unsupported plans
+// are omitted rather than silently changing their assertion semantics.
+const legacyAction = v.union(v.literal('fill'), v.literal('click'), v.literal('assertText'), v.literal('assertValue'), v.literal('assertVisible'), v.literal('assertInvalid'))
+const legacyPlan = v.array(v.object({ criterionIndex: v.number(), steps: v.array(v.object({ action: legacyAction, selector: v.string(), value: v.string() })) }))
+const legacyRow = v.object({ ...row.fields, plan: legacyPlan })
 export const list = query({
+  args: { artifactId: v.id('artifacts') }, returns: v.array(legacyRow),
+  handler: async (ctx, args) => {
+    const artifact = await ctx.db.get('artifacts', args.artifactId)
+    if (!artifact) throw new Error('Artifact not found')
+    await requireOwnedMission(ctx, artifact.missionId)
+    const rows = await ctx.db.query('artifactTestRuns').withIndex('by_artifact', q => q.eq('artifactId', args.artifactId)).order('desc').take(10)
+    return rows.filter(item => item.plan.every(test => test.steps.every(step => step.action !== 'assertTextEquals'))) as Infer<typeof legacyRow>[]
+  },
+})
+export const listWithExactText = query({
   args: { artifactId: v.id('artifacts') }, returns: v.array(row),
   handler: async (ctx, args) => {
     const artifact = await ctx.db.get('artifacts', args.artifactId)
