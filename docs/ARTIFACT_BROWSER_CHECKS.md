@@ -39,3 +39,11 @@ Browser reports never approve an artifact, dispatch delivery, or complete a miss
 Regression checks cover working/broken HTML, form validity, missing/invalid selectors, markup encoding, coverage, stale snapshots, ownership, unchanged approval state, parent result matching, timeouts, selector hints, plan reuse, and failed-save retries.
 
 The repeatable artifact-dom-v3 fixture suite and GitHub-verified CI receipts are implemented; see [benchmark evidence](BENCHMARK_CI_EVIDENCE.md). Exact saved artifact/mission/test-plan Chromium CI is now implemented; see [the exact CI workflow](EXACT_ARTIFACT_CI.md). Broader benchmark and external integration coverage remains open. The independent-verification and delivery milestones remain partial.
+
+## Exact text acceptance
+
+Artifact Forge offers **Assert text equals** in addition to **Assert text contains**. Equality compares the selected element's complete textContent literally, including nested text and whitespace. Expected 14 rejects observed 140. Empty expected text checks an empty element. Contains retains its existing substring semantics; choose it only when a substring is the intended acceptance condition.
+
+New browser receipts use sandbox-dom-v2; old plans and receipts retain their meanings. Equality plans are validated and retained by the backend and run by the exact-snapshot Chromium runner. This is a backward-compatible action extension, with no change to the artifact-ci-v1 bundle/report envelope. New snapshot branches use the runner from main when published; existing published branches retain their original runner commit.
+
+Controlled tests cover numeric substring rejection, whitespace, nested text, empty output, backend persistence and the explicit UI action. The exact Chromium CI self-test uses equality for its valid doubled result and a separate digest-bound negative control: 140 must fail an expectation of 14, and the next step must remain not-run. Negative-control reports are retained without being published as successful artifact evidence. All checks remain separate from approval, delivery and product outcome verification.
