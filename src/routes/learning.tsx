@@ -53,7 +53,7 @@ function LearningEnginePage() {
 
   const saveReviewedLesson = async () => {
     setLessonMessage("");
-    const references = lessonEvidence.split("\\n").map(item => item.trim()).filter(Boolean);
+    const references = lessonEvidence.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
     if (!lessonStrategyId) { setLessonMessage("Choose the Manifest strategy this lesson belongs to."); return; }
     if (references.length < 2) { setLessonMessage("Add at least two evidence references on separate lines."); return; }
     setLessonBusy(true);
