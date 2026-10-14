@@ -40,6 +40,8 @@ describe('criterion-linked browser evidence', () => {
     const other = t.withIdentity(identity('owner-b'))
     await expect(other.mutation(api.artifactTests.record, args)).rejects.toThrow(/not found or access denied/i)
     await expect(other.query(api.artifactTests.list, { artifactId })).rejects.toThrow(/not found or access denied/i)
+    await expect(other.query(api.artifactTests.listWithExactText, { artifactId })).rejects.toThrow(/not found or access denied/i)
+    await expect(t.query(api.artifactTests.listWithExactText, { artifactId })).rejects.toThrow()
   })
   it('stores snapshots, per-step evidence, and an audit receipt without changing approval', async () => {
     const { t, owner, args, artifactId, missionId } = await fixture()
@@ -67,9 +69,14 @@ describe('criterion-linked browser evidence', () => {
 describe('exact text evidence persistence', () => {
   it('accepts and retains exact-text plans with the updated runner identity', async () => {
     const { owner, args, artifactId } = await fixture()
+    await owner.mutation(api.artifactTests.record, args)
     const exactPlan: BrowserCase[] = [{ criterionIndex: 0, steps: [{ action: 'assertTextEquals', selector: '#result', value: '' }] }]
     await owner.mutation(api.artifactTests.record, { ...args, plan: exactPlan })
-    const rows = await owner.query(api.artifactTests.list, { artifactId })
+    const rows = await owner.query(api.artifactTests.listWithExactText, { artifactId })
+    expect(rows).toHaveLength(2)
+    const legacy = await owner.query(api.artifactTests.list, { artifactId })
+    expect(legacy).toHaveLength(1)
+    expect(legacy[0].plan).toEqual(plan)
     expect(rows[0].plan).toEqual(exactPlan)
     expect(rows[0].runnerVersion).toBe('sandbox-dom-v2')
     expect(rows[0].allPassed).toBe(false)
