@@ -45,7 +45,10 @@ import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server
 
 import type * as productEvidenceImport from "../productEvidenceImport.js";
 
+import type * as siteTraffic from "../siteTraffic.js";
+
 declare const fullApi: ApiFromModules<{
+  siteTraffic: typeof siteTraffic;
   productEvidenceImport: typeof productEvidenceImport;
   ResendOTP: typeof ResendOTP;
   aiProvider: typeof aiProvider;
