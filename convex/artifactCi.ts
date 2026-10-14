@@ -31,7 +31,10 @@ export const verified = internalMutation({
     const row = await ctx.db.get('artifactTestRuns', args.testRunId)
     if (!row?.ci || row.ci.snapshotSha !== args.snapshotSha) throw new Error('CI snapshot provenance mismatch')
     const summary = summarizeBrowserRun(row.criteria, row.plan, args.results)
-    if (row.ci.verifiedAt && (row.ci.runUrl !== args.runUrl || row.ci.attempt !== args.attempt || row.ci.checkId !== args.checkId)) throw new Error('Verified CI receipt is immutable; create a fresh saved test run for another CI attempt')
+    if (row.ci.verifiedAt) {
+      if (row.ci.runUrl !== args.runUrl || row.ci.attempt !== args.attempt || row.ci.checkId !== args.checkId || JSON.stringify(row.ci.results) !== JSON.stringify(args.results)) throw new Error('Verified CI receipt is immutable; create a fresh saved test run for another CI attempt')
+      return null
+    }
     await ctx.db.patch('artifactTestRuns', args.testRunId, { ci: { ...row.ci, runUrl: args.runUrl, attempt: args.attempt, checkId: args.checkId, results: args.results, outcome: summary.allPassed ? 'passed' : summary.failed ? 'failed' : 'partial', verifiedAt: Date.now() } })
     await ctx.runMutation(internal.audit.record, { missionId: row.missionId, type: 'artifact', action: 'exact_ci_verified', status: summary.allPassed ? 'passed' : 'needs_review', detail: `Exact snapshot CI: ${summary.passed}/${summary.total} criteria passed; commit ${row.ci.commitSha}; ${args.runUrl} attempt ${args.attempt}. Approval and delivery unchanged.` })
     return null
