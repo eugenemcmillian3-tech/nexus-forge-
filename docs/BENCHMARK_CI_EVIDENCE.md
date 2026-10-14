@@ -1,10 +1,10 @@
 # Artifact DOM benchmark CI evidence — 2026-10-14
 
-`artifact-dom-v1` is a repeatable **fixture-suite** baseline, not certification of a user's generated artifact.
+`artifact-dom-v2` is a repeatable **fixture-suite** baseline, not certification of a user's generated artifact.
 
 ## Suite
 
-Six versioned cases exercise the same declarative interaction harness used by Artifact Forge:
+Fourteen versioned cases exercise the same declarative interaction harness used by Artifact Forge:
 
 1. Fill/click/assert a correct doubled result.
 2. Recompute zero after an earlier result to catch stale state.
@@ -13,12 +13,23 @@ Six versioned cases exercise the same declarative interaction harness used by Ar
 5. Detect an inert button (negative control).
 6. Detect a missing output element (negative control).
 
+7. Preserve multiline textarea values.
+8. Select an option and observe change behavior.
+9. Reject malformed email.
+10. Reject out-of-range numeric input.
+11. Restore field defaults through reset.
+12. Detect an incorrect exact field value (negative control).
+13. Reject an invalidity assertion on valid input (negative control).
+14. Reject filling a non-field and skip dependent assertions (negative control).
+
+Existing v1 receipts remain historical v1 evidence. New imports require the v2 job and step; an old v1 run cannot be relabeled v2.
+
 A negative control succeeds as a benchmark when the runner detects the expected assertion failure. CI runs these authored fixtures with JSDOM. It does not claim full-browser layout, arbitrary generated artifact functionality, external integration, deployment readiness, or business outcomes.
 
 Catalog: `convex/artifactBenchmarkCatalog.ts`.
 Suite: `__tests__/artifact-behavior-benchmark.test.ts`.
-CI job: **Artifact DOM benchmarks v1** in `.github/workflows/ci.yml`.
-Report artifact: **artifact-dom-v1-report**, containing `artifact-dom-v1.json`.
+CI job: **Artifact DOM benchmarks v2** in `.github/workflows/ci.yml`.
+Report artifact: **artifact-dom-v2-report**, containing `artifact-dom-v2.json`.
 
 ## View and save evidence
 
