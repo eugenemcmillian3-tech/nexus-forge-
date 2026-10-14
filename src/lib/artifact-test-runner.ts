@@ -49,10 +49,10 @@ window.addEventListener("load", async function () {
         } else if (step.action === "click") {
           click.call(element);
           detail = "Clicked " + step.selector;
-        } else if (step.action === "assertText") {
+        } else if (step.action === "assertText" || step.action === "assertTextEquals") {
           const observed = String(text.call(element) || "");
-          if (!observed.includes(step.value)) throw new Error("Expected text " + step.value.slice(0, 200) + "; observed " + observed.slice(0, 300));
-          detail = "Observed expected text: " + step.value.slice(0, 300);
+          if (step.action === "assertTextEquals" ? observed !== step.value : !observed.includes(step.value)) throw new Error("Expected text " + step.value.slice(0, 200) + "; observed " + observed.slice(0, 300));
+          detail = (step.action === "assertTextEquals" ? "Observed exact text: " : "Observed expected text: ") + step.value.slice(0, 300);
         } else if (step.action === "assertValue") {
           const getter = element.tagName === "INPUT" ? inputGetter : element.tagName === "TEXTAREA" ? textareaGetter : element.tagName === "SELECT" ? selectGetter : null;
           if (!getter) throw new Error("Value assertion requires a form field.");
