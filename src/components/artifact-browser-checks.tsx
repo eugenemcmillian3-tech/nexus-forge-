@@ -9,7 +9,7 @@ import { buildArtifactTestDocument } from '../lib/artifact-test-runner'
 const newStep = (): BrowserStep => ({ action: 'assertText', selector: 'body', value: '' })
 export function ArtifactBrowserChecks({ artifact, missionContract }: { artifact: { _id: Id<'artifacts'>; content: string }; missionContract: string }) {
   const criteria = extractAcceptanceCriteria(missionContract)
-  const selectors = [...new Set([...artifact.content.matchAll(/\\bid\\s*=\\s*["']([A-Za-z_][A-Za-z0-9_-]*)["']/g)].map(match => '#' + match[1]))].slice(0,40)
+  const selectors = [...new Set([...artifact.content.matchAll(/\bid\s*=\s*["']([A-Za-z_][A-Za-z0-9_-]*)["']/g)].map(match => '#' + match[1]))].slice(0,40)
   const [plan, setPlan] = useState<BrowserCase[]>([])
   const [run, setRun] = useState<{ nonce: string; html: string; plan: BrowserCase[]; mission: string; artifact: string } | null>(null)
   const [unsaved, setUnsaved] = useState<{ plan: BrowserCase[]; results: StepResult[][]; mission: string; artifact: string } | null>(null)
