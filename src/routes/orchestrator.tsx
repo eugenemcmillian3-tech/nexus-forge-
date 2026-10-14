@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
+import { useActiveMission } from "../hooks/use-active-mission";
+import type { Id } from "../../convex/_generated/dataModel";
 import { WorkspaceLayout } from "../components/workspace-layout";
 
 export const Route = createFileRoute("/orchestrator")({ component: IntelligenceOrchestratorPage });
@@ -30,6 +32,8 @@ function parseSaved(row: SavedSpec): { intent: string; domain: string; budget: n
 }
 
 function IntelligenceOrchestratorPage() {
+  const { setMissionId } = useActiveMission();
+  const [sourceMemoryId, setSourceMemoryId] = useState<Id<'memories'> | undefined>();
   const compileIntent = useAction(api.intelligenceOrchestrator.compileIntent);
   const createMission = useMutation(api.missions.create);
   const savedRows = useQuery(api.intelligenceOrchestrator.listRecent, {});
@@ -51,6 +55,7 @@ function IntelligenceOrchestratorPage() {
       const result = await compileIntent({ intent: intent.trim(), domain, budget, horizon });
       const compiled = result.specification as Specification;
       setSpecification(compiled);
+      setSourceMemoryId(result.sourceMemoryId);
       setSelectedStrategy(compiled.recommendedStrategy);
       setNotice("Mission specification saved. Review the alternatives and select the strategy to carry into the governed draft.");
     } catch (e) { setError(e instanceof Error ? e.message : "Intent compilation failed. Check provider health and retry."); }
@@ -79,7 +84,8 @@ function IntelligenceOrchestratorPage() {
         `DEADLINE TARGET: ${specification.deadline}`,
         "GOVERNANCE: This is a draft. Require explicit human approval before execution or external actions. Independently verify each acceptance criterion before claiming completion.",
       ].join("\n");
-      await createMission({ title: `Orchestrated: ${intent.trim().slice(0, 48)}`, mission, autonomy: "Approval required", budget: Math.max(0, Math.min(500, budget)), ownerKey: "local-workspace" });
+      const id = await createMission({ title: `Orchestrated: ${intent.trim().slice(0, 48)}`, mission, autonomy: "Approval required", budget: Math.max(0, Math.min(500, budget)), ownerKey: "local-workspace", ...(sourceMemoryId ? { sourceMemoryId } : {}) });
+      setMissionId(id);
       setNotice("Governed draft mission created. It has not been approved or executed. Open Mission Console to review it and explicitly approve when ready.");
     } catch (e) { setError(e instanceof Error ? e.message : "Could not create a governed draft."); }
     finally { setBusy(false); }
@@ -136,7 +142,7 @@ function IntelligenceOrchestratorPage() {
         <div className="panel-title"><span>RECENT SPECIFICATIONS</span><span className="live-pill">{history.length} SAVED</span></div>
         {savedRows === undefined ? <p>Loading saved specifications…</p> : history.length === 0 ? <p>No saved specifications yet.</p> : history.map(row => {
           const item = parseSaved(row);
-          return <div className="portfolio-row" key={row._id}><div className="portfolio-main"><strong>{item?.intent ?? "Saved mission specification"}</strong><p>{item?.domain ?? "Domain unavailable"} · {item?.horizon ?? 'Horizon unavailable'} · Budget cap ${item?.budget ?? 0}</p></div><div className="portfolio-cell"><small>STATUS</small><b>SAVED DRAFT</b></div><div className="portfolio-cell"><small>CONFIDENCE</small><b>{Math.round(row.confidence * 100)}% RECORD</b></div><button className="secondary-button small" disabled={!item} onClick={() => { if (!item) return; setIntent(item.intent); setDomain(item.domain); setBudget(Math.max(0, Math.min(500, item.budget))); setHorizon(item.horizon); setSpecification(item.specification); setSelectedStrategy(item.specification.recommendedStrategy); setNotice('Saved specification restored. Review the alternatives and confirm the strategy before creating a governed draft.'); setError(''); }}>Load specification</button></div>;
+          return <div className="portfolio-row" key={row._id}><div className="portfolio-main"><strong>{item?.intent ?? "Saved mission specification"}</strong><p>{item?.domain ?? "Domain unavailable"} · {item?.horizon ?? 'Horizon unavailable'} · Budget cap ${item?.budget ?? 0}</p></div><div className="portfolio-cell"><small>STATUS</small><b>SAVED DRAFT</b></div><div className="portfolio-cell"><small>CONFIDENCE</small><b>{Math.round(row.confidence * 100)}% RECORD</b></div><button className="secondary-button small" disabled={!item} onClick={() => { if (!item) return; setSourceMemoryId(row._id as Id<'memories'>); setIntent(item.intent); setDomain(item.domain); setBudget(Math.max(0, Math.min(500, item.budget))); setHorizon(item.horizon); setSpecification(item.specification); setSelectedStrategy(item.specification.recommendedStrategy); setNotice('Saved specification restored. Review the alternatives and confirm the strategy before creating a governed draft.'); setError(''); }}>Load specification</button></div>;
         })}
       </div>
     </section>
