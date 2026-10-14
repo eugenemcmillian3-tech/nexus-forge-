@@ -2,14 +2,15 @@ import { createFileRoute, Link, useRouterState } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
 import { api } from '../../convex/_generated/api'
+import { WorkspaceLoading } from '../components/workspace-loading'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useActiveMission } from '../hooks/use-active-mission'
 
 export const Route = createFileRoute('/mission')({ component: MissionPage })
 
-function MissionPage() {
+export function MissionPage() {
   const pathname = useRouterState({ select: state => state.location.pathname })
-  const { missionId, setMissionId, mission: activeMission, sourceLinks } = useActiveMission()
+  const { evidenceLoading, missionId, setMissionId, mission: activeMission, sourceLinks } = useActiveMission()
   const missions = useQuery(api.missions.list, { ownerKey: 'local-workspace', paginationOpts: { numItems: 30, cursor: null } })
   const createMission = useMutation(api.missions.create)
   const approveMission = useMutation(api.missions.approve)
@@ -59,6 +60,7 @@ function MissionPage() {
     try { await approveMission({ id: missionId, approved: true }); setReceipt('Mission approval recorded. Council execution is a separate action on the AI Council page.') }
     catch (e) { setError(e instanceof Error ? e.message : 'Mission approval failed.') } finally { setBusy(false) }
   }
+  if (evidenceLoading) return <WorkspaceLoading title="Mission Console" />
   return <WorkspaceLayout title="Mission Console" eyebrow="STAGE 01 / INTENT & AUTHORITY">
     <section className="workspace"><div className="console-grid">
       <div id="mission-contract" className="glass-card research-card"><div className="panel-title"><span>MISSION CONTRACT</span><span className="live-pill">HUMAN CONTROL</span></div>
