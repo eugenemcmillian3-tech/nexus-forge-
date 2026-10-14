@@ -4,11 +4,11 @@ import { allWorkspaces, guidedWorkspaces } from '../lib/workspaces'
 
 export function WorkspaceGuide() {
   const pathname = useRouterState({ select: state => state.location.pathname })
-  const { missionId, mission, loaded, stages, nextStage, completed } = useMissionGuide()
+  const { missionId, mission, loaded, evidenceLoading, stages, nextStage, completed } = useMissionGuide()
   const page = allWorkspaces.find(item => item.path === pathname)
   const index = guidedWorkspaces.findIndex(item => item.path === pathname)
   const nextPage = guidedWorkspaces[index + 1]
-  const loading = !loaded || (!!missionId && mission === undefined)
+  const loading = !!evidenceLoading || !loaded || (!!missionId && mission === undefined)
   return <section className="workspace-context" aria-label="Current workspace and next step">
     <div><span className="section-kicker">YOU ARE HERE · {page?.title ?? 'Workspace'}</span><p>{page?.purpose}</p><small>Expected output: {page?.output}</small></div>
     <div className="workspace-context-next" aria-live="polite">
