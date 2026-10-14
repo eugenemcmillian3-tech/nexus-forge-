@@ -49,4 +49,8 @@ Verified Learning Engine now records reviewed lesson + Manifest strategy + missi
 
 ## Structured product observations update
 
-Portfolio Intelligence now records five bounded product/business metric types in private paginated mission-linked history, separate from readiness verification. Backend-derived task rates, units, directions and reported target comparisons retain operator provenance. See [operating details](PRODUCT_OUTCOME_MEASUREMENTS.md). Product-outcome integration with strategy reuse, authenticated analytics ingestion and independent outcome verification remain next work. No new workspace or automatic completion is added.
+Portfolio Intelligence now records five bounded product/business metric types in private paginated mission-linked history, separate from readiness verification. Backend-derived task rates, units, directions and reported target comparisons retain operator provenance. See [operating details](PRODUCT_OUTCOME_MEASUREMENTS.md). Product observations now integrate with strategy reuse through matched period/sample/method comparisons. Authenticated analytics ingestion and independent outcome verification remain next work. No new workspace or automatic completion is added.
+
+## Product reuse comparison update
+
+Verified Learning Engine now selects either cost/readiness measurements or structured product observations for reviewed-lesson reuse. Product comparisons enforce matched metric/unit/direction/target, sample size, elapsed observation duration and saved method text, plus periods on the correct sides of the source handoff. Snapshots and rates are computed from server-read records; application/comparability remain operator attestations. See [comparison rules and scope](STRATEGY_REUSE_OUTCOMES.md). No new workspace, auto-promotion or causal claim is added.
