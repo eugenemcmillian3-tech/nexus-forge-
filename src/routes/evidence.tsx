@@ -33,6 +33,6 @@ function EvidencePage() {
       {research.length === 0 ? <div className="empty-state"><h3>No evidence stored for this mission</h3><p>Run a research query after Council planning completes.</p></div> : research.map((row: any) => <article className="evidence-item" key={row._id}><span className="time">SOURCE</span><div><b>{row.query}</b><p>{row.result}</p>{(row.citations ?? []).map((citation: string, index: number) => <p key={index}><a href={citation} target="_blank" rel="noreferrer">{citation}</a></p>)}</div></article>)}
     </div>
     <div className="glass-card research-card"><div className="panel-title"><span>MEMORY & LESSONS</span><span className="live-pill">PERSISTENT</span></div><p>Council summaries and verified outcomes are stored as reusable mission memory. Memory is advisory and never grants approval or execution authority.</p><Link className="secondary-button" to="/workflow">Open workflow & outcome records →</Link></div>
-    <div className="hero-actions"><Link className="secondary-button" to="/artifacts">Continue to Artifact Forge →</Link></div></section>
+    <div className="hero-actions">{research.length > 0 ? <><p>Saved research belongs to the selected mission. Review its sources, then continue to artifact generation.</p><Link className="primary-button" to="/artifacts">Continue with saved research →</Link></> : <p>Save mission-specific research above before continuing to Artifact Forge.</p>}</div></section>
   </WorkspaceLayout>
 }
