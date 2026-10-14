@@ -1,8 +1,9 @@
+import { internal } from "./_generated/api"
 import type { PaginationResult } from "convex/server"
-import type { Doc } from "./_generated/dataModel"
+import type { Doc, Id } from "./_generated/dataModel"
 import { paginationOptsValidator, paginationResultValidator } from "convex/server"
 import { v } from "convex/values"
-import { mutation, query, internalQuery, internalMutation } from "./_generated/server"
+import { action, mutation, query, internalQuery, internalMutation } from "./_generated/server"
 import { getAuthUserId } from "@convex-dev/auth/server"
 import { ConvexError } from "convex/values"
 import { requireOperator, requireOwnedMission } from "./permissions"
@@ -84,7 +85,7 @@ export const getLearningContext = internalQuery({
   handler: async (ctx, args) => {
     const mission = await ctx.db.get("missions", args.missionId)
     if (!mission) throw new Error("Mission not found")
-    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).order("desc").take(60)
+    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.neq(q.field("category"), "retrieval-evaluation")).order("desc").take(60)
     const outcomes = rows.filter(row => row.category === "verification-outcome").slice(0, 10).map(row => ({ value: row.value, confidence: row.confidence, source: row.source }))
     const lessons = rows.filter(row => row.category === "learning-lesson" || row.category === "operational-recovery").slice(0, 10).map(row => {
       let value = row.value
@@ -119,7 +120,7 @@ export const getAdaptivePreflight = internalQuery({
   handler: async (ctx, args) => {
     const mission = await ctx.db.get("missions", args.missionId)
     if (!mission) throw new Error("Mission not found")
-    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).order("desc").take(80)
+    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.neq(q.field("category"), "retrieval-evaluation")).order("desc").take(80)
     return buildPreflight(args.missionId, rows)
   },
 })
@@ -128,7 +129,7 @@ export const getAdaptivePreflightForOperator = query({
   args: { missionId: v.id("missions") }, returns: preflight,
   handler: async (ctx, args) => {
     const mission = await requireOwnedMission(ctx, args.missionId)
-    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).order("desc").take(80)
+    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.neq(q.field("category"), "retrieval-evaluation")).order("desc").take(80)
     return buildPreflight(args.missionId, rows)
   },
 })
@@ -138,6 +139,7 @@ export const remember = mutation({
   returns: v.id("memories"),
   handler: async (ctx, args) => {
     const userId = await requireOperator(ctx)
+    if (args.category === "retrieval-evaluation") throw new Error("Retrieval evaluations must be computed by the server.")
     const mission = args.missionId ? await requireOwnedMission(ctx, args.missionId) : null
     const ownerKey = mission?.ownerKey ?? userId
     let value = args.value
@@ -219,5 +221,75 @@ export const captureVerificationLesson = internalMutation({
       confidence: Math.max(0, Math.min(1, args.score)),
       source: "verified-measurement",
     })
+  },
+})
+
+const retrievalArgs = { search: v.string(), expectedIds: v.array(v.id("memories")), missionId: v.optional(v.id("missions")), rationale: v.string() }
+
+/** Query both retrieval methods from one database snapshot; labels are operator judgments. */
+export const evaluateRetrievalInternal = internalQuery({
+  args: retrievalArgs, returns: v.string(),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx)
+    if (args.missionId) await requireOwnedMission(ctx, args.missionId)
+    const search = args.search.trim()
+    const rationale = args.rationale.trim()
+    if (!search || search.length > 200) throw new Error("Enter a search question of 1–200 characters.")
+    if (rationale.length < 8 || rationale.length > 1200) throw new Error("Explain relevance in 8–1200 characters.")
+    if (!args.expectedIds.length || args.expectedIds.length > 20 || new Set(args.expectedIds).size !== args.expectedIds.length) throw new Error("Choose 1–20 distinct expected learning lesson receipts.")
+    const expected: Doc<"memories">[] = []
+    for (const id of args.expectedIds) {
+      const row = await ctx.db.get(id)
+      if (!row || row.ownerKey !== ownerKey || row.category !== "learning-lesson" || (args.missionId && row.missionId !== args.missionId)) throw new Error("Expected lesson not found in your selected private scope.")
+      expected.push(row)
+    }
+    const ranked = await ctx.db.query("memories").withSearchIndex("search_value", q => {
+      let match = q.search("value", search).eq("ownerKey", ownerKey).eq("category", "learning-lesson")
+      if (args.missionId) match = match.eq("missionId", args.missionId)
+      return match
+    }).take(5)
+    let recentQuery = ctx.db.query("memories").withIndex("by_owner_category", q => q.eq("ownerKey", ownerKey).eq("category", "learning-lesson")).order("desc")
+    if (args.missionId) recentQuery = recentQuery.filter(q => q.eq(q.field("missionId"), args.missionId))
+    const recent = await recentQuery.take(5)
+    const snapshot = (row: Doc<"memories">) => {
+      let strategyId: string | null = null
+      try {
+        const parsed = JSON.parse(row.value)
+        if (row.source === "operator-reviewed-manifest-learning" && parsed.reviewStatus === "operator-reviewed" && typeof parsed.manifestStrategyId === "string") strategyId = parsed.manifestStrategyId
+      } catch { /* Plain text lessons remain eligible. */ }
+      return { id: row._id, key: row.key, excerpt: row.value.slice(0, 500), source: row.source, strategyId }
+    }
+    const score = (rows: Doc<"memories">[]) => {
+      const hits = rows.filter(row => args.expectedIds.includes(row._id)).length
+      const first = rows.findIndex(row => args.expectedIds.includes(row._id))
+      return { returned: rows.length, hits, precisionAt5: hits / 5, recallAt5: hits / expected.length, reciprocalRank: first < 0 ? 0 : 1 / (first + 1), results: rows.map(snapshot) }
+    }
+    return JSON.stringify({ version: "lesson-retrieval-v1", ownerKey, search, missionId: args.missionId ?? null, rationale, expected: expected.map(snapshot), baseline: score(recent), candidate: score(ranked), recordedAt: Date.now(), labels: "operator-selected relevance; not independently verified", scope: "Learning lessons only; browser search versus newest-five baseline, not Council context or strategy outcome effectiveness." })
+  },
+})
+
+export const saveRetrievalInternal = internalMutation({
+  args: { snapshot: v.string() }, returns: v.id("memories"),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx)
+    const record = JSON.parse(args.snapshot)
+    if (record.ownerKey !== ownerKey) throw new Error("Retrieval evaluation owner mismatch.")
+    return ctx.db.insert("memories", { ownerKey, ...(record.missionId ? { missionId: record.missionId } : {}), category: "retrieval-evaluation", key: "lesson-retrieval:" + record.recordedAt, value: args.snapshot, confidence: 0.5, source: "server-observed-retrieval-operator-labels" })
+  },
+})
+
+export const evaluateRetrieval = action({
+  args: retrievalArgs, returns: v.id("memories"),
+  handler: async (ctx, args): Promise<Id<"memories">> => {
+    const snapshot: string = await ctx.runQuery(internal.memory.evaluateRetrievalInternal, args)
+    return ctx.runMutation(internal.memory.saveRetrievalInternal, { snapshot })
+  },
+})
+
+export const retrievalEvaluations = query({
+  args: {}, returns: v.array(memoryValidator),
+  handler: async ctx => {
+    const ownerKey = await requireOperator(ctx)
+    return ctx.db.query("memories").withIndex("by_owner_category", q => q.eq("ownerKey", ownerKey).eq("category", "retrieval-evaluation")).order("desc").take(20)
   },
 })
