@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { WorkspaceLayout } from "../components/workspace-layout";
 import { deriveManifestOutcomeSignals } from "../lib/manifest-outcome-signals";
+import { deriveStrategyComparisonSignals } from "../lib/strategy-comparison-signals";
 
 export const Route = createFileRoute("/learning")({ component: LearningEnginePage });
 
@@ -151,6 +152,18 @@ function LearningEnginePage() {
               <Link className="secondary-button" to="/manifest">Review strategy ledger →</Link>
             </>;
         })()}
+      </div>
+
+      <div className="glass-card research-card">
+        <div className="panel-title"><span>REPEATABLE STRATEGY BASELINES</span><span className="live-pill">{deriveStrategyComparisonSignals(history).length} LINKED STRATEGIES</span></div>
+        <p className="muted-copy">This view compares saved baseline/candidate measurements only when experiments are linked to the same Manifest strategy, evidence references are present, both safety checks passed, and metric keys, units, and directions are compatible. It never promotes a strategy.</p>
+        {savedRows === undefined ? <p>Loading comparison history…</p> : (() => {
+          const comparisons = deriveStrategyComparisonSignals(history);
+          return comparisons.length === 0
+            ? <div className="empty-state"><h3>No linked comparisons available</h3><p>Record evidence-backed experiments and link them to the same Manifest strategy to build a comparable history. Standalone experiments remain in the experiment log but are not attributed to a Manifest strategy.</p></div>
+            : comparisons.map(item => <article className="portfolio-row" key={item.strategyId}><div className="portfolio-main"><strong>{item.strategyName}</strong><p>{item.experimentCount} saved experiment(s) · {item.comparableMetricCount} compatible metric(s) · {item.improvedRuns} improved run(s) · {item.regressedRuns} regressed run(s) · {item.inconclusiveRuns} excluded/incomparable run(s)</p>{item.metricSummary.map(summary => <small key={summary}>{summary}</small>)}<p className="muted-copy">{item.recommendation}</p></div><div className="portfolio-cell"><small>COMPARABLE</small><b>{item.experimentCount - item.inconclusiveRuns}/{item.experimentCount}</b></div></article>);
+        })()}
+        <p className="muted-copy">These are deterministic summaries of operator-entered observations, not independent verification, statistical significance, or causal proof. Human review remains required before reuse.</p>
       </div>
 
       <div className="glass-card research-card">
