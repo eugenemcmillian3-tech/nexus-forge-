@@ -15,14 +15,14 @@ export function WorkflowPage() {
           <div className="eyebrow"><span /> ONE CLEAR ROUTE THROUGH THE PLATFORM</div>
           <h2>Know where to go, <em>why it matters, and what comes next.</em></h2>
           <p className="hero-text">Choose the mission checklist when you need the governed execution lifecycle, or follow the core feature tour in order, with specialist tools listed separately below. Every tour stop links directly to its page and points to the next stop. Optional workspaces can be skipped when they do not apply to a mission.</p>
-          <div className="hero-actions"><Link className="primary-button" to={missionId ? (nextStage?.path ?? '/portfolio') : '/mission'}>{missionId ? 'Continue mission sequence →' : 'Start with Mission Console →'}</Link><a className="secondary-button" href="#full-platform-tour">Start full platform tour →</a><Link className="secondary-button" to="/roadmap">View build roadmap →</Link></div>
+          <div className="hero-actions"><Link className="primary-button" to={missionId ? (nextStage?.path ?? '/learning') : '/mission'}>{missionId ? 'Continue mission sequence →' : 'Start with Mission Console →'}</Link><a className="secondary-button" href="#full-platform-tour">Start full platform tour →</a><Link className="secondary-button" to="/roadmap">View build roadmap →</Link></div>
         </div>
         <div className="glass-card research-card">
           <div className="panel-title"><span>MISSION GUIDE</span><span className="live-pill">{completed}/{stages.length} RECORDED</span></div>
           <h3>{mission?.title ?? 'No active mission selected'}</h3>
           <p>{mission ? mission.mission : 'Choose or create a mission to see the state of its execution steps.'}</p>
           <div className="decision-line"><span>MISSION STATE</span><strong>{mission?.status?.toUpperCase() ?? 'NOT SELECTED'}</strong></div>
-          <div className="decision-line"><span>NEXT STEP</span><strong>{nextStage?.title ?? 'Review outcome evidence'}</strong></div>
+          <div className="decision-line"><span>NEXT STEP</span><strong>{nextStage?.title ?? 'Compare measured outcomes in Learning Engine'}</strong></div>
           <p className="muted-copy">This checklist reads saved state. It does not silently approve, resume, or dispatch work. Outcome measurement is a separate post-delivery activity.</p>
         </div>
       </div>
