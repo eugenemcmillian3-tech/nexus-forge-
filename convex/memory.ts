@@ -1,3 +1,4 @@
+import { councilMemoryItem, councilSelectionFields, councilEvaluationFields } from "./councilMemoryModel"
 import { internal } from "./_generated/api"
 import type { PaginationResult } from "convex/server"
 import type { Doc, Id } from "./_generated/dataModel"
@@ -87,30 +88,8 @@ export const getLearningContext = internalQuery({
     if (!mission) throw new Error("Mission not found")
     const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.and(q.neq(q.field("category"), "retrieval-evaluation"), q.neq(q.field("category"), "strategy-reuse-comparison"))).order("desc").take(60)
     const outcomes = rows.filter(row => row.category === "verification-outcome").slice(0, 10).map(row => ({ value: row.value, confidence: row.confidence, source: row.source }))
-    const lessons = rows.filter(row => row.category === "learning-lesson" || row.category === "operational-recovery").slice(0, 10).map(row => {
-      let value = row.value
-      if (row.category === "learning-lesson" && row.source === "operator-reviewed-manifest-learning") {
-        try {
-          const parsed = JSON.parse(row.value) as {
-            lesson?: string; applicability?: string; strategyKey?: string;
-            evidenceReferences?: string[]; reviewStatus?: string; limitations?: string;
-          }
-          if (parsed.reviewStatus === "operator-reviewed" && typeof parsed.lesson === "string") {
-            value = [
-              `REVIEW STATUS: ${parsed.reviewStatus}`,
-              `LESSON: ${parsed.lesson}`,
-              `APPLICABILITY: ${parsed.applicability || "Not specified"}`,
-              `LINKED MANIFEST STRATEGY: ${parsed.strategyKey || "Not available"}`,
-              `OPERATOR-PROVIDED EVIDENCE REFERENCES: ${(parsed.evidenceReferences ?? []).join("; ") || "None"}`,
-              `LIMITATIONS: ${parsed.limitations || "Operator-provided evidence is not independent verification or causal proof."}`,
-            ].join("\\n")
-          }
-        } catch {
-          value = "Reviewed lesson record could not be parsed; do not rely on it without operator review."
-        }
-      }
-      return { value, confidence: row.confidence, source: row.source }
-    })
+    const lessons = rows.filter(row => row.category === "learning-lesson" || row.category === "operational-recovery").slice(0, 10).map(formatLearningRow)
+
     return { ownerKey: mission.ownerKey, outcomes, lessons }
   },
 })
@@ -291,5 +270,102 @@ export const retrievalEvaluations = query({
   handler: async ctx => {
     const ownerKey = await requireOperator(ctx)
     return ctx.db.query("memories").withIndex("by_owner_category", q => q.eq("ownerKey", ownerKey).eq("category", "retrieval-evaluation")).order("desc").take(20)
+  },
+})
+
+function formatLearningRow(row: Doc<"memories">) {
+      let value = row.value
+      if (row.category === "learning-lesson" && row.source === "operator-reviewed-manifest-learning") {
+        try {
+          const parsed = JSON.parse(row.value) as {
+            lesson?: string; applicability?: string; strategyKey?: string;
+            evidenceReferences?: string[]; reviewStatus?: string; limitations?: string;
+          }
+          if (parsed.reviewStatus === "operator-reviewed" && typeof parsed.lesson === "string") {
+            value = [
+              `REVIEW STATUS: ${parsed.reviewStatus}`,
+              `LESSON: ${parsed.lesson}`,
+              `APPLICABILITY: ${parsed.applicability || "Not specified"}`,
+              `LINKED MANIFEST STRATEGY: ${parsed.strategyKey || "Not available"}`,
+              `OPERATOR-PROVIDED EVIDENCE REFERENCES: ${(parsed.evidenceReferences ?? []).join("; ") || "None"}`,
+              `LIMITATIONS: ${parsed.limitations || "Operator-provided evidence is not independent verification or causal proof."}`,
+            ].join("\\n")
+          }
+        } catch {
+          value = "Reviewed lesson record could not be parsed; do not rely on it without operator review."
+        }
+      }
+      return { value, confidence: row.confidence, source: row.source }
+}
+
+export const getCouncilMemorySelection = internalQuery({
+  args: { missionId: v.id("missions") },
+  returns: v.object({ learning: v.object({ ownerKey: v.string(), outcomes: v.array(signal), lessons: v.array(signal) }), adaptive: preflight, corpusCutoff: v.number(), selected: v.array(councilMemoryItem) }),
+  handler: async (ctx, args) => {
+    const mission = await ctx.db.get(args.missionId)
+    if (!mission) throw new Error("Mission not found")
+    const rows = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", mission.ownerKey)).filter(q => q.and(q.neq(q.field("category"), "retrieval-evaluation"), q.neq(q.field("category"), "strategy-reuse-comparison"))).order("desc").take(80)
+    const learningRows = rows.slice(0, 60)
+    const outcomes = learningRows.filter(row => row.category === "verification-outcome").slice(0, 10)
+    const lessons = learningRows.filter(row => row.category === "learning-lesson" || row.category === "operational-recovery").slice(0, 10)
+    const failures = rows.filter(row => row.category === "verification-outcome" && /fail|blocked|risk|not ready/i.test(row.value)).slice(0, 6)
+    const successes = rows.filter(row => row.category === "verification-outcome" && /pass|success|verified|complete/i.test(row.value)).slice(0, 6)
+    const recovery = rows.filter(row => row.category === "operational-recovery").slice(0, 6)
+    const reuse = [...successes, ...rows.filter(row => row.category === "learning-lesson").slice(0, 8)].slice(0, 10)
+    const routes = new Map<Id<"memories">, string[]>()
+    for (const [channel, items] of [["learning-outcome", outcomes], ["learning-lesson", lessons], ["adaptive-risk", failures], ["adaptive-recovery", recovery], ["adaptive-reuse", reuse]] as const) for (const row of items) routes.set(row._id, [...(routes.get(row._id) ?? []), channel])
+    const selected = rows.filter(row => routes.has(row._id)).map(row => ({ memoryId: row._id, key: row.key, category: row.category, source: row.source, confidence: row.confidence, value: row.value, ...(lessons.some(item => item._id === row._id) ? { learningValue: formatLearningRow(row).value } : {}), routes: routes.get(row._id)! }))
+    return { corpusCutoff: rows[0]?._creationTime ?? 0, learning: { ownerKey: mission.ownerKey, outcomes: outcomes.map(row => ({ value: row.value, source: row.source, confidence: row.confidence })), lessons: lessons.map(formatLearningRow) }, adaptive: buildPreflight(args.missionId, rows), selected }
+  },
+})
+
+export const recordCouncilMemorySelection = internalMutation({
+  args: { missionId: v.id("missions"), missionText: v.string(), corpusCutoff: v.number(), selected: v.array(councilMemoryItem), learningContext: v.string(), preflightContext: v.string() }, returns: v.id("councilMemoryReceipts"),
+  handler: async (ctx, args) => {
+    const mission = await ctx.db.get(args.missionId)
+    if (!mission) throw new Error("Mission not found")
+    if (new TextEncoder().encode(JSON.stringify(args)).byteLength > 700000) throw new ConvexError("Council memory snapshot is too large. Review oversized saved memories before planning.")
+    return ctx.db.insert("councilMemoryReceipts", { ...args, ownerKey: mission.ownerKey, policyVersion: "council-recent-context-v1", status: "prepared", preparedAt: Date.now() })
+  },
+})
+export const markCouncilPlannerResponded = internalMutation({
+  args: { receiptId: v.id("councilMemoryReceipts") }, returns: v.null(),
+  handler: async (ctx, args) => {
+    const receipt = await ctx.db.get(args.receiptId)
+    if (!receipt) throw new Error("Council memory receipt not found")
+    if (receipt.status === "prepared") await ctx.db.patch(receipt._id, { status: "planner-responded", respondedAt: Date.now() })
+    return null
+  },
+})
+export const councilMemoryHistory = query({
+  args: { missionId: v.id("missions") }, returns: v.array(v.object({ _id: v.id("councilMemoryReceipts"), _creationTime: v.number(), ...councilSelectionFields })),
+  handler: async (ctx, args) => { await requireOwnedMission(ctx, args.missionId); return ctx.db.query("councilMemoryReceipts").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").take(10) },
+})
+export const evaluateCouncilMemory = mutation({
+  args: { receiptId: v.id("councilMemoryReceipts"), expectedIds: v.array(v.id("memories")), rationale: v.string() }, returns: v.id("councilMemoryEvaluations"),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx)
+    const receipt = await ctx.db.get(args.receiptId)
+    if (!receipt || receipt.ownerKey !== ownerKey) throw new ConvexError("Council memory receipt not found in your private history.")
+    await requireOwnedMission(ctx, receipt.missionId)
+    if (!args.expectedIds.length || args.expectedIds.length > 20 || new Set(args.expectedIds).size !== args.expectedIds.length) throw new ConvexError("Choose 1–20 distinct expected memory receipts.")
+    if (args.rationale.trim().length < 8 || args.rationale.length > 1200) throw new ConvexError("Explain relevance in 8–1200 characters.")
+    for (const id of args.expectedIds) {
+      const row = await ctx.db.get(id)
+      if (!row || row.ownerKey !== ownerKey || !["verification-outcome", "learning-lesson", "operational-recovery"].includes(row.category) || row._creationTime > receipt.corpusCutoff) throw new ConvexError("Expected memories must be owned eligible records that existed when context was prepared.")
+    }
+    const selectedIds = new Set(receipt.selected.map(row => row.memoryId))
+    const hits = args.expectedIds.filter(id => selectedIds.has(id)).length
+    return ctx.db.insert("councilMemoryEvaluations", { ...args, rationale: args.rationale.trim(), ownerKey, missionId: receipt.missionId, hits, selectedCount: selectedIds.size, precision: selectedIds.size ? hits / selectedIds.size : 0, recall: hits / args.expectedIds.length, recordedAt: Date.now() })
+  },
+})
+export const councilMemoryEvaluations = query({
+  args: { receiptId: v.id("councilMemoryReceipts") }, returns: v.array(v.object({ _id: v.id("councilMemoryEvaluations"), _creationTime: v.number(), ...councilEvaluationFields })),
+  handler: async (ctx, args) => {
+    const ownerKey = await requireOperator(ctx)
+    const receipt = await ctx.db.get(args.receiptId)
+    if (!receipt || receipt.ownerKey !== ownerKey) throw new ConvexError("Council memory receipt not found.")
+    await requireOwnedMission(ctx, receipt.missionId)
+    return ctx.db.query("councilMemoryEvaluations").withIndex("by_receipt", q => q.eq("receiptId", args.receiptId)).order("desc").take(20)
   },
 })
