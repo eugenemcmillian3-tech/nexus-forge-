@@ -19,7 +19,7 @@ export function ArtifactBrowserChecks({ artifact, missionContract }: { artifact:
   const [receipt, setReceipt] = useState('')
   const frame = useRef<HTMLIFrameElement>(null)
   const record = useMutation(api.artifactTests.record)
-  const history = useQuery(api.artifactTests.list, { artifactId: artifact._id })
+  const history = useQuery(api.artifactTests.listWithExactText, { artifactId: artifact._id })
   const busy = !!run || saving
 
   const saveReport = async (report: NonNullable<typeof unsaved>) => {
