@@ -36,6 +36,10 @@ function ManifestIntelligencePage() {
   const [assumptionEvidenceType, setAssumptionEvidenceType] = useState<'supports' | 'contradicts' | 'inconclusive'>('supports')
   const [assumptionEvidenceUrl, setAssumptionEvidenceUrl] = useState('')
   const [assumptionEvidenceNote, setAssumptionEvidenceNote] = useState('')
+  const [sourcePublishedDate, setSourcePublishedDate] = useState('')
+  const [sourceAuthority, setSourceAuthority] = useState<'official_primary' | 'peer_reviewed' | 'reputable_reporting' | 'industry_source' | 'other'>('official_primary')
+  const [assumptionEvidenceRelevance, setAssumptionEvidenceRelevance] = useState('')
+  const [assumptionClaimMatch, setAssumptionClaimMatch] = useState<'matches_claim' | 'partially_matches' | 'does_not_match' | 'not_reviewed'>('not_reviewed')
   const [assumptionEvidenceBusy, setAssumptionEvidenceBusy] = useState(false)
   const [outcomeStatus, setOutcomeStatus] = useState<'succeeded' | 'partial' | 'failed' | 'inconclusive'>('succeeded')
   const [actualResult, setActualResult] = useState('')
@@ -104,6 +108,14 @@ function ManifestIntelligencePage() {
       setError('Explain how the source relates to the assumption.')
       return
     }
+    if (assumptionEvidenceRelevance.trim().length < 3) {
+      setError('Explain why the source is relevant to the specific claim.')
+      return
+    }
+    if (sourcePublishedDate && (!/^\d{4}-\d{2}-\d{2}$/.test(sourcePublishedDate) || Number.isNaN(Date.parse(sourcePublishedDate)) || new Date(sourcePublishedDate).toISOString().slice(0, 10) !== sourcePublishedDate)) {
+      setError('Enter a real publication date in YYYY-MM-DD format, or leave it blank if unknown.')
+      return
+    }
     try {
       const parsedUrl = new URL(assumptionEvidenceUrl.trim())
       if (parsedUrl.protocol !== 'https:' || !parsedUrl.hostname || parsedUrl.username || parsedUrl.password) {
@@ -116,10 +128,22 @@ function ManifestIntelligencePage() {
     }
     setAssumptionEvidenceBusy(true)
     try {
-      await attachAssumptionEvidence({ strategyId: selectedStrategyId as any, evidenceType: assumptionEvidenceType, url: assumptionEvidenceUrl.trim(), note: assumptionEvidenceNote.trim() })
-      setNotice('Source reference attached to the selected strategy assumption. Its classification is an operator assessment, not independent fact verification.')
+      await attachAssumptionEvidence({
+        strategyId: selectedStrategyId as any,
+        evidenceType: assumptionEvidenceType,
+        url: assumptionEvidenceUrl.trim(),
+        note: assumptionEvidenceNote.trim(),
+        sourcePublishedDate: sourcePublishedDate.trim() || undefined,
+        sourceAuthority,
+        relevance: assumptionEvidenceRelevance.trim(),
+        claimMatch: assumptionClaimMatch,
+      })
+      setNotice('Source reference and quality review saved. Authority and claim-match are operator assessments, not independent fact verification.')
       setAssumptionEvidenceUrl('')
       setAssumptionEvidenceNote('')
+      setSourcePublishedDate('')
+      setAssumptionEvidenceRelevance('')
+      setAssumptionClaimMatch('not_reviewed')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not attach assumption evidence.')
     } finally {
@@ -272,7 +296,7 @@ function ManifestIntelligencePage() {
         {strategies.length === 0 ? <p className="empty-state">No structured strategies are available to build the context register. Synthesize a blueprint with valid strategy records first.</p> : strategyContext.map(item => <article className="workflow-step" key={item.id}>
           <span className="workflow-step-mark">{item.measured ? 'E' : '?'}</span>
           <span className="workflow-step-copy"><strong>{item.name}</strong><small>Prerequisites: {item.prerequisites || 'Not specified by the strategy proposal.'}</small><small>Unverified assumptions: {item.assumptions || 'None supplied; review the plan for missing assumptions.'}</small><small>Primary failure mode: {item.failureMode || 'Not specified by the strategy proposal.'}</small>
-            {item.evidence.length ? item.evidence.map((entry, index) => <small key={index}>Assumption evidence · {String(entry.evidenceType ?? 'inconclusive').toUpperCase()}: <a href={String(entry.url ?? '')} target="_blank" rel="noreferrer noopener">{String(entry.url ?? 'Source')}</a> — {String(entry.note ?? '')} · {typeof entry.addedAt === 'number' ? new Date(entry.addedAt).toLocaleDateString() : 'date not recorded'}</small>) : <small>No source references attached to this strategy yet.</small>}
+            {item.evidence.length ? item.evidence.map((entry, index) => <small key={index}>Assumption evidence · {String(entry.evidenceType ?? 'inconclusive').toUpperCase()}: <a href={String(entry.url ?? '')} target="_blank" rel="noreferrer noopener">{String(entry.url ?? 'Source')}</a> — {String(entry.note ?? '')} · Authority: {String(entry.sourceAuthority ?? 'not reviewed').replaceAll('_', ' ')} · Published: {String(entry.sourcePublishedDate ?? 'unknown')} · Claim match: {String(entry.claimMatch ?? 'not reviewed').replaceAll('_', ' ')} · Relevance: {String(entry.relevance ?? 'not reviewed')} · Reviewed: {typeof entry.reviewedAt === 'number' ? new Date(entry.reviewedAt).toLocaleDateString() : 'legacy record / not reviewed'} · Added: {typeof entry.addedAt === 'number' ? new Date(entry.addedAt).toLocaleDateString() : 'date not recorded'}</small>) : <small>No source references attached to this strategy yet.</small>}
           </span>
           <span className="workflow-step-state">{item.evidence.length ? `${item.evidence.length} SOURCE REFERENCE${item.evidence.length === 1 ? '' : 'S'}` : item.measured ? 'OUTCOME EVIDENCE ENTERED' : 'HYPOTHESIS · VERIFY'}</span>
         </article>)}
@@ -280,10 +304,14 @@ function ManifestIntelligencePage() {
           <div><label htmlFor="assumption-evidence-target">ASSUMPTION / STRATEGY</label><select id="assumption-evidence-target" value={selectedStrategyId} onChange={e => setSelectedStrategyId(e.target.value)}><option value="">Select a candidate strategy</option>{strategies.map(row => { let item: Record<string, unknown> = {}; try { item = JSON.parse(row.value) as Record<string, unknown> } catch { item = {} } return <option key={row._id} value={row._id}>{String(item.name ?? row.key)}</option> })}</select></div>
           <div><label htmlFor="assumption-evidence-type">EVIDENCE CLASSIFICATION</label><select id="assumption-evidence-type" value={assumptionEvidenceType} onChange={e => setAssumptionEvidenceType(e.target.value as typeof assumptionEvidenceType)}><option value="supports">Supports assumption</option><option value="contradicts">Contradicts assumption</option><option value="inconclusive">Inconclusive / mixed</option></select></div>
           <div><label htmlFor="assumption-evidence-url">SOURCE URL · HTTPS</label><input id="assumption-evidence-url" type="url" value={assumptionEvidenceUrl} onChange={e => setAssumptionEvidenceUrl(e.target.value)} placeholder="https://example.org/report" maxLength={2000} /></div>
-          <div><label htmlFor="assumption-evidence-note">WHY THIS SOURCE MATTERS</label><textarea id="assumption-evidence-note" rows={2} value={assumptionEvidenceNote} onChange={e => setAssumptionEvidenceNote(e.target.value)} placeholder="Which part of the assumption does it support or challenge?" maxLength={1000} /></div>
+          <div><label htmlFor="assumption-evidence-note">WHAT DOES THE SOURCE SAY?</label><textarea id="assumption-evidence-note" rows={2} value={assumptionEvidenceNote} onChange={e => setAssumptionEvidenceNote(e.target.value)} placeholder="Summarize the specific finding or passage relevant to the assumption." maxLength={1000} /></div>
+          <div><label htmlFor="assumption-source-date">SOURCE PUBLICATION DATE (OPTIONAL)</label><input id="assumption-source-date" type="date" value={sourcePublishedDate} onChange={e => setSourcePublishedDate(e.target.value)} /></div>
+          <div><label htmlFor="assumption-source-authority">SOURCE AUTHORITY (OPERATOR ASSESSMENT)</label><select id="assumption-source-authority" value={sourceAuthority} onChange={e => setSourceAuthority(e.target.value as typeof sourceAuthority)}><option value="official_primary">Official / primary source</option><option value="peer_reviewed">Peer-reviewed research</option><option value="reputable_reporting">Reputable reporting</option><option value="industry_source">Industry / practitioner source</option><option value="other">Other / unclear</option></select></div>
+          <div><label htmlFor="assumption-source-relevance">RELEVANCE TO THE SPECIFIC CLAIM</label><textarea id="assumption-source-relevance" rows={2} value={assumptionEvidenceRelevance} onChange={e => setAssumptionEvidenceRelevance(e.target.value)} placeholder="Explain the scope, population, context, or limitation that makes this source relevant." maxLength={1000} /></div>
+          <div><label htmlFor="assumption-claim-match">DOES THE SOURCE ACTUALLY MATCH THE CLAIM?</label><select id="assumption-claim-match" value={assumptionClaimMatch} onChange={e => setAssumptionClaimMatch(e.target.value as typeof assumptionClaimMatch)}><option value="not_reviewed">Not reviewed yet</option><option value="matches_claim">Directly matches the claim</option><option value="partially_matches">Partially matches / limited</option><option value="does_not_match">Does not support this claim</option></select></div>
         </div>
-        <button className="primary-button" disabled={assumptionEvidenceBusy || !selectedStrategyId || assumptionEvidenceNote.trim().length < 3 || !assumptionEvidenceUrl.trim()} onClick={() => void saveAssumptionEvidence()}>{assumptionEvidenceBusy ? 'Attaching evidence…' : 'Attach evidence to selected assumption'}</button>
-        <p className="muted-copy">Evidence rule: classification is an operator assessment. A citation is not proof by itself; check the source's authority, date, methodology, and relevance. Evidence links are stored on the selected private strategy record, and the latest 30 references are retained.</p>
+        <button className="primary-button" disabled={assumptionEvidenceBusy || !selectedStrategyId || assumptionEvidenceNote.trim().length < 3 || assumptionEvidenceRelevance.trim().length < 3 || !assumptionEvidenceUrl.trim()} onClick={() => void saveAssumptionEvidence()}>{assumptionEvidenceBusy ? 'Attaching evidence…' : 'Attach evidence and quality review'}</button>
+        <p className="muted-copy">Quality-review rule: authority, publication date, relevance, and claim match are operator-entered assessments—not automated source verification. Check methodology, source text, and recency yourself. A URL alone is not proof. Evidence is stored on the selected private strategy record; latest 30 references are retained.</p>
       </div>
 
       <div className="glass-card research-card">
