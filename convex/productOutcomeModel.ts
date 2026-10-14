@@ -2,7 +2,8 @@ import { ConvexError, v } from "convex/values"
 
 export const productMetric = v.union(v.literal("active-users"), v.literal("paid-customers"), v.literal("revenue-usd"), v.literal("task-success-rate"), v.literal("task-time-seconds"))
 export const productOutcomeInput = { missionId: v.id("missions"), metric: productMetric, observed: v.number(), target: v.number(), sampleSize: v.number(), periodStart: v.number(), periodEnd: v.number(), method: v.string(), evidence: v.array(v.string()), notes: v.string() }
-export const productOutcomeFields = { ownerKey: v.string(), ...productOutcomeInput, actual: v.number(), unit: v.string(), direction: v.union(v.literal("higher"), v.literal("lower")), targetMet: v.boolean(), recordedAt: v.number(), provenance: v.literal("operator-recorded") }
+export const productImportReceipt = v.object({ repository: v.string(), commitSha: v.string(), path: v.string(), blobSha: v.string(), reportSha256: v.string(), importedAt: v.number() })
+export const productOutcomeFields = { ownerKey: v.string(), ...productOutcomeInput, actual: v.number(), unit: v.string(), direction: v.union(v.literal("higher"), v.literal("lower")), targetMet: v.boolean(), recordedAt: v.number(), provenance: v.union(v.literal("operator-recorded"), v.literal("github-report")), importKey: v.optional(v.string()), importReceipt: v.optional(productImportReceipt) }
 
 export function evaluateProductOutcome(input: { metric: string; observed: number; target: number; sampleSize: number; periodStart: number; periodEnd: number; method: string; evidence: string[]; notes: string }, now: number) {
   if (![input.observed, input.target, input.sampleSize, input.periodStart, input.periodEnd].every(Number.isFinite)) throw new ConvexError("Measurement values and dates must be finite.")
