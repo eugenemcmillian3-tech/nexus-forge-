@@ -91,24 +91,55 @@ describe("Manifest provider-to-ledger persistence", () => {
       evidenceType: "contradicts",
       url: "https://example.com/market-study",
       note: "The study reports lower repeat usage than the assumption predicts.",
+      sourcePublishedDate: "2026-08-12",
+      sourceAuthority: "peer_reviewed",
+      relevance: "The study measured repeat usage in a comparable customer segment.",
+      claimMatch: "partially_matches",
     });
     const saved = (await operator.query(api.manifestIntelligence.listStrategies, {})).find(row => row._id === strategy._id)!;
     expect(JSON.parse(saved.value).assumptionEvidence).toMatchObject([{
       evidenceType: "contradicts",
       url: "https://example.com/market-study",
       note: "The study reports lower repeat usage than the assumption predicts.",
+      sourcePublishedDate: "2026-08-12",
+      sourceAuthority: "peer_reviewed",
+      relevance: "The study measured repeat usage in a comparable customer segment.",
+      claimMatch: "partially_matches",
     }]);
+    expect(JSON.parse(saved.value).assumptionEvidence[0]).toMatchObject({
+      sourcePublishedDate: "2026-08-12",
+      sourceAuthority: "peer_reviewed",
+      relevance: "The study measured repeat usage in a comparable customer segment.",
+      claimMatch: "partially_matches",
+    });
+    expect(typeof JSON.parse(saved.value).assumptionEvidence[0].reviewedAt).toBe("number");
+    await expect(operator.mutation(api.manifestIntelligence.attachAssumptionEvidence, {
+      strategyId: strategy._id,
+      evidenceType: "supports",
+      url: "https://example.com/invalid-date",
+      note: "Should reject invalid publication date",
+      sourcePublishedDate: "2026-02-31",
+      sourceAuthority: "official_primary",
+      relevance: "This is a validation probe for invalid date values.",
+      claimMatch: "not_reviewed",
+    })).rejects.toThrow(/publication date/i);
     await expect(operator.mutation(api.manifestIntelligence.attachAssumptionEvidence, {
       strategyId: strategy._id,
       evidenceType: "supports",
       url: "http://example.com/not-https",
       note: "Should be rejected",
+      sourceAuthority: "official_primary",
+      relevance: "This is a validation probe for the invalid URL scheme.",
+      claimMatch: "not_reviewed",
     })).rejects.toThrow(/HTTPS/i);
     await expect(t.withIdentity(identity("different-assumption-owner")).mutation(api.manifestIntelligence.attachAssumptionEvidence, {
       strategyId: strategy._id,
       evidenceType: "supports",
       url: "https://example.com/other",
       note: "Cross-owner write must fail",
+      sourceAuthority: "official_primary",
+      relevance: "This request should fail the owner access check.",
+      claimMatch: "not_reviewed",
     })).rejects.toThrow(/access denied/i);
     expect(JSON.parse((await operator.query(api.manifestIntelligence.listStrategies, {})).find(row => row._id === strategy._id)!.value).assumptionEvidence).toHaveLength(1);
   });
