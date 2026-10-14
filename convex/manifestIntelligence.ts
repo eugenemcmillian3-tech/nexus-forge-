@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { callAiProvider } from "./aiProvider";
+import { callManagedAi } from "./providerAccounting";
 import { extractManifestStrategies } from "./manifestStrategyParser";
 
 const blueprintShape = v.object({
@@ -238,6 +238,8 @@ export const listProviderUsage = query({
 export const recordProviderUsageInternal = internalMutation({
   args: {
     ownerKey: v.string(),
+    invocationId: v.optional(v.id('providerInvocations')),
+    reportOrdinal: v.optional(v.number()),
     provider: v.string(),
     model: v.string(),
     promptTokens: v.optional(v.number()),
@@ -269,11 +271,24 @@ export const recordProviderUsageInternal = internalMutation({
     if (!Number.isFinite(args.capturedAt) || args.capturedAt <= 0) {
       throw new Error("Provider usage capture timestamp is invalid.");
     }
+    const invocation = args.invocationId ? await ctx.db.get(args.invocationId) : null;
+    const report = { ordinal: args.reportOrdinal ?? 0, provider: args.provider, model: args.model, ...(args.promptTokens !== undefined ? { promptTokens: args.promptTokens } : {}), ...(args.completionTokens !== undefined ? { completionTokens: args.completionTokens } : {}), ...(args.totalTokens !== undefined ? { totalTokens: args.totalTokens } : {}), ...(args.reportedCostUsd !== undefined ? { reportedCostUsd: args.reportedCostUsd } : {}), capturedAt: args.capturedAt };
+    if (args.invocationId) {
+      if (!invocation || invocation.ownerKey !== args.ownerKey || !Number.isInteger(args.reportOrdinal) || args.reportOrdinal! < 1 || args.reportOrdinal! > 8) throw new Error("Invalid invocation receipt identity.");
+      const existing = invocation.reports.find(item => item.ordinal === args.reportOrdinal);
+      if (existing) {
+        if ((['ordinal', 'provider', 'model', 'promptTokens', 'completionTokens', 'totalTokens', 'reportedCostUsd', 'capturedAt'] as const).some(key => existing[key] !== report[key])) throw new Error("Conflicting invocation receipt.");
+        return null;
+      }
+      if (invocation.outcome !== "pending" || invocation.reports.length >= 8) throw new Error("Invocation receipt is closed or full.");
+    } else if (args.reportOrdinal !== undefined) throw new Error("Report ordinal requires an invocation.");
     await ctx.db.insert("memories", {
       ownerKey: args.ownerKey,
+      ...(invocation?.missionId ? { missionId: invocation.missionId } : {}),
       category: "manifest-provider-usage",
       key: `provider-usage:${args.capturedAt}:${args.provider}`,
       value: JSON.stringify({
+        ...(args.invocationId ? { invocationId: args.invocationId, stage: invocation!.stage, reportOrdinal: args.reportOrdinal } : {}),
         provider: args.provider,
         model: args.model.slice(0, 160),
         promptTokens: args.promptTokens ?? null,
@@ -286,6 +301,7 @@ export const recordProviderUsageInternal = internalMutation({
       confidence: args.reportedCostUsd === undefined ? 0.7 : 0.95,
       source: "ai-provider-response-usage-metadata",
     });
+    if (invocation) await ctx.db.patch(invocation._id, { reports: [...invocation.reports, report] });
     return null;
   },
 });
@@ -384,8 +400,7 @@ TIME HORIZON: ${horizon}
 
 Write specific, realistic guidance tailored to the intent. Do not describe the blueprint as completed work; it is a proposal until executed and verified.`;
     const structuredPrompt = `${prompt}\n\nMISSION SPECIFICATION REQUIREMENTS:\n- Constraints and operator assumptions: ${constraints || "Not supplied; identify unknowns instead of inventing constraints."}\n- Required acceptance criteria: ${acceptanceCriteria || "Not supplied; propose measurable criteria and label them as proposals for operator review."}\n- Explicitly identify goal, deliverable, target user, dependencies, permitted tools/resources, risk level, required human approvals, and rollback/stop conditions.\n- If an essential requirement is missing, state the gap and ask a focused clarification question rather than inventing facts.` + "\n\nAppend a fenced JSON block labelled manifest-strategies with three objects containing string fields name, mechanism, prerequisites, timeToEvidence, expectedValue, reversibility, failureMode, unverifiedAssumptions. Keep the blueprint Markdown before it readable. Do not claim execution.";
-    const recordUsage = async (usage: { provider: string; model: string; promptTokens?: number; completionTokens?: number; totalTokens?: number; reportedCostUsd?: number; capturedAt: number }) => { await ctx.runMutation(internal.manifestIntelligence.recordProviderUsageInternal, { ownerKey: operatorId, ...usage }); };
-    const generated = await callAiProvider("planner", structuredPrompt, 2400, recordUsage);
+    const generated = await callManagedAi(ctx, { ownerKey: operatorId, stage: "manifest-blueprint", role: "planner", prompt: structuredPrompt, maxTokens: 2400 });
     const extraction = extractManifestStrategies(generated);
     const blueprint = extraction.blueprint;
     let strategies = extraction.strategies;
@@ -397,7 +412,7 @@ Write specific, realistic guidance tailored to the intent. Do not describe the b
     if (strategies.length === 0) {
       const strategyPrompt = `Extract exactly three distinct candidate strategies from the blueprint below. Return ONLY a JSON array, with no Markdown fences or commentary. Each object must contain non-empty string fields: name, mechanism, prerequisites, timeToEvidence, expectedValue, reversibility, failureMode, unverifiedAssumptions. Do not invent claims of execution, measured outcomes, verified costs, or available integrations. Preserve uncertainty in unverifiedAssumptions. If three genuinely distinct strategies cannot be supported by the blueprint, return an empty JSON array.\n\nUSER INTENT: ${intent}\nDOMAIN: ${domain}\nBUDGET CAP: $${budget} USD\nTIME HORIZON: ${horizon}\nCONSTRAINTS: ${constraints || 'Not supplied; identify unknowns.'}\nACCEPTANCE CRITERIA: ${acceptanceCriteria || 'Not supplied; label proposed criteria.'}\n\nBLUEPRINT:\n${blueprint.slice(0, 9000)}`;
       try {
-        const structuredResponse = await callAiProvider("planner", strategyPrompt, 1400, recordUsage);
+        const structuredResponse = await callManagedAi(ctx, { ownerKey: operatorId, stage: "manifest-strategy", role: "planner", prompt: strategyPrompt, maxTokens: 1400 });
         const retry = extractManifestStrategies(structuredResponse);
         if (retry.validJson && retry.strategies.length === 3) {
           strategies = retry.strategies;
