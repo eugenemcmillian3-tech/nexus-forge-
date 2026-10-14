@@ -15,7 +15,7 @@ The nine mission lifecycle checkpoints remain separate from the 16-page product 
 | AI Providers (`/providers`) | Manual inference diagnostics, stored history, routing policy visibility | Point-in-time health only. Mistral/Hugging Face remain deferred; OpenRouter is manual-only. |
 | AI Council (`/council`) | Agent orchestration/runs, partial-result warning, saved summary, Research continuation | Partial memories have lower confidence; broader independent planning-quality evaluation remains open. |
 | Research & Memory (`/evidence`) | Cited research, saved source inspection, new MemoryBrowser | Previously the memory panel was descriptive only. It now provides owner-scoped content search, mission/category filters, paginated browsing, source/confidence/receipt details, and full record inspection. Retrieval relevance and reuse-effectiveness benchmarks remain open. |
-| Artifact Forge (`/artifacts`) | Generate from saved mission/research, inspect content, structural verification, approval | Structural quality gates exist; independent functional behavior against acceptance criteria needs expansion. |
+| Artifact Forge (`/artifacts`) | Generate from saved mission/research, inspect content, structural verification, approval | Structural gates plus configurable criterion-linked browser interaction checks exist. Reports retain exact snapshots and per-step evidence; trusted CI attestation and broader integrated behavior remain open. |
 | Delivery (`/delivery`) | Exact artifact choice, destination preparation/correction, approval, explicit dispatch, workflow/deployment/readiness receipts | Repository/branch preflight and immutable callback evidence exist. New product/business outcome measurement is separate. |
 | Launch Readiness (`/readiness`) | URL checks, pass/fail evidence, audit history, canonical delivery evidence | Readiness proves the recorded checks, not complete artifact functionality or user value. |
 | Portfolio (`/portfolio`) | Recommendations, decisions, accept-to-draft continuation, measured summaries | Recommendations are advisory; larger evidence coverage and actual product outcome ingestion remain partial. |
@@ -35,6 +35,6 @@ The nine mission lifecycle checkpoints remain separate from the 16-page product 
 
 ## Next build priority
 
-Expand independent artifact functionality checks against saved acceptance criteria, then establish repeatable capability benchmark cases. Keep the existing accepted Research, Manifest, and LocalBoost evidence; do not repeat authentication or approval exercises as a routine maintenance gate.
+Criterion-linked browser interaction checks are now available on Artifact Forge; see [usage and evidence boundaries](ARTIFACT_BROWSER_CHECKS.md). Next establish repeatable benchmark fixtures and trusted CI/browser evidence for broader behavior. Keep the existing accepted Research, Manifest, and LocalBoost evidence; do not repeat authentication or approval exercises as a routine maintenance gate.
 
 The remaining 16 partial milestones and seven deferred expansions stay partial/deferred. Search availability alone does not complete the persistent-knowledge milestone; semantic relevance, ranking evaluation, and measured reuse effectiveness remain open.
