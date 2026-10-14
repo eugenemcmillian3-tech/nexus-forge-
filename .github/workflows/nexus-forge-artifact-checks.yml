@@ -84,6 +84,7 @@ jobs:
           fs.writeFileSync('ci-input/negative.json', bytes);
           fs.appendFileSync(process.env.GITHUB_ENV, 'NEGATIVE_SHA=' + createHash('sha256').update(bytes).digest('hex') + '\n');
           NODE
+          export NEGATIVE_SHA="$(sha256sum ci-input/negative.json | cut -d ' ' -f 1)"
           timeout 180s docker run --rm --init --network none --read-only \
             --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges \
             --security-opt seccomp=.github/artifact-ci/seccomp_profile.json \
