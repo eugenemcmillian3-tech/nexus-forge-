@@ -50,7 +50,7 @@ describe('product observations linked to actual lesson reuse', () => {
   })
   it('rejects different targets, samples, methods and observation durations', async () => {
     const { t, owner, args } = await fixture()
-    const original = await t.run(ctx => ctx.db.get(args.candidateOutcomeId))
+    const original = await t.run(ctx => ctx.db.get('productOutcomes', args.candidateOutcomeId))
     for (const patch of [{ target: 90 }, { sampleSize: 11 }, { method: 'Different collection method' }, { periodEnd: epoch + 3.5 * hour }]) {
       await t.run(ctx => ctx.db.patch(args.candidateOutcomeId, patch))
       await expect(owner.mutation(api.learningEngine.recordProductReuseComparison, args)).rejects.toThrow(/same|equal/)
