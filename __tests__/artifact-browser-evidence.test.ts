@@ -63,3 +63,16 @@ describe('criterion-linked browser evidence', () => {
     expect((await owner.query(api.artifactTests.list, { artifactId }))[0]).toMatchObject({ failed: 1, passed: 0, allPassed: false })
   })
 })
+
+describe('exact text evidence persistence', () => {
+  it('accepts and retains exact-text plans with the updated runner identity', async () => {
+    const { owner, args, artifactId } = await fixture()
+    const exactPlan: BrowserCase[] = [{ criterionIndex: 0, steps: [{ action: 'assertTextEquals', selector: '#result', value: '' }] }]
+    await owner.mutation(api.artifactTests.record, { ...args, plan: exactPlan })
+    const rows = await owner.query(api.artifactTests.list, { artifactId })
+    expect(rows[0].plan).toEqual(exactPlan)
+    expect(rows[0].runnerVersion).toBe('sandbox-dom-v2')
+    expect(rows[0].allPassed).toBe(false)
+    expect(() => validateBrowserPlan(['Cleared output'], exactPlan)).not.toThrow()
+  })
+})
