@@ -35,6 +35,52 @@ export const listExperiments = query({
   },
 });
 
+export const captureReviewedLesson = mutation({
+  args: {
+    manifestStrategyId: v.id("memories"),
+    lesson: v.string(),
+    applicability: v.string(),
+    evidenceReferences: v.array(v.string()),
+  },
+  returns: v.object({ saved: v.boolean(), lessonId: v.id("memories"), strategyKey: v.string() }),
+  handler: async (ctx, args) => {
+    const ownerKey = await getAuthUserId(ctx);
+    if (!ownerKey) throw new Error("Authenticated operator session required.");
+    const strategy = await ctx.db.get(args.manifestStrategyId);
+    if (!strategy || strategy.ownerKey !== ownerKey || strategy.category !== "manifest-strategy") {
+      throw new Error("Selected Manifest strategy was not found in your private strategy ledger.");
+    }
+    const lesson = args.lesson.trim().slice(0, 1600);
+    const applicability = args.applicability.trim().slice(0, 1000);
+    const references = args.evidenceReferences.map(item => item.trim()).filter(Boolean).slice(0, 8);
+    if (lesson.length < 12) throw new Error("Write a specific reusable lesson of at least 12 characters.");
+    if (applicability.length < 8) throw new Error("Explain when this lesson applies.");
+    if (references.length < 2 || references.some(item => item.length < 8)) {
+      throw new Error("Provide at least two evidence references, each at least 8 characters long.");
+    }
+    const payload = {
+      lesson,
+      applicability,
+      manifestStrategyId: strategy._id,
+      strategyKey: strategy.key,
+      evidenceReferences: references,
+      reviewStatus: "operator-reviewed",
+      reusableRule: lesson,
+      recordedAt: Date.now(),
+      limitations: "Operator-reviewed evidence references; not independently verified and not causal proof.",
+    };
+    const lessonId = await ctx.db.insert("memories", {
+      ownerKey,
+      category: "learning-lesson",
+      key: `reviewed-lesson:${strategy._id}:${Date.now()}`,
+      value: JSON.stringify(payload),
+      confidence: 0.6,
+      source: "operator-reviewed-manifest-learning",
+    });
+    return { saved: true, lessonId, strategyKey: strategy.key };
+  },
+});
+
 export const recordExperiment = mutation({
   args: {
     name: v.string(),
