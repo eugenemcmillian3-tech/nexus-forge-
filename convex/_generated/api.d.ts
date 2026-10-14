@@ -33,6 +33,7 @@ import type * as providerHealth from "../providerHealth.js";
 import type * as portfolio from "../portfolio.js";
 import type * as readiness from "../readiness.js";
 import type * as research from "../research.js";
+import type * as researchData from "../researchData.js";
 import type * as users from "../users.js";
 import type * as verification from "../verification.js";
 
@@ -64,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   portfolio: typeof portfolio;
   readiness: typeof readiness;
   research: typeof research;
+  researchData: typeof researchData;
   users: typeof users;
   verification: typeof verification;
 }>;

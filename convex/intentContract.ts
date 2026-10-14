@@ -1,3 +1,5 @@
+import { jsonrepair } from "jsonrepair";
+
 export type MissionStrategy = {
   name: string;
   rationale: string;
@@ -28,7 +30,7 @@ function extractJson(raw: string): unknown {
   try {
     return JSON.parse(candidate) as unknown;
   } catch {
-    throw new Error("Invalid JSON object");
+    return JSON.parse(jsonrepair(candidate)) as unknown;
   }
 }
 

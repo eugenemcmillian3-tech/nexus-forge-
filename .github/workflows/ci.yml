@@ -37,6 +37,9 @@ jobs:
       - name: Audit production dependencies
         run: pnpm audit --prod
 
+      - name: Typecheck application and tests
+        run: pnpm exec tsc --noEmit
+
       - name: Run automated tests
         run: pnpm test
 
