@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { ArtifactBrowserChecks } from '../src/components/artifact-browser-checks'
 import type { Id } from '../convex/_generated/dataModel'
 const state = vi.hoisted(() => ({ record: vi.fn(), history: [] as any[] }))
-vi.mock('convex/react', () => ({ useMutation: () => state.record, useQuery: () => state.history }))
+vi.mock('convex/react', () => ({ useMutation: () => state.record, useQuery: () => state.history, useAction: () => vi.fn() }))
 const artifact = { _id: 'artifact-test' as Id<'artifacts'>, content: '<p id="result">14</p>' }
 const mission = 'ACCEPTANCE CRITERIA:\n- Show the correct result'
 beforeEach(() => { cleanup(); vi.clearAllMocks(); state.history = []; state.record.mockResolvedValue('receipt-test') })
