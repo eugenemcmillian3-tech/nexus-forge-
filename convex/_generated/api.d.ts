@@ -29,6 +29,7 @@ import type * as missions from "../missions.js";
 import type * as orchestration from "../orchestration.js";
 import type * as missionSources from "../missionSources.js";
 import type * as permissions from "../permissions.js";
+import type * as providerHealth from "../providerHealth.js";
 import type * as portfolio from "../portfolio.js";
 import type * as readiness from "../readiness.js";
 import type * as research from "../research.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   orchestration: typeof orchestration;
   missionSources: typeof missionSources;
   permissions: typeof permissions;
+  providerHealth: typeof providerHealth;
   portfolio: typeof portfolio;
   readiness: typeof readiness;
   research: typeof research;
