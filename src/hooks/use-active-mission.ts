@@ -39,10 +39,11 @@ export function useActiveMission() {
   const agents = useQuery(api.forge.listRuns, missionId ? { missionId } : 'skip')
   const artifacts = useQuery(api.artifacts.list, missionId ? { missionId } : 'skip')
   const deliveries = useQuery(api.delivery.list, missionId ? { missionId } : 'skip')
+  const measurements = useQuery(api.verification.measurements, missionId ? { missionId } : 'skip')
   const councilComplete = !!agents?.length && agents.every(run => run.status === 'complete')
   const hasResearch = !!research?.length
   const hasVerifiedArtifact = !!artifacts?.some(item => item.status === 'verified' || item.status === 'ready')
   const hasApprovedArtifact = !!artifacts?.some(item => item.status === 'ready')
   const hasApprovedDelivery = !!deliveries?.some(item => item.approved && ['github', 'test', 'build', 'deploy', 'verified', 'complete'].includes(item.stage))
-  return { missionId, setMissionId, loaded, mission, research: research ?? [], agents: agents ?? [], artifacts: artifacts ?? [], deliveries: deliveries ?? [], councilComplete, hasResearch, hasVerifiedArtifact, hasApprovedArtifact, hasApprovedDelivery }
+  return { missionId, setMissionId, loaded, mission, research: research ?? [], agents: agents ?? [], artifacts: artifacts ?? [], deliveries: deliveries ?? [], measurements: measurements ?? [], councilComplete, hasResearch, hasVerifiedArtifact, hasApprovedArtifact, hasApprovedDelivery }
 }
