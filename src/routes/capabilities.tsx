@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction, useQuery } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
+import { ProductionReleaseReadiness } from '../components/production-release-readiness'
 import { ArtifactBenchmarkEvidence } from '../components/artifact-benchmark-evidence'
 import { WorkspaceLayout } from '../components/workspace-layout'
 import { useActiveMission } from '../hooks/use-active-mission'
@@ -67,6 +68,7 @@ function CapabilityDashboard() {
         </div>
       </div>
 
+      <ProductionReleaseReadiness />
       <ArtifactBenchmarkEvidence />
       <div className="stats-strip">
         <div><strong>{missions ? missionRows.length : '—'}</strong><span>Recent missions</span></div>
@@ -116,7 +118,7 @@ function CapabilityDashboard() {
 
       <div className="glass-card research-card">
         <div className="panel-title"><span>RELIABILITY INTERPRETATION</span><span className="live-pill">NO UNPROVEN CLAIMS</span></div>
-        <div className="decision-line"><span>LIVE DEPLOYMENT</span><strong>Available in the published app; this panel does not run an external uptime monitor.</strong></div>
+        <div className="decision-line"><span>LIVE DEPLOYMENT</span><strong>Available in the published app; hourly public-shell probes are available through the release checklist. This panel does not display live uptime telemetry.</strong></div>
         <div className="decision-line"><span>MISSION SUCCESS</span><strong>Requires recorded verification evidence; generated text alone is not proof.</strong></div>
         <div className="decision-line"><span>LEARNING PROMOTION</span><strong>Requires measured comparisons and human review; no automatic self-modification.</strong></div>
         <div className="decision-line"><span>PROVIDER STATUS</span><strong>Only current when the operator runs diagnostics; failures do not block unrelated work.</strong></div>
