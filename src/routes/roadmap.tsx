@@ -98,7 +98,7 @@ const roadmap = [
     "n": 16,
     "title": "Cost and resource intelligence",
     "status": "partial",
-    "detail": "Provider response metadata is recorded by supported stages with validated counts and charges; accounting failures no longer replay successful inference. Complete per-run attribution, billing reconciliation and resource intelligence remain open."
+    "detail": "Durable invocation history now records mission/stage attribution, explicit runner IDs and pending/missing/gap states across current generative router paths. Complete billing reconciliation, representative workload validation and resource intelligence remain open."
   },
   {
     "n": 17,

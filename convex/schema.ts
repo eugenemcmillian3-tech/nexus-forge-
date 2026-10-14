@@ -1,3 +1,4 @@
+import { invocationFields } from './providerUsageModel'
 import { councilSelectionFields, councilEvaluationFields, councilPolicyFields } from "./councilMemoryModel"
 import { trafficFields } from "./siteTrafficModel"
 import { productOutcomeFields } from "./productOutcomeModel"
@@ -8,6 +9,7 @@ import { authTables } from "@convex-dev/auth/server"
 
 export default defineSchema({
   ...authTables,
+  providerInvocations: defineTable(invocationFields).index('by_owner', ['ownerKey']).index('by_mission', ['missionId']),
   missions: defineTable({ title: v.string(), mission: v.string(), autonomy: v.string(), budget: v.number(), status: v.union(v.literal("draft"), v.literal("running"), v.literal("review"), v.literal("complete"), v.literal("cancelled")), completion: v.number(), approved: v.boolean(), ownerKey: v.string() }).index("by_owner", ["ownerKey"]),
   missionRuns: defineTable({ missionId: v.id("missions"), startedAt: v.number(), deadlineAt: v.number(), maxRetries: v.number(), retries: v.number(), status: v.union(v.literal("running"), v.literal("paused"), v.literal("blocked"), v.literal("complete")), currentStage: v.string(), nextActionAt: v.number(), lastError: v.optional(v.string()) }).index("by_mission", ["missionId"]),
   agentRuns: defineTable({ missionId: v.id("missions"), agent: v.string(), role: v.string(), status: v.string(), progress: v.number(), note: v.string() }).index("by_mission", ["missionId"]),

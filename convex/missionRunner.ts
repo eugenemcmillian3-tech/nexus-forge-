@@ -110,7 +110,7 @@ export const tickInternal: any = (internalAction as any)({
       if (r.currentStage === "orchestration" && !coordinationStarted) {
         await c.runMutation((internal as any).forge.createRuns, { missionId: r.missionId });
         await c.runMutation((internal as any).missionRunner.setState, { runId: a.runId, status: "running", currentStage: "agent_coordination", nextActionAt: now + 1500, lastError: "Agent coordination scheduled; waiting for persisted wave results." });
-        await c.scheduler.runAfter(0, (internal as any).forge.orchestrateInternal, { missionId: r.missionId, mission: m.mission });
+        await c.scheduler.runAfter(0, (internal as any).forge.orchestrateInternal, { missionId: r.missionId, missionRunId: r._id, mission: m.mission });
         await c.scheduler.runAfter(1500, (internal as any).missionRunner.tickInternal, { runId: a.runId }); return null;
       }
       if (r.currentStage === "agent_coordination" && !coordinationDone) {
@@ -119,7 +119,7 @@ export const tickInternal: any = (internalAction as any)({
         if (allQueued && now >= r.nextActionAt && r.retries < r.maxRetries) {
           const retries = r.retries + 1;
           await c.runMutation((internal as any).missionRunner.setState, { runId: a.runId, status: "running", currentStage: "agent_coordination", nextActionAt: now + 30000, lastError: "No agent handoff started; retrying scheduled Council orchestration.", retries });
-          await c.scheduler.runAfter(0, (internal as any).forge.orchestrateInternal, { missionId: r.missionId, mission: m.mission });
+          await c.scheduler.runAfter(0, (internal as any).forge.orchestrateInternal, { missionId: r.missionId, missionRunId: r._id, mission: m.mission });
           await c.scheduler.runAfter(30000, (internal as any).missionRunner.tickInternal, { runId: a.runId }); return null;
         }
         await c.runMutation((internal as any).missionRunner.setState, { runId: a.runId, status: blocked.length ? "paused" : "running", currentStage: blocked.length ? "agent_coordination_blocked" : "agent_coordination", nextActionAt: now + 3000, lastError: blocked.length ? `${blocked.length} agent(s) blocked; inspect agent evidence before continuing.` : "Waiting for coordinated agent waves to complete." });
@@ -129,7 +129,7 @@ export const tickInternal: any = (internalAction as any)({
         if (r.retries < r.maxRetries) {
           const retries = r.retries + 1;
           await c.runMutation((internal as any).missionRunner.setState, { runId: a.runId, status: "running", currentStage: "agent_coordination", nextActionAt: now + 30000, lastError: "Council handoff was blocked; retrying the bounded orchestration pass.", retries });
-          await c.scheduler.runAfter(0, (internal as any).forge.orchestrateInternal, { missionId: r.missionId, mission: m.mission });
+          await c.scheduler.runAfter(0, (internal as any).forge.orchestrateInternal, { missionId: r.missionId, missionRunId: r._id, mission: m.mission });
           await c.scheduler.runAfter(30000, (internal as any).missionRunner.tickInternal, { runId: a.runId });
         }
         return null;
@@ -139,7 +139,7 @@ export const tickInternal: any = (internalAction as any)({
         if (r.retries < r.maxRetries) {
           const retries = r.retries + 1;
           await c.runMutation((internal as any).missionRunner.setState, { runId: a.runId, status: "running", currentStage: "agent_coordination", nextActionAt: now + 30000, lastError: `${blockedCount} Council agent(s) did not complete; retrying before artifact generation.`, retries });
-          await c.scheduler.runAfter(0, (internal as any).forge.orchestrateInternal, { missionId: r.missionId, mission: m.mission });
+          await c.scheduler.runAfter(0, (internal as any).forge.orchestrateInternal, { missionId: r.missionId, missionRunId: r._id, mission: m.mission });
           await c.scheduler.runAfter(30000, (internal as any).missionRunner.tickInternal, { runId: a.runId });
         } else {
           await c.runMutation((internal as any).missionRunner.setState, { runId: a.runId, status: "paused", currentStage: "agent_coordination_blocked", nextActionAt: now, lastError: `${blockedCount} Council agent(s) remain incomplete after bounded retries; human review required. No artifact was generated.` });
@@ -155,7 +155,7 @@ export const tickInternal: any = (internalAction as any)({
         return null;
       }
       if (!ready && !waiting) {
-        const generated = await c.runAction((internal as any).artifacts.generateInternal, { missionId: r.missionId, mission: m.mission, artifactType: "execution-artifact", artifactName: `${m.title} execution artifact` });
+        const generated = await c.runAction((internal as any).artifacts.generateInternal, { missionId: r.missionId, missionRunId: r._id, mission: m.mission, artifactType: "execution-artifact", artifactName: `${m.title} execution artifact` });
         const verification = await c.runMutation((internal as any).artifacts.verifyInternal, { id: generated.artifactId });
         if (!verification.passed) { await c.runMutation((internal as any).missionRunner.setState, { runId: a.runId, status: "paused", currentStage: "artifact_verification_failed", nextActionAt: now + 60000, lastError: `Artifact verification failed at ${Math.round(verification.score * 100)}%; human revision or regeneration required.` }); return null; }
         await c.runMutation((internal as any).missionRunner.setState, { runId: a.runId, status: "paused", currentStage: "awaiting_artifact_approval", nextActionAt: now + 60000, lastError: "Artifact verified; human approval required." }); return null;

@@ -15,7 +15,7 @@ This is one finite release checklist for the current operator product. All 16 fe
 | Backup/restore | BLOCKED | Private export, separate file backup, isolated Testing restore, row/ownership checks, retention, RPO/RTO and timed evidence required. Managed connector does not expose this browser-only operation. |
 | Rollback | BLOCKED | Controlled Testing rehearsal, backward-compatible backend recovery, resulting publish and data-integrity evidence required. A written runbook is not a completed rehearsal. |
 | Capacity/resource bounds | Partial | Small read-only burst completed. Define expected authenticated workload and run sustained Testing checks, including quota/budget behavior. |
-| Cost attribution | Partial | Usage metadata validation and no-replay accounting implemented. Required per-run attribution and persistence-gap visibility are incomplete; no complete billing guarantee. |
+| Cost attribution | Partial | Durable mission/stage invocations, explicit runner IDs, paginated usage history and pending/missing/gap visibility are implemented. Representative live ledger and billing reconciliation evidence remain open; no complete billing guarantee. |
 
 ## What this batch completes
 
@@ -40,3 +40,7 @@ This is one finite release checklist for the current operator product. All 16 fe
 A release decision must reference a source commit, matching CI evidence, the resulting READY publish, current live observations and completed operational evidence. Do not infer a pass from missing records or from a developer checking a box. Update the dated audit when new evidence exists; the page snapshot does not auto-follow GitHub or future deployments.
 
 This batch closes the checklist-and-audit task. It does not claim that unavailable managed recovery drills or incomplete workload/accounting capabilities were performed.
+
+## Accounting implementation update
+
+The follow-up implementation closes code-side attribution and persistence-gap visibility for all current generative router paths. See [durable accounting](DURABLE_PROVIDER_ACCOUNTING.md). New controlled fault/concurrency and UI tests verify the ledger; they are not a sustained-capacity or live billing-reconciliation drill. Recovery UI was reached but Google account navigation was blocked by automatic approval review. Isolated recovery drills remain pending specific sign-in authorization.

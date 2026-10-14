@@ -2,7 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { action, internalMutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { callAiProvider } from "./aiProvider";
+import { callManagedAi } from "./providerAccounting";
 import { parseMissionSpecification } from "./intentContract";
 
 const strategy = v.object({
@@ -73,7 +73,7 @@ export const compileIntent = action({
     const domain = args.domain.trim().slice(0, 100);
     const horizon = args.horizon.trim().slice(0, 80);
     const prompt = `You are the NEXUS FORGE Intent Compiler. Convert the user's request into a precise, testable mission contract. Return ONLY valid JSON matching this exact shape: {"objective":"string","constraints":["string"],"dependencies":["string"],"acceptanceCriteria":["string"],"risks":["string"],"deadline":"string","strategies":[{"name":"string","rationale":"string","tradeoff":"string","expectedOutcome":"string"}],"recommendedStrategy":0}. Provide 2 or 3 genuinely different strategies. recommendedStrategy must be a valid zero-based index. Use 2-6 concise items per list. Treat missing information as explicit assumptions or constraints, never as known facts. Keep within the budget cap. Do not assert that any platform, model, API, hosting service, product, or free tier is available, configured, free, or suitable unless that is established in the prompt. Prefer the user's existing configured stack. Any unverified external service must be explicitly labelled 'unverified option — confirm availability, pricing, and credentials before use'; do not present it as a dependency already secured. Never claim work has already been executed. Keep external actions behind human approval. The deadline should reflect the user's horizon and be a relative target if no calendar date was given.\n\nINTENT: ${intent}\nDOMAIN: ${domain}\nBUDGET CAP USD: ${budget}\nTIME HORIZON: ${horizon}`;
-    const raw = await callAiProvider("planner", prompt, 1400);
+    const raw = await callManagedAi(ctx, { ownerKey, stage: "intent-compile", role: "planner", prompt, maxTokens: 1400 });
     const result = parseMissionSpecification(raw);
     const specification = JSON.stringify(result);
     const sourceMemoryId = await ctx.runMutation(internal.intelligenceOrchestrator.saveSpec, { ownerKey, intent, domain, budget, horizon, specification });

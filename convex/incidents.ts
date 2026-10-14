@@ -3,7 +3,7 @@ import { action, internalAction, internalMutation, internalQuery, mutation, quer
 import { internal } from "./_generated/api"
 import { parseIncidentDiagnosis } from "./incidentParser"
 import { requireOperator, requireOwnedMission } from "./permissions"
-import { callAiProvider } from "./aiProvider"
+import { callManagedAi } from "./providerAccounting"
 
 const incident = v.object({
   _id: v.id("incidents"), _creationTime: v.number(), missionId: v.id("missions"), runId: v.optional(v.id("missionRuns")),
@@ -112,7 +112,9 @@ export const diagnoseInternal = internalAction({
   handler: async (ctx, args) => {
     const incident = await ctx.runQuery(internal.incidents.getById, { incidentId: args.incidentId })
     if (!incident || incident.status === "resolved") return null
-    const text = (await callAiProvider("critic", `You are the NEXUS FORGE Incident Diagnostician. Analyze one autonomous execution failure using only the supplied facts. Do not invent logs or root causes. Return exactly three labeled sections: DIAGNOSIS, PROPOSED RECOVERY, CONFIDENCE. The recovery must be a safe, bounded next action; never recommend bypassing human approval, security controls, tests, or deployment gates. If evidence is insufficient, say so and recommend human investigation.\n\nMission: ${incident.missionId}\nStage: ${incident.stage}\nFailure: ${incident.message}\nAttempts: ${incident.attempts}`, 500)).trim() || "DIAGNOSIS\nInsufficient evidence.\nPROPOSED RECOVERY\nHuman investigation required.\nCONFIDENCE\n0"
+    const mission = await ctx.runQuery(internal.missions.getByIdInternal, { id: incident.missionId })
+    if (!mission) throw new Error("Mission not found")
+    const text = (await callManagedAi(ctx, { ownerKey: mission.ownerKey, missionId: incident.missionId, stage: "incident-diagnosis", role: "critic", prompt: `You are the NEXUS FORGE Incident Diagnostician. Analyze one autonomous execution failure using only the supplied facts. Do not invent logs or root causes. Return exactly three labeled sections: DIAGNOSIS, PROPOSED RECOVERY, CONFIDENCE. The recovery must be a safe, bounded next action; never recommend bypassing human approval, security controls, tests, or deployment gates. If evidence is insufficient, say so and recommend human investigation.\n\nMission: ${incident.missionId}\nStage: ${incident.stage}\nFailure: ${incident.message}\nAttempts: ${incident.attempts}`, maxTokens: 500 })).trim() || "DIAGNOSIS\nInsufficient evidence.\nPROPOSED RECOVERY\nHuman investigation required.\nCONFIDENCE\n0"
     const { diagnosis, proposedRecovery, confidence } = parseIncidentDiagnosis(text)
     await ctx.runMutation(internal.incidents.markDiagnosis, { incidentId: args.incidentId, diagnosis, proposedRecovery, confidence })
     return null
