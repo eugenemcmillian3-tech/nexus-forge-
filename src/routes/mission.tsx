@@ -22,21 +22,22 @@ function MissionPage() {
   const [receipt, setReceipt] = useState('')
   const [error, setError] = useState('')
   useEffect(() => {
-    const raw = window.sessionStorage.getItem('nexus-forge-manifest-handoff')
+    const raw = window.sessionStorage.getItem('nexus-forge-intelligence-handoff') ?? window.sessionStorage.getItem('nexus-forge-manifest-handoff')
     if (!raw) return
     try {
-      const handoff = JSON.parse(raw) as { sourceMemoryId?: string; intent?: string; domain?: string; budget?: number; horizon?: string; constraints?: string; acceptanceCriteria?: string; blueprint?: string }
+      const handoff = JSON.parse(raw) as { sourceLabel?: string; sourceMemoryId?: string; intent?: string; domain?: string; budget?: number; horizon?: string; constraints?: string; acceptanceCriteria?: string; blueprint?: string }
       setSourceMemoryId(handoff.sourceMemoryId)
       const intent = handoff.intent?.trim() || 'Review Manifest Intelligence proposal'
       const blueprint = handoff.blueprint?.trim() || ''
-      setTitle(`Manifest: ${intent.slice(0, 56)}`)
+      setTitle(`${handoff.sourceLabel ?? 'Manifest'}: ${intent.slice(0, 56)}`)
       setDescription(`Desired outcome: ${intent}\nDomain: ${handoff.domain || 'General'}\nTime horizon: ${handoff.horizon || 'Not specified'}\nConstraints and assumptions: ${handoff.constraints || 'Not specified'}\nAcceptance criteria: ${handoff.acceptanceCriteria || 'Review and define measurable criteria'}\n\nBlueprint proposal — unverified, review before approval:\n${blueprint.slice(0, 7000)}`)
       setBudget(Math.max(0, Math.min(500, Number(handoff.budget ?? 25))))
-      setReceipt('Manifest blueprint loaded into a draft contract. Review the proposal and constraints before creating or approving the mission.')
+      setReceipt('Saved intelligence source loaded into a draft contract. Review the proposal and constraints before creating or approving the mission.')
       setError('')
     } catch {
-      setError('Could not load the Manifest blueprint. Return to Manifest Intelligence and try again.')
+      setError('Could not load the source proposal. Return to its intelligence page and try again.')
       window.sessionStorage.removeItem('nexus-forge-manifest-handoff')
+      window.sessionStorage.removeItem('nexus-forge-intelligence-handoff')
     }
   }, [pathname])
   const rows = missions?.page ?? []
@@ -48,7 +49,8 @@ function MissionPage() {
       setMissionId(id)
       setSourceMemoryId(undefined)
       window.sessionStorage.removeItem('nexus-forge-manifest-handoff')
-      setReceipt('Draft created and selected. The Manifest handoff is now safely consumed. Review the mission contract, then explicitly approve it before Council execution.')
+      window.sessionStorage.removeItem('nexus-forge-intelligence-handoff')
+      setReceipt('Draft created and selected. The source handoff is now safely consumed. Review the mission contract, then explicitly approve it before Council execution.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Mission creation failed.') } finally { setBusy(false) }
   }
   const approve = async () => {
