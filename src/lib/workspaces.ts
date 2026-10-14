@@ -56,3 +56,7 @@ export const workspaceGroups = [
 // One source of truth: main navigation contains core user-facing pages; specialist tools stay reachable from the guide and relevant feature pages.
 export const allWorkspaces = workspaceGroups.reduce<(typeof workspaceGroups)[number]['pages'][number][]>((items, group) => [...items, ...group.pages], [])
 export const primaryWorkspaces = allWorkspaces.filter(workspace => !['/capabilities', '/readiness', '/incidents', '/providers'].includes(workspace.path))
+
+// Full product guide includes every dedicated page, including on-demand diagnostics.
+const guidePaths = ['/', '/workflow', '/roadmap', '/manifest', '/orchestrator', '/mission', '/providers', '/council', '/evidence', '/artifacts', '/delivery', '/readiness', '/portfolio', '/learning', '/capabilities', '/incidents']
+export const guidedWorkspaces = guidePaths.map(path => allWorkspaces.find(page => page.path === path)!)
