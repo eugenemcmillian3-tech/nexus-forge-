@@ -1,26 +1,19 @@
 import { Link, useRouterState } from '@tanstack/react-router'
+import { WorkspaceGuide } from './workspace-guide'
 import { AuthWrapper } from './auth-wrapper'
+import { workspaceGroups } from '../lib/workspaces'
 
-const sections = [
-  { label: 'WORKFLOW', items: [
-    { to: '/', title: 'Overview', icon: '⌂' },
-    { to: '/mission', title: 'Mission Console', icon: '◎' },
-    { to: '/council', title: 'AI Council', icon: '◈' },
-    { to: '/manifest', title: 'Manifest Intelligence', icon: '✧' },
-    { to: '/orchestrator', title: 'Intelligence Orchestrator', icon: '⟁' },
-    { to: '/evidence', title: 'Research & Memory', icon: '⌕' },
-    { to: '/learning', title: 'Verified Learning Engine', icon: '↗' },
-    { to: '/artifacts', title: 'Artifact Forge', icon: '◇' },
-    { to: '/delivery', title: 'Delivery Pipeline', icon: '⇧' },
-    { to: '/portfolio', title: 'Portfolio Intelligence', icon: '▦' },
-    { to: '/workflow', title: 'Autonomous Workflow', icon: '⇢' },
-    { to: '/providers', title: 'AI Providers', icon: '⌘' },
-    { to: '/readiness', title: 'Launch Readiness', icon: '✓' },
-    { to: '/incidents', title: 'Incident Center', icon: '!' },
-    { to: '/capabilities', title: 'Capability & Reliability', icon: '⌁' },
-    { to: '/roadmap', title: 'Master Roadmap', icon: '☷' },
-  ] },
-]
+const supportOnlyPaths = new Set(['/capabilities', '/readiness', '/incidents', '/providers'])
+const sections = workspaceGroups.map(group => ({
+  label: group.title,
+  items: group.pages
+    .filter(page => page.showInSidebar !== false && !supportOnlyPaths.has(page.path))
+    .map(page => ({
+      to: page.path,
+      title: page.path === '/workflow' ? 'Guided Workflow' : page.title,
+      icon: page.icon,
+    })),
+})).filter(section => section.items.length > 0)
 
 export function WorkspaceLayout({ title, eyebrow, children }: { title: string; eyebrow: string; children: React.ReactNode }) {
   const pathname = useRouterState({ select: state => state.location.pathname })
@@ -43,7 +36,8 @@ export function WorkspaceLayout({ title, eyebrow, children }: { title: string; e
         <section className="workspace">
           <div className="section-kicker">{eyebrow}</div><h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mt-2">{title}</h1>
           <p className="hero-text">Dedicated workspace pages follow a governed sequence. Every destination is registered in the route tree and uses the shared governed shell.</p>
-          {children}
+          <WorkspaceGuide />
+          <div id="workspace-controls">{children}</div>
         </section>
       </div>
     </main>
