@@ -35,7 +35,17 @@ export const nextOpportunity = query({
     const latest = missions[0];
     const blocked = missions.filter(m => m.status === "review").length;
     const missionIds = new Set(missions.map(m => m._id));
-    const measurements = (await Promise.all(missions.map(mission => ctx.db.query("measurements").withIndex("by_mission", q => q.eq("missionId", mission._id)).collect()))).flat().sort((a, b) => b.createdAt - a.createdAt).slice(0, 50);
+    // Avoid deeply nested Convex query inference in the deployment typechecker.
+    // The mission list is bounded above, and the final measurement set remains capped.
+    const measurements: any[] = [];
+    for (const mission of missions) {
+      const missionMeasurements = await ctx.db.query("measurements")
+        .withIndex("by_mission", q => q.eq("missionId", mission._id))
+        .collect();
+      measurements.push(...missionMeasurements);
+    }
+    measurements.sort((a, b) => b.createdAt - a.createdAt);
+    measurements.splice(50);
     const lessons = await ctx.db.query("memories").withIndex("by_owner", q => q.eq("ownerKey", ownerKey)).order("desc").take(80);
     const lessonRows = lessons.filter(m => m.category === "learning-lesson").slice(0, 4);
     const latestMeasurement = measurements[0];
