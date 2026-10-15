@@ -1,0 +1,1 @@
+Controlled NEXUS FORGE authenticated write acceptance. No executable content. No deployment request.
