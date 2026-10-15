@@ -14,7 +14,7 @@ When a probe fails: inspect its bounded report, check Macaly deployment status a
 
 ## Backup and restore
 
-**Status: snapshot export, isolated local restore and Managed Testing table restore demonstrated; uploaded-asset coverage, durable retention and RPO/RTO remain open.**
+**Current status (2026-10-15 UTC): retained private database backup, independent retrieval, Managed Testing restore and original-media retrieval demonstrated. Daily backup and monthly restore tasks are enabled. Their first scheduled results, failure/freshness reporting, retention enforcement and full-service recovery remain unverified.** See [BACKUP_POLICY_DRAFT.md](BACKUP_POLICY_DRAFT.md) for adopted setup targets. The dated observations below preserve earlier limitations; use this summary and the latest entries for next work.
 
 Recorded evidence (2026-10-14/15 UTC, see [operational evidence](evidence/operational-evidence-20261015.md)): Live snapshot export in 3 seconds (1,532,578 bytes, SHA-256 b111058d…92ae3e) with 1,971 documents across 34 tables and 0 Convex files; isolated restore into a fresh local backend in 2.8 seconds with record, ownership and delivery/workflow verification passing. Limitations: the restore target was an isolated local Convex backend because Managed Testing selection was unavailable; uploaded assets outside Convex need a separate backup path; retention, RPO and RTO are not yet agreed.
 
@@ -51,7 +51,7 @@ The live production service was not deliberately rolled back or disrupted to man
 
 ## Capacity and cost
 
-**Status: sustained authenticated workload demonstrated on the isolated backend; Testing/cloud capacity remains open.** Recorded evidence (2026-10-15): 90 seconds at concurrency 4 under an authenticated operator identity produced 270,213 owner-scoped requests across five representative read paths with 0 failures and 0 throttling; p50 1 ms, p95 2–3 ms, max 54 ms, recovery probe 5 ms. Limits: local backend seeded with restored Live-scale data, representative authenticated reads only, no sustained provider inference. Define expected concurrent operators, mission frequency and acceptable latency/error/cost limits, then repeat in Testing before certifying an expected production workload.
+**Current status: bounded Managed Testing reads and paced draft writes/read-backs passed; execution/inference, multi-owner/session load, agreed production workload limits, saturation, storage capacity and billing reconciliation remain open.** Managed results: 448 reads over 60 seconds with zero failures and p95 38 ms; 48 draft writes plus read-backs and matching audits with zero failures, write p95 180 ms. Testing was returned to its safety snapshot. These checks are already complete and need not be repeated without a relevant change. Historical local observation follows: Recorded evidence (2026-10-15): 90 seconds at concurrency 4 under an authenticated operator identity produced 270,213 owner-scoped requests across five representative read paths with 0 failures and 0 throttling; p50 1 ms, p95 2–3 ms, max 54 ms, recovery probe 5 ms. Limits: local backend seeded with restored Live-scale data, representative authenticated reads only, no sustained provider inference. Define expected concurrent operators, mission frequency and acceptable latency/error/cost limits, then repeat in Testing before certifying an expected production workload.
 
 Supported stages retain provider-reported usage, with unknown charges kept unknown and no inference replay after a usage-save failure. Explicit runner attribution and accounting-gap visibility are implemented and have scoped evidence; provider billing reconciliation and broader workload validation remain open. Do not infer zero cost, complete billing, or a hard spend guarantee from incomplete metadata.
 
@@ -60,6 +60,8 @@ Supported stages retain provider-reported usage, with unknown charges kept unkno
 Use PRODUCTION_RELEASE_CHECKLIST.md and the checklist on Capability & Reliability. Partial/blocked evidence holds full production sign-off. Existing accepted Research, Manifest and LocalBoost receipts remain valid evidence for their recorded scope. Authentication and approval are not repeated as setup exercises.
 
 ## Production monitor notification drill
+
+**Completed:** production-monitor drill 38664996942, normal run 38665052731 and operator-confirmed notification receipt are recorded above. The following procedure is for a relevant workflow/destination change or incident; it is not the next unfinished setup task.
 
 Run `production-release.yml` manually on `main` with boolean input `alert_drill: true`. The default is false. This uses the hourly monitor probe mode, skips browser installation, and deliberately fails only after the live read-only probes pass. It does not modify production data or deploy code. Its separate concurrency group cannot cancel normal monitoring.
 
@@ -85,7 +87,7 @@ Managed Testing creation/selection is not exposed by the connector, but the auth
 - Managed table restore is demonstrated. External original-asset recovery, durable backup retention, agreed RPO/RTO, managed code rollback, controlled cloud recovery, cloud load and provider billing reconciliation remain open. Full release HOLD remains.
 
 
-Recovery policy decisions remain unapproved: private storage destination, backup frequency, retention, maximum acceptable data loss (RPO) and full service recovery time (RTO). Drill durations already recorded are observations, not agreed objectives. Record these decisions and an actual private backup/restore receipt before marking backup coverage complete.
+Historical policy gap at the time of the initial restore: private storage, frequency, retention and recovery targets were unresolved. Superseded by the retained backup evidence and recurring-task setup below: private copies were retrieved and verified; setup targets are daily 03:00 New York, 30 daily points, 24-hour RPO and four-hour full-service RTO. Scheduled success, retention enforcement and achieved recovery targets remain unverified. Recorded drill durations are observations, not proof of full-service RTO.
 
 
 ## Managed Testing persisted-state recovery — 2026-10-15T02:13:25Z
