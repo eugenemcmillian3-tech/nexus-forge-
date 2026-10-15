@@ -33,6 +33,17 @@ export const recordProductOutcome = mutation({
 })
 
 export const productOutcomes = query({
+ args:{missionId:v.optional(v.id("missions")),paginationOpts:paginationOptsValidator},
+ returns:paginationResultValidator(v.object({_id:v.id("productOutcomes"),_creationTime:v.number(),...productOutcomeFields,provenance:v.union(v.literal("operator-recorded"),v.literal("github-report"))})),
+ handler:async(ctx,args)=>{
+ const ownerKey=await requireOperator(ctx);if(args.missionId)await requireOwnedMission(ctx,args.missionId);
+ const base=args.missionId?ctx.db.query("productOutcomes").withIndex("by_mission",q=>q.eq("missionId",args.missionId!)):ctx.db.query("productOutcomes").withIndex("by_owner",q=>q.eq("ownerKey",ownerKey));
+ const result=await base.filter(q=>q.neq(q.field("provenance"),"product-events")).order("desc").paginate(args.paginationOpts);
+ return{...result,page:result.page.map(row=>({...row,provenance:row.provenance==="github-report"?"github-report" as const:"operator-recorded" as const}))}
+ }
+})
+
+export const productOutcomesV2 = query({
   args: { missionId: v.optional(v.id("missions")), paginationOpts: paginationOptsValidator },
   returns: paginationResultValidator(v.object({ _id: v.id("productOutcomes"), _creationTime: v.number(), ...productOutcomeFields })),
   handler: async (ctx, args) => {

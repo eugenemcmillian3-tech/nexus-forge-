@@ -2,6 +2,12 @@ import { defineTable } from 'convex/server'
 import { v } from 'convex/values'
 export const labKind = v.union(v.literal('comparison'), v.literal('science'), v.literal('generality'))
 export const frontierTables = {
+ productSources: defineTable({ownerKey:v.string(),missionId:v.id('missions'),name:v.string(),tokenHash:v.string(),enabled:v.boolean(),generation:v.number(),received:v.number(),pendingCount:v.number(),pendingSuccess:v.number(),pendingStart:v.optional(v.number()),batch:v.number(),createdAt:v.number()}).index('by_owner',['ownerKey']),
+ productEvents: defineTable({sourceId:v.id('productSources'),eventKey:v.string(),digest:v.string(),success:v.boolean(),receivedAt:v.number()}).index('by_source_key',['sourceId','eventKey']).index('by_source',['sourceId']),
+
+ teamDirectory: defineTable({teamId:v.id('forgeTeams'),email:v.string(),role:v.union(v.literal('viewer'),v.literal('contributor')),status:v.union(v.literal('active'),v.literal('revoked')),createdBy:v.string(),operatorId:v.optional(v.string()),updatedAt:v.number()}).index('by_team',['teamId']).index('by_email',['email']).index('by_team_email',['teamId','email']),
+ githubWritePlans: defineTable({ownerKey:v.string(),missionId:v.id('missions'),branch:v.string(),baseCommit:v.string(),baseTree:v.string(),files:v.array(v.object({path:v.string(),content:v.string()})),status:v.union(v.literal('prepared'),v.literal('executing'),v.literal('complete'),v.literal('uncertain'),v.literal('revoked')),commitSha:v.optional(v.string()),createdAt:v.number()}).index('by_owner',['ownerKey']),
+
  runtimeJobs: defineTable({ownerKey:v.string(),requestKey:v.string(),kind:v.string(),input:v.string(),status:v.union(v.literal('pending'),v.literal('complete'),v.literal('failed')),result:v.optional(v.string()),createdAt:v.number()}).index('by_owner_key',['ownerKey','requestKey']).index('by_owner',['ownerKey']),
  teamMissions: defineTable({teamId:v.id('forgeTeams'),missionId:v.id('missions'),ownerKey:v.string(),allowExecute:v.boolean(),createdAt:v.number()}).index('by_team',['teamId']).index('by_team_mission',['teamId','missionId']),
  externalAdapters: defineTable({ownerKey:v.string(),packageId:v.id('extensionPackages'),endpoint:v.string(),enabled:v.boolean(),createdAt:v.number()}).index('by_owner',['ownerKey']),

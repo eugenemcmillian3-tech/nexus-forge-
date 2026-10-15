@@ -12,7 +12,7 @@ vi.mock('convex/react', () => ({
       case 'missionSources:list': return mocks.linked ? [{ sourceMemoryId: 'lesson-one', path: '/learning', key: 'Reviewed lesson' }] : []
       case 'missions:list': return { page: [{ _id: 'baseline-mission', title: 'Baseline mission' }] }
       case 'verification:measurements': return args === 'skip' ? undefined : [{ _id: typeof args === 'object' && args.missionId === 'baseline-mission' ? 'baseline-measure' : 'candidate-measure', metric: 'actual runtime cost', actual: 5, target: 25, unit: 'USD' }]
-      case 'verification:productOutcomes': return args === 'skip' ? undefined : { page: [{ _id: typeof args === 'object' && args.missionId === 'baseline-mission' ? 'baseline-product' : 'candidate-product', metric: 'task-success-rate', actual: 80, target: 75, unit: '%', sampleSize: 10, periodStart: 1000 }] }
+      case 'verification:productOutcomesV2': return args === 'skip' ? undefined : { page: [{ _id: typeof args === 'object' && args.missionId === 'baseline-mission' ? 'baseline-product' : 'candidate-product', metric: 'task-success-rate', actual: 80, target: 75, unit: '%', sampleSize: 10, periodStart: 1000 }] }
       case 'learningEngine:listReuseComparisons': return []
       default: return undefined
     }

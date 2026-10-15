@@ -1,5 +1,7 @@
 # Seven runtime workflows — 2026-10-15
 
+Latest enterprise, authenticated-write and instrumentation status: [REMAINING_ENGINEERING_BATCH.md](REMAINING_ENGINEERING_BATCH.md). The snapshot below preserves its original scope.
+
 This release implements the seven scoped workflows requested together. It does not mark every broader roadmap milestone complete. External-access acceptance remains on hold.
 
 | Area | Previously | Now | Evidence limit |

@@ -1,5 +1,7 @@
 # Real-service acceptance — October 15, 2026
 
+Latest enterprise, authenticated-write and instrumentation status: [REMAINING_ENGINEERING_BATCH.md](REMAINING_ENGINEERING_BATCH.md). The snapshot below preserves its original scope.
+
 The batch used Managed Testing (quick-rabbit-810) and real configured external services. Tests used trusted administrative test identities, not a new browser OTP session. Live data was not used for experiments. Earlier LocalBoost production acceptance remains separate evidence.
 
 Overall acceptance is **partial**. Working transport and a small sample do not complete a broad capability.

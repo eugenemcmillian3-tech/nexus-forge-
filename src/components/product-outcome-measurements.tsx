@@ -17,7 +17,7 @@ export function ProductOutcomeMeasurements({ missionId, missionTitle }: { missio
   const record = useMutation(api.verification.recordProductOutcome)
   const [scope, setScope] = useState(missionId ? 'mission' : 'all')
   const selectedMission = scope === 'mission' && missionId ? missionId : null
-  const { results, status, loadMore } = usePaginatedQuery(api.verification.productOutcomes, selectedMission ? { missionId: selectedMission } : {}, { initialNumItems: 10 })
+  const { results, status, loadMore } = usePaginatedQuery(api.verification.productOutcomesV2, selectedMission ? { missionId: selectedMission } : {}, { initialNumItems: 10 })
   const [metric, setMetric] = useState<typeof metrics[number]['key']>('active-users')
   const [observed, setObserved] = useState('')
   const [target, setTarget] = useState('')

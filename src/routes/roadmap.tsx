@@ -15,7 +15,7 @@ const roadmap:Milestone[] = [
     "n": 2,
     "title": "Finish Manifest Intelligence outcome system",
     "status": "partial",
-    "detail": "Opt-in hourly GitHub outcome ingestion and evidence-based planning selection are implemented. Broader world context, complete resource accounting and representative measured adaptive improvement remain open."
+    "detail": "Opt-in hourly GitHub ingestion, source-scoped product-task event aggregation and evidence-based planning selection are implemented. Broader world context, complete resource accounting and representative measured adaptive improvement remain open."
   },
   {
     "n": 3,
@@ -123,13 +123,13 @@ const roadmap:Milestone[] = [
     "n": 20,
     "title": "Multi-user and enterprise governance",
     "status": "partial",
-    "detail": "Team Governance now supports team creation, explicit join requests, admin-reviewed viewer/contributor/admin roles, revocation and permission-checked shared notes. Mission owners can explicitly share selected briefs and delegate approved execution through the original dependency/resource/incident preflight. Unshared missions and credentials remain private. SSO and enterprise provisioning remain open."
+    "detail": "Team Governance now supports team creation, explicit join requests, admin-reviewed viewer/contributor/admin roles, revocation and permission-checked shared notes. Mission owners can explicitly share selected briefs and delegate approved execution through the original dependency/resource/incident preflight. Unshared missions and credentials remain private. Verified-email directory grants and deprovisioning are implemented. Domain-verified Google Workspace SSO is configuration-ready; tenant credentials and live identity-provider validation remain open. SCIM is not implemented."
   },
   {
     "n": 21,
     "title": "External agent and developer ecosystem",
     "status": "partial",
-    "detail": "Developer Integrations now registers immutable semantic versions, validates exact JSON field examples and retires versions with audit history. Explicitly enabled public HTTPS GET JSON agents now execute through hardened egress with exact declared fields, revocation and durable receipts. Arbitrary code, authenticated POST tools, marketplace distribution and revenue sharing remain open."
+    "detail": "Developer Integrations now registers immutable semantic versions, validates exact JSON field examples and retires versions with audit history. Explicitly enabled public HTTPS GET JSON agents now execute through hardened egress with exact declared fields, revocation and durable receipts. An authenticated GitHub data-write tool now prepares exact mission-bound files and commits only to a new isolated branch, with no automatic merge or dispatch. Arbitrary code, broader authenticated service tools, marketplace distribution and revenue sharing remain open."
   },
   {
     "n": 22,

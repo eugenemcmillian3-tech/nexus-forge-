@@ -1,0 +1,64 @@
+{
+  "environment": "Testing quick-rabbit-810; controlled acceptance events, not real customer outcomes",
+  "missionId": "k977pb34vnxb1yqcr2xnz2vp8s8ganxe",
+  "telemetry": {
+    "accepted": 30,
+    "sourceId": "s179xns5h3xj91jcp908twxmcs8gb2v3",
+    "outcomes": [
+      {
+        "id": "nn79y5m8n9hgfjwvz0nkt5b3v58gbebr",
+        "observed": 9,
+        "sampleSize": 10,
+        "actual": 90,
+        "provenance": "product-events"
+      },
+      {
+        "id": "nn7adrr0ar3cqs8wsq12rzks1s8gbghv",
+        "observed": 9,
+        "sampleSize": 10,
+        "actual": 90,
+        "provenance": "product-events"
+      },
+      {
+        "id": "nn759dgnf6khdjkqsyg6q8xts18gbspp",
+        "observed": 9,
+        "sampleSize": 10,
+        "actual": 90,
+        "provenance": "product-events"
+      }
+    ],
+    "legacyRows": 0
+  },
+  "adaptive": {
+    "evidenceIds": [
+      "nn79y5m8n9hgfjwvz0nkt5b3v58gbebr",
+      "nn7adrr0ar3cqs8wsq12rzks1s8gbghv",
+      "nn759dgnf6khdjkqsyg6q8xts18gbspp"
+    ],
+    "limitations": "Source receipts establish provenance, not measurement truth or causality. This policy changes planning guidance only.",
+    "reason": "Repeated source-linked measurements meet their fixed target; reuse the same bounded method and retain acceptance checks.",
+    "strategy": "reuse-with-verification"
+  },
+  "disabledStatus": 409,
+  "directory": [
+    {
+      "email": "unverified-acceptance@example.invalid",
+      "status": "awaiting-verified-sign-in"
+    }
+  ],
+  "directoryRevoked": "revoked",
+  "sso": {
+    "domain": null,
+    "workspaceSso": false
+  },
+  "planId": "rs74a3nrjwm2praagv0kdk0hc58gbhes",
+  "githubWrite": {
+    "repository": "eugenemcmillian3-tech/nexus-forge-",
+    "branch": "nexus-agent/rs74a3nrjwm2praagv0kdk0hc58gbhes",
+    "commitSha": "55777d321a7c9848d9a10ed766ce54ba1d2f4102",
+    "files": [
+      "agent-output/remaining-gap-acceptance.txt"
+    ],
+    "scope": "New branch only. No merge or workflow dispatch requested; existing repository CI rules may run."
+  }
+}

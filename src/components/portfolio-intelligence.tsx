@@ -1,3 +1,4 @@
+import { ProductInstrumentation } from './product-instrumentation'
 import { RuntimeWorkbench } from './runtime-workbench'
 import { useAction, useMutation, useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
@@ -25,7 +26,7 @@ export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }
   const rows = missions?.page ?? []
   const topSignal = learning?.prioritySignals[0]
   return <section id="portfolio" className="workspace portfolio-section">
-    <RuntimeWorkbench area="outcomes"/><div className="workspace-head"><div><div className="section-kicker">PORTFOLIO INTELLIGENCE / 007</div><h2>Mission History</h2></div><span className="status-chip"><span className="pulse-dot" /> PORTFOLIO LIVE</span></div>
+    <ProductInstrumentation/><RuntimeWorkbench area="outcomes"/><div className="workspace-head"><div><div className="section-kicker">PORTFOLIO INTELLIGENCE / 007</div><h2>Mission History</h2></div><span className="status-chip"><span className="pulse-dot" /> PORTFOLIO LIVE</span></div>
     {opportunityError && <div className="glass-card research-card"><p role="alert">{opportunityError}</p><Link className="secondary-button" to="/incidents">Review incidents →</Link></div>}
     {opportunityReceipt && <div className="glass-card research-card"><p className="receipt" role="status">{opportunityReceipt}</p>{selectedDraft && <Link className="primary-button" to="/mission">Continue to selected draft mission →</Link>}</div>}
     <div className="stats-strip compact"><div><strong>{portfolio?.totalMissions ?? 0}</strong><span>Missions</span></div><div><strong>{portfolio?.active ?? 0}</strong><span>Active</span></div><div><strong>{portfolio?.blocked ?? 0}</strong><span>Review</span></div><div><strong>{Math.round((portfolio?.completionRate ?? 0) * 100)}%</strong><span>Completion</span></div><div><strong>{portfolio?.recommendation?.toUpperCase() ?? '—'}</strong><span>Recommendation</span></div></div>

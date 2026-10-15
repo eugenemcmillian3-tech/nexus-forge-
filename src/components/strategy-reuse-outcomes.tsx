@@ -20,8 +20,8 @@ export function StrategyReuseOutcomes() {
   const [lessonId, setLessonId] = useState('')
   const [baselineMissionId, setBaselineMissionId] = useState('')
   const baselines = useQuery(api.verification.measurements, baselineMissionId ? { missionId: baselineMissionId as Id<'missions'> } : 'skip')
-  const productCandidates = useQuery(api.verification.productOutcomes, mode === 'product' && missionId ? { missionId, paginationOpts: { numItems: 20, cursor: null } } : 'skip')
-  const productBaselines = useQuery(api.verification.productOutcomes, mode === 'product' && baselineMissionId ? { missionId: baselineMissionId as Id<'missions'>, paginationOpts: { numItems: 20, cursor: null } } : 'skip')
+  const productCandidates = useQuery(api.verification.productOutcomesV2, mode === 'product' && missionId ? { missionId, paginationOpts: { numItems: 20, cursor: null } } : 'skip')
+  const productBaselines = useQuery(api.verification.productOutcomesV2, mode === 'product' && baselineMissionId ? { missionId: baselineMissionId as Id<'missions'>, paginationOpts: { numItems: 20, cursor: null } } : 'skip')
   const baselineRows = mode === 'product' ? productBaselines?.page : baselines
   const candidateRows = mode === 'product' ? productCandidates?.page : candidates
   const [baselineId, setBaselineId] = useState('')
