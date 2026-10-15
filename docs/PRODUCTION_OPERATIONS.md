@@ -32,7 +32,7 @@ No exposed connector capability performed this browser-only export/import drill.
 
 ## Rollback
 
-**Status: isolated and managed Testing module rehearsals completed; Live rollback not performed; platform UI restore blocked by an empty Version History panel.**
+**Status: isolated and managed Testing module rehearsals completed; whole-version restore remains unverified. Version History is empty, but completed run cards expose Restore previous version after the external editor claim ends. Its confirmation would remove later changes/chat entries; it was cancelled without restoring.** See [checkpoint restore preflight](evidence/rollback-checkpoint-preflight-20261015.md) for the prepared 12:14 AM candidate, preserved current source and exact remaining decision. Live was not rolled back.
 
 Recorded evidence (2026-10-14/15 UTC, see [operational evidence](evidence/operational-evidence-20261015.md)): restoring pre-accounting backend code (local commit 7102089, the state before the provider-accounting batch) onto a database with ledger rows deleted the providerInvocations indexes immediately — code rollback across the accounting boundary is not backward-compatible with ledger data. A compatible known version (150241c) was then restored, verified against restored data, and the current code returned and re-verified within about 2.5 minutes. Live was never rolled back. A code restore does not restore Live Convex code, tables or uploaded files.
 
