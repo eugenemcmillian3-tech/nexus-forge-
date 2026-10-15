@@ -9,6 +9,16 @@ beforeEach(() => {
   state.evidence = { status: 'uncertain', scope: 'council', context: null, lastReview: null, invocations: [], effectsTruncated: false, invocationsTruncated: false, evidenceToken: 'current-evidence', effectCount: 0, providerScope: 'unattributed-direct-or-missing-run' }
 })
 describe('execution evidence review', () => {
+  it('confirms only retained completion without authorizing new execution', async () => {
+    state.evidence = { ...state.evidence, completionBlock: null }
+    render(<ExecutionReview claimId={'claim-test' as Id<'executionClaims'>} />)
+    fireEvent.change(screen.getByLabelText('Recovery decision'), { target: { value: 'confirm-completion' } })
+    expect(screen.getByText(/does not start inference/)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Evidence reviewed and next investigation'), { target: { value: 'Verified saved final outcome and all eight durable answers.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm saved completion' }))
+    expect(await screen.findByText(/No inference or workflow advance was scheduled/)).toBeInTheDocument()
+    expect(state.record.mock.calls[0][0].decision).toBe('confirm-completion')
+  })
   it('offers a separate deliberate authorization only for proven unstarted work', async () => {
     state.evidence = { ...state.evidence, retryBlock: null }
     render(<ExecutionReview claimId={'claim-test' as Id<'executionClaims'>} />)

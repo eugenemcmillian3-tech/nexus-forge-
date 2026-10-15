@@ -24,6 +24,7 @@ import type * as auth from "../auth.js";
 import type * as benchmarkProvenance from "../benchmarkProvenance.js";
 import type * as benchmarks from "../benchmarks.js";
 import type * as claimedEffects from "../claimedEffects.js";
+import type * as completedCouncil from "../completedCouncil.js";
 import type * as councilMemoryCandidate from "../councilMemoryCandidate.js";
 import type * as councilMemoryModel from "../councilMemoryModel.js";
 import type * as delivery from "../delivery.js";
@@ -88,6 +89,7 @@ declare const fullApi: ApiFromModules<{
   benchmarkProvenance: typeof benchmarkProvenance;
   benchmarks: typeof benchmarks;
   claimedEffects: typeof claimedEffects;
+  completedCouncil: typeof completedCouncil;
   councilMemoryCandidate: typeof councilMemoryCandidate;
   councilMemoryModel: typeof councilMemoryModel;
   delivery: typeof delivery;

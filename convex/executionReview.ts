@@ -1,3 +1,4 @@
+import { completedCouncilOutcome } from './completedCouncil'
 import { unstartedRetryBlock } from './unstartedRetry'
 import { internal } from './_generated/api'
 import { v, ConvexError } from 'convex/values'
@@ -10,7 +11,7 @@ async function inspect(ctx: Pick<QueryCtx, 'db' | 'auth'>, claimId: Id<'executio
   const claim = await ctx.db.get('executionClaims', claimId)
   if (!claim) throw new ConvexError('Execution claim not found or access denied')
   const mission = await requireOwnedMission(ctx, claim.missionId)
-  const effects = await ctx.db.query('executionEffects').withIndex('by_claim', q => q.eq('claimId', claimId)).take(11)
+  const effects = await ctx.db.query('executionEffects').withIndex('by_claim', q => q.eq('claimId', claimId)).take(6)
   const snapshot = await ctx.db.query('executionEffects').withIndex('by_claimId_and_effectKey', q => q.eq('claimId', claimId).eq('effectKey', 'council-context:v1')).unique()
   const review = await ctx.db.query('executionEffects').withIndex('by_claimId_and_effectKey', q => q.eq('claimId', claimId).eq('effectKey', 'recovery-review:v1')).unique()
   const runId = claim.workKey.startsWith('runner:') ? ctx.db.normalizeId('missionRuns', claim.workKey.slice(7)) : null
@@ -23,10 +24,11 @@ async function inspect(ctx: Pick<QueryCtx, 'db' | 'auth'>, claimId: Id<'executio
     const result = await ctx.db.query('providerResults').withIndex('by_invocation', q => q.eq('invocationId', row._id)).unique()
     return { id: row._id, stage: row.stage, outcome: row.outcome, usageStatus: row.usageStatus, recoverable: row.outcome === 'succeeded' && !!result, reports: row.reports.length, finishedAt: row.finishedAt ?? null }
   }))
-  const effectsTruncated = effects.length > 10, invocationsTruncated = rows.length > 10
+  const effectsTruncated = effects.length > 5, invocationsTruncated = rows.length > 10
   // Token represents exactly the bounded evidence displayed, excluding review notes.
   // It is compared transactionally, not treated as authorization.
-  const evidenceToken = JSON.stringify([claim.status, snapshot?._id ?? null, runMatches ? run!.status : null, invocations, effects.slice(0, 10).filter(e => e.effectKey !== 'recovery-review:v1').map(e => e._id), effectsTruncated, invocationsTruncated])
+  const completionOutcome = await completedCouncilOutcome(ctx, claim)
+  const evidenceToken = JSON.stringify([claim.status, completionOutcome.proof ?? completionOutcome.block, snapshot?._id ?? null, runMatches ? run!.status : null, invocations, effects.slice(0, 5).filter(e => e.effectKey !== 'recovery-review:v1').map(e => e._id), effectsTruncated, invocationsTruncated])
   let context: string | null = null
   if (snapshot) {
     try {
@@ -39,20 +41,20 @@ async function inspect(ctx: Pick<QueryCtx, 'db' | 'auth'>, claimId: Id<'executio
     try { const saved = JSON.parse(review.payload); if (typeof saved.decision === 'string' && typeof saved.note === 'string' && typeof saved.recordedAt === 'number') lastReview = saved } catch { /* Legacy payload is unavailable. */ }
   }
   return { claim, review, context, lastReview, invocations, effectsTruncated, invocationsTruncated, evidenceToken,
-    retryBlock: await unstartedRetryBlock(ctx, claim), effectCount: Math.min(effects.length, 10), providerScope: runMatches ? 'runner-council' : 'unattributed-direct-or-missing-run' }
+    completionOutcome, completionBlock: completionOutcome.block, retryBlock: await unstartedRetryBlock(ctx, claim), effectCount: Math.min(effects.length, 5), providerScope: runMatches ? 'runner-council' : 'unattributed-direct-or-missing-run' }
 }
 const invocation = v.object({ id: v.id('providerInvocations'), stage: v.string(), outcome: v.string(), usageStatus: v.string(), recoverable: v.boolean(), reports: v.number(), finishedAt: v.union(v.number(), v.null()) })
 export const evidence = query({
   args: { claimId: v.id('executionClaims') },
-  returns: v.object({ retryBlock: v.union(v.string(), v.null()), status: v.string(), scope: v.string(), context: v.union(v.string(), v.null()), lastReview: v.union(v.null(), v.object({ decision: v.string(), note: v.string(), recordedAt: v.number() })), invocations: v.array(invocation), effectsTruncated: v.boolean(), invocationsTruncated: v.boolean(), evidenceToken: v.string(), effectCount: v.number(), providerScope: v.string() }),
+  returns: v.object({ completionBlock: v.union(v.string(), v.null()), retryBlock: v.union(v.string(), v.null()), status: v.string(), scope: v.string(), context: v.union(v.string(), v.null()), lastReview: v.union(v.null(), v.object({ decision: v.string(), note: v.string(), recordedAt: v.number() })), invocations: v.array(invocation), effectsTruncated: v.boolean(), invocationsTruncated: v.boolean(), evidenceToken: v.string(), effectCount: v.number(), providerScope: v.string() }),
   handler: async (ctx, args) => {
     const result = await inspect(ctx, args.claimId)
-    const { claim, review: _review, ...visible } = result
+    const { claim, review: _review, completionOutcome: _completion, ...visible } = result
     return { ...visible, status: claim.status, scope: claim.scope }
   },
 })
 export const record = mutation({
-  args: { claimId: v.id('executionClaims'), evidenceToken: v.string(), decision: v.union(v.literal('hold'), v.literal('escalate'), v.literal('retry-unstarted')), note: v.string() },
+  args: { claimId: v.id('executionClaims'), evidenceToken: v.string(), decision: v.union(v.literal('hold'), v.literal('escalate'), v.literal('retry-unstarted'), v.literal('confirm-completion')), note: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {
     const note = args.note.trim()
@@ -60,6 +62,13 @@ export const record = mutation({
     const result = await inspect(ctx, args.claimId)
     if (result.claim.status !== 'uncertain') throw new ConvexError('Only uncertain work can receive a recovery decision')
     if (result.evidenceToken !== args.evidenceToken) throw new ConvexError('Execution evidence changed. Review the current evidence before saving')
+    if (args.decision === 'confirm-completion') {
+      const outcome = result.completionOutcome
+      if (outcome.block || !outcome.result) throw new ConvexError(outcome.block ?? 'Council completion cannot be confirmed')
+      await ctx.db.patch(args.claimId, { status: 'complete', result: outcome.result })
+      await ctx.db.insert('auditEvents', { missionId: result.claim.missionId, eventType: 'execution-completion-reconciled', source: 'operator', message: 'Operator confirmed the retained final Council outcome; no inference or workflow advance was scheduled.', metadata: JSON.stringify({ claimId: args.claimId, note }), createdAt: Date.now() })
+      return null
+    }
     if (args.decision === 'retry-unstarted') {
       if (result.retryBlock) throw new ConvexError(result.retryBlock)
       const runId = ctx.db.normalizeId('missionRuns', result.claim.workKey.slice(7))!
