@@ -32,7 +32,7 @@ No exposed connector capability performed this browser-only export/import drill.
 
 ## Rollback
 
-**Status: isolated rehearsal completed; Live rollback not performed; platform UI restore still pending operator sign-in.**
+**Status: isolated and managed Testing module rehearsals completed; Live rollback not performed; platform UI restore blocked by an empty Version History panel.**
 
 Recorded evidence (2026-10-14/15 UTC, see [operational evidence](evidence/operational-evidence-20261015.md)): restoring pre-accounting backend code (local commit 7102089, the state before the provider-accounting batch) onto a database with ledger rows deleted the providerInvocations indexes immediately — code rollback across the accounting boundary is not backward-compatible with ledger data. A compatible known version (150241c) was then restored, verified against restored data, and the current code returned and re-verified within about 2.5 minutes. Live was never rolled back. A code restore does not restore Live Convex code, tables or uploaded files.
 
@@ -140,3 +140,14 @@ The existing Providers ledger now displays mission and role attribution and a pe
 - Before/after workload: missions 51 → 99, auditEvents 334 → 382, providerInvocations 1 → 1, deliveries 20 → 20. No inference or mission execution was requested. Restored the pre-drill Testing snapshot afterward; verified original counts returned.
 - The initial harness checked the mutation argument name action instead of persisted eventType, so its audit relationship assertion was invalid. After inspecting audit.ts, corrected the assertion to eventType=mission:mission_created and repeated the bounded drill; the metrics above are from the corrected run. No product audit defect was found.
 - PASS for this paced draft-write/read-back/audit workload. Provider inference, concurrent mission execution, billing and budget enforcement under inference, saturation, multi-owner/session load, agreed workload targets and storage capacity remain outside scope. Capacity remains PARTIAL; the read-only limitation is now narrowed to missing execution/inference and scale evidence.
+
+
+## Managed Testing accounting-module rollback — 2026-10-15T02:58:36Z
+
+- Platform UI inspected after authenticated sign-in: Version History reported 'No previous versions yet'. No UI restore was performed. This is a different blocker from the earlier sign-in restriction.
+- Starting Macaly source HEAD 4bc3e1c529f7010787475bfeab2fba67da83222b. Replaced only convex/providerUsage.ts with its exact content from local commit 150241c59a435dca5ebfbb7a2f026fe667b7ae13; git diff against that historical module was empty. Other source files and schema were not rolled back. This is not a whole-release rollback.
+- Exported Testing safety snapshot; verified target quick-rabbit-810. Managed deploy command accepted the historical candidate as public-contract backward-compatible and deployed to Testing. The historical module lacks the current active-call reservation guard, so no provider/inference work was exercised during the rehearsal.
+- Historical verification: unchanged counts for missions 51, research 29, artifacts 45, deliveries 20, missionRuns 15, auditEvents 334, providerInvocations 1; accepted mission approved/complete; indexed mission ledger retained its succeeded/recorded row and one report; owner-scoped ledger query returned it.
+- Restored exact current module bytes and deployed through the managed command again; contract remained backward-compatible. All checked data and ledger fields matched the pre-drill snapshot. Source diff from starting HEAD was empty before documentation updates. Eight provider-accounting regressions and strict types passed after returning to current.
+- Data verification window 02:57:17.908Z → 02:58:36.627Z, 78,720 ms including tool round trips, two deployments and verification; not a service RTO or total user-facing outage measure. No Live rollback or publish of the historical candidate occurred.
+- PASS for this module-scoped managed backend round trip. Whole-version platform UI restore, full-release rollback and Live recovery remain unverified; rollback gate stays PARTIAL. A GitHub/local source commit alone does not identify a recoverable platform version.
