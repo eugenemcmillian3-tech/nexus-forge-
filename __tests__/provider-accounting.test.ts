@@ -71,6 +71,38 @@ describe('durable provider invocation accounting', () => {
     expect(fetchMock).not.toHaveBeenCalled()
     expect((await owner.query(api.providerUsage.history, { paginationOpts: page })).page).toEqual([])
   })
+  it('rejects a duplicate while inference is active, then permits a later explicit invocation', async () => {
+    const { owner, ctx, args, fetchMock } = await fixture()
+    let release!: () => void
+    let entered!: () => void
+    const active = new Promise<void>(resolve => { entered = resolve })
+    const gate = new Promise<void>(resolve => { release = resolve })
+    fetchMock.mockImplementationOnce(async () => {
+      entered()
+      await gate
+      return new Response(JSON.stringify({ choices: [{ message: { content: 'First answer' } }] }), { status: 200 })
+    })
+    const first = callManagedAi(ctx, args)
+    await active
+    try {
+      await expect(callManagedAi(ctx, args)).rejects.toThrow(/No inference request was started/)
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect((await owner.query(api.providerUsage.history, { paginationOpts: page })).page).toHaveLength(1)
+    } finally { release() }
+    expect(await first).toBe('First answer')
+    expect(await callManagedAi(ctx, args)).toBe('Controlled answer')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+  it('keeps unresolved finalization reserved across runner retries', async () => {
+    const { t, owner, ctx, args, missionRunId, fetchMock } = await fixture()
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const fault = { runMutation: (ref: any, values: any) => getFunctionName(ref) === 'providerUsage:finish' ? Promise.reject(new Error('Interrupted finalization')) : ctx.runMutation(ref, values) }
+    await callManagedAi(fault, args)
+    await t.run(c => c.db.patch(missionRunId, { retries: 1 }))
+    await expect(callManagedAi(ctx, args)).rejects.toThrow(/No inference request was started/)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect((await owner.query(api.providerUsage.history, { paginationOpts: page })).page).toHaveLength(1)
+  })
   it('handles concurrent independent invocations without combining their receipts', async () => {
     const { owner, ctx, args, fetchMock } = await fixture()
     await Promise.all(Array.from({ length: 8 }, (_, i) => callManagedAi(ctx, { ...args, stage: 'concurrent-' + i })))
