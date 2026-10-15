@@ -3,6 +3,16 @@ import { action, internalAction, internalMutation, internalQuery, query } from "
 import { internal } from "./_generated/api"
 import { COUNCIL_MODELS } from "./aiProvider"
 import { callManagedAi } from "./providerAccounting"
+import { exclusiveWork } from "./exclusiveWork"
+import { getFunctionName } from "convex/server"
+import { assertClaim, claimEffect } from "./claimedEffects"
+
+async function settleWave<T>(jobs: Promise<T>[]): Promise<T[]> {
+  const results = await Promise.allSettled(jobs)
+  const failure = results.find(result => result.status === "rejected")
+  if (failure?.status === "rejected") throw failure.reason
+  return results.map(result => (result as PromiseFulfilledResult<T>).value)
+}
 import type { Id } from "./_generated/dataModel"
 import { requireOwnedMission } from "./permissions"
 
@@ -17,10 +27,10 @@ async function askCouncil(prompt: string, maxTokens = 700, model: keyof typeof C
 export const listRuns = query({ args: { missionId: v.id("missions") }, returns: v.array(agentShape), handler: async (ctx, args) => { await requireOwnedMission(ctx, args.missionId); return await ctx.db.query("agentRuns").withIndex("by_mission", q => q.eq("missionId", args.missionId)).collect() } })
 export const getRuns = internalQuery({ args: { missionId: v.id("missions") }, returns: v.array(agentShape), handler: async (ctx, args) => ctx.db.query("agentRuns").withIndex("by_mission", q => q.eq("missionId", args.missionId)).collect() })
 export const createRuns = internalMutation({ args: { missionId: v.id("missions") }, returns: v.null(), handler: async (ctx, args) => { const existing = await ctx.db.query("agentRuns").withIndex("by_mission", q => q.eq("missionId", args.missionId)).collect(); const existingAgents = new Set(existing.map(run => run.agent)); for (const [agent, role] of agents) if (!existingAgents.has(agent)) await ctx.db.insert("agentRuns", { missionId: args.missionId, agent, role, status: "queued", progress: 0, note: "Queued for orchestration." }); return null } })
-export const updateRun = internalMutation({ args: { missionId: v.id("missions"), agent: v.string(), status: v.string(), progress: v.number(), note: v.string() }, returns: v.null(), handler: async (ctx, args) => { const run = await ctx.db.query("agentRuns").withIndex("by_mission", q => q.eq("missionId", args.missionId)).filter(q => q.eq(q.field("agent"), args.agent)).first(); if (!run) throw new Error(`Agent run not found: ${args.agent}`); await ctx.db.patch(run._id, { status: args.status, progress: Math.max(0, Math.min(100, args.progress)), note: args.note }); return null } })
-export const recordAgentEvidence = internalMutation({ args: { missionId: v.id("missions"), agent: v.string(), message: v.string(), score: v.number(), severity: v.string() }, returns: v.null(), handler: async (ctx, args) => { await ctx.db.insert("evidence", { ...args, score: Math.max(0, Math.min(1, args.score)) }); return null } })
-export const recordCouncilResult = internalMutation({ args: { missionId: v.id("missions"), summary: v.string() }, returns: v.null(), handler: async (ctx, args) => { await ctx.db.insert("evidence", { missionId: args.missionId, agent: "Council Planner", message: args.summary, score: 0.9, severity: "verified" }); await ctx.db.patch(args.missionId, { status: "review", completion: 40 }); return null } })
-export const recordLearningLesson = internalMutation({ args: { missionId: v.id("missions"), lesson: v.string(), confidence: v.number() }, returns: v.null(), handler: async (ctx, args) => { const mission = await ctx.db.get(args.missionId); if (!mission) throw new Error("Mission not found"); await ctx.db.insert("memories", { ownerKey: mission.ownerKey, missionId: mission._id, category: "learning-lesson", key: `council:${Date.now()}`, value: args.lesson.trim(), confidence: Math.max(0, Math.min(1, args.confidence)), source: "council-learning" }); return null } })
+export const updateRun = internalMutation({ args: { missionId: v.id("missions"), agent: v.string(), status: v.string(), progress: v.number(), note: v.string(), executionClaimId: v.optional(v.id("executionClaims")) }, returns: v.null(), handler: async (ctx, args) => { await assertClaim(ctx, args.executionClaimId, args.missionId); const run = await ctx.db.query("agentRuns").withIndex("by_mission", q => q.eq("missionId", args.missionId)).filter(q => q.eq(q.field("agent"), args.agent)).first(); if (!run) throw new Error(`Agent run not found: ${args.agent}`); await ctx.db.patch(run._id, { status: args.status, progress: Math.max(0, Math.min(100, args.progress)), note: args.note }); return null } })
+export const recordAgentEvidence = internalMutation({ args: { missionId: v.id("missions"), agent: v.string(), message: v.string(), score: v.number(), severity: v.string(), executionClaimId: v.optional(v.id("executionClaims")), effectKey: v.optional(v.string()) }, returns: v.null(), handler: async (ctx, args) => { const { executionClaimId, effectKey, ...fields } = args; if (!await claimEffect(ctx, executionClaimId, args.missionId, "evidence:" + args.agent + ":" + (effectKey ?? args.severity), fields)) return null; await ctx.db.insert("evidence", { ...fields, score: Math.max(0, Math.min(1, args.score)) }); return null } })
+export const recordCouncilResult = internalMutation({ args: { missionId: v.id("missions"), summary: v.string(), executionClaimId: v.optional(v.id("executionClaims")) }, returns: v.null(), handler: async (ctx, args) => { if (!await claimEffect(ctx, args.executionClaimId, args.missionId, "council-result", { summary: args.summary })) return null; await ctx.db.insert("evidence", { missionId: args.missionId, agent: "Council Planner", message: args.summary, score: 0.9, severity: "verified" }); await ctx.db.patch(args.missionId, { status: "review", completion: 40 }); return null } })
+export const recordLearningLesson = internalMutation({ args: { missionId: v.id("missions"), lesson: v.string(), confidence: v.number(), executionClaimId: v.optional(v.id("executionClaims")) }, returns: v.null(), handler: async (ctx, args) => { if (!await claimEffect(ctx, args.executionClaimId, args.missionId, "learning-lesson", { lesson: args.lesson, confidence: args.confidence })) return null; const mission = await ctx.db.get(args.missionId); if (!mission) throw new Error("Mission not found"); await ctx.db.insert("memories", { ownerKey: mission.ownerKey, missionId: mission._id, category: "learning-lesson", key: `council:${Date.now()}`, value: args.lesson.trim(), confidence: Math.max(0, Math.min(1, args.confidence)), source: "council-learning" }); return null } })
 
 export const orchestrate = action({ args: { missionId: v.id("missions"), mission: v.string() }, returns: v.object({ ok: v.boolean(), summary: v.string() }), handler: async (ctx, args) => { const operator = await ctx.runQuery(internal.permissions.currentOperator, {}); if (!operator) throw new Error("Authenticated operator session required"); const missionRecord = await ctx.runQuery(internal.missions.getByIdInternal, { id: args.missionId }); if (!missionRecord || missionRecord.ownerKey !== operator) throw new Error("Mission not found or access denied"); return await ctx.runAction(internal.forge.orchestrateInternal, { missionId: args.missionId, mission: missionRecord.mission }) } })
 
@@ -46,6 +56,10 @@ export const orchestrateInternal = internalAction({
     if (!missionRecord) throw new Error("Mission not found")
     if (!missionRecord.approved) throw new Error("Human mission approval is required before council execution")
     if (missionRecord.status === "complete") throw new Error("Mission is already complete")
+    const actionCtx = ctx
+    return (await exclusiveWork<{ ok: boolean; summary: string }>(actionCtx, { missionId: args.missionId, scope: "council", workKey: args.missionRunId ? `runner:${args.missionRunId}` : `direct:${crypto.randomUUID()}`, retain: !!args.missionRunId }, async executionClaimId => {
+    const guarded = new Set(["forge:updateRun", "forge:recordAgentEvidence", "forge:recordCouncilResult", "forge:recordLearningLesson"])
+    const ctx: typeof actionCtx = { ...actionCtx, runMutation: ((ref: any, values: any) => actionCtx.runMutation(ref, guarded.has(getFunctionName(ref)) ? { ...values, executionClaimId } : values)) as typeof actionCtx.runMutation }
     await ctx.runMutation(internal.forge.createRuns, { missionId: args.missionId })
     try {
       const synthesis = await ctx.runQuery(internal.memory.getMissionSynthesis, { missionId: args.missionId })
@@ -69,18 +83,18 @@ CITATIONS: ${row.citations.join(", ") || "none"}`).join("\n\n")}${synthesis ? `\
       await ctx.runMutation(internal.memory.markCouncilPlannerResponded, { receiptId: memoryReceiptId })
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Council Planner", message: `Model ${COUNCIL_MODELS.planner}\n${planner}`, score: 0.9, severity: "verified" })
       const common = `Mission:\n${args.mission}\n\n${researchContext}\n\n${learningContext}\n\n${preflightContext}\n\nCouncil Plan:\n${planner}`
-      const wave1 = await Promise.all([
+      const wave1 = await settleWave([
         runAgent(ctx, args.missionId, missionRecord.ownerKey, "Vision Architect", "Mission mapping", `You are the Vision Architect. Wave 1 independent analysis. Define objective decomposition, measurable acceptance criteria, and decision boundaries. Do not assume findings from other agents. ${common}`, "wave1", args.missionRunId),
         runAgent(ctx, args.missionId, missionRecord.ownerKey, "Research Oracle", "Evidence & market", `You are the Research Oracle. Wave 1 independent analysis. Identify evidence needs, research gaps, and source-verification requirements. Do not invent sources. ${common}`, "wave1", args.missionRunId),
         runAgent(ctx, args.missionId, missionRecord.ownerKey, "Systems Engineer", "Architecture", `You are the Systems Engineer. Wave 1 independent analysis. Define architecture, dependencies, interfaces, and technical risks. ${common}`, "wave1", args.missionRunId),
       ])
-      await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Coordinator", message: `Wave 1 completed. Independent outputs are now available for downstream handoff.\n${wave1.map(x => `${x.agent}: ${x.finding}`).join("\n\n")}`, score: wave1.every(x => x.ok) ? 0.9 : 0.55, severity: wave1.every(x => x.ok) ? "verified" : "warning" })
+      await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Coordinator", effectKey: "wave1", message: `Wave 1 completed. Independent outputs are now available for downstream handoff.\n${wave1.map(x => `${x.agent}: ${x.finding}`).join("\n\n")}`, score: wave1.every(x => x.ok) ? 0.9 : 0.55, severity: wave1.every(x => x.ok) ? "verified" : "warning" })
       const wave1Context = wave1.map(x => `${x.agent}: ${x.finding}`).join("\n\n")
-      const wave2 = await Promise.all([
+      const wave2 = await settleWave([
         runAgent(ctx, args.missionId, missionRecord.ownerKey, "Builder Agent", "Code & tests", `You are the Builder Agent. Wave 2 downstream handoff. Use Wave 1 outputs to define implementation, test strategy, and artifact requirements. Flag contradictions rather than silently resolving them. ${common}\n\nWAVE 1 HANDOFF:\n${wave1Context}`, "wave2", args.missionRunId),
         runAgent(ctx, args.missionId, missionRecord.ownerKey, "Creative Director", "Brand & media", `You are the Creative Director. Wave 2 downstream handoff. Use Wave 1 outputs to define UX/content requirements and consistency checks. Flag contradictions. ${common}\n\nWAVE 1 HANDOFF:\n${wave1Context}`, "wave2", args.missionRunId),
       ])
-      await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Coordinator", message: `Wave 2 completed. Builder and Creative Director consumed Wave 1 handoffs.\n${wave2.map(x => `${x.agent}: ${x.finding}`).join("\n\n")}`, score: wave2.every(x => x.ok) ? 0.9 : 0.55, severity: wave2.every(x => x.ok) ? "verified" : "warning" })
+      await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Coordinator", effectKey: "wave2", message: `Wave 2 completed. Builder and Creative Director consumed Wave 1 handoffs.\n${wave2.map(x => `${x.agent}: ${x.finding}`).join("\n\n")}`, score: wave2.every(x => x.ok) ? 0.9 : 0.55, severity: wave2.every(x => x.ok) ? "verified" : "warning" })
       const wave2Context = wave2.map(x => `${x.agent}: ${x.finding}`).join("\n\n")
       const specialistWavesSucceeded = [...wave1, ...wave2].every(x => x.ok)
       await ctx.runMutation(internal.forge.updateRun, { missionId: args.missionId, agent: "Critic Agent", status: "running", progress: 60, note: `Reconciling coordinated waves with ${COUNCIL_MODELS.critic}.` })
@@ -141,5 +155,6 @@ ${decision}`
       for (const run of runs.filter(x => x.status === "queued" || x.status === "running")) await ctx.runMutation(internal.forge.updateRun, { missionId: args.missionId, agent: run.agent, status: "blocked", progress: 100, note: `Blocked by orchestration failure: ${message}` })
       throw error
     }
+    }))!
   },
 })

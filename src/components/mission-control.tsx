@@ -21,6 +21,7 @@ export function MissionControl({
     api.artifacts.list,
     missionId ? { missionId } : "skip",
   );
+  const executionClaims = useQuery(api.executionClaims.unresolved, missionId ? { missionId } : "skip");
   const regenerateArtifact = useAction(api.artifacts.generate);
   const verifyArtifact = useMutation(api.artifacts.verify);
   const latestArtifact = artifacts?.[0];
@@ -240,6 +241,12 @@ export function MissionControl({
       </div>
       {actionError && <div className="glass-card research-card"><p role="alert">{actionError}</p><div className="hero-actions"><Link className="secondary-button" to="/incidents">Review incidents →</Link><Link className="secondary-button" to="/delivery">Review delivery evidence →</Link><Link className="secondary-button" to="/mission">Review mission →</Link></div></div>}
       {receipt && <p className="receipt" role="status">{receipt}</p>}
+      {!!executionClaims?.length && <div className="glass-card research-card">
+        <div className="panel-title"><span>EXECUTION RECOVERY</span><span className="status-chip">WORK RESERVED</span></div>
+        {executionClaims.map(claim => <p key={claim.id} role="status">{claim.scope === "council" ? "AI Council" : "Mission runner"} · {claim.status === "uncertain" ? "Interrupted or unconfirmed work requires review." : "Work is active or awaiting completion confirmation."} Reference: {claim.id}</p>)}
+        <p>Duplicate execution is paused. Check provider records and saved outcomes before retrying. Reservations do not expire automatically; a running reservation alone does not prove a failure.</p>
+        <Link className="secondary-button" to="/incidents">Review recovery evidence →</Link>
+      </div>}
       {providerHealth && (
         <div className="glass-card research-card">
           <div className="panel-title"><span>AI PROVIDER HEALTH</span><span className="live-pill">● LIVE</span></div>

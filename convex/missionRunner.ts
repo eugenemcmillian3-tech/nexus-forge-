@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { requireOperator, requireOwnedMission } from "./permissions";
 import { directStartBlock, missionIsAlreadyComplete } from "./incidentSafety";
+import { exclusiveWork } from "./exclusiveWork";
 
 const WINDOW = 20 * 60 * 1000;
 const RETRIES = 2;
@@ -68,8 +69,11 @@ export const tick: any = (action as any)({
 });
 
 export const tickInternal: any = (internalAction as any)({
-  args: { runId: v.id("missionRuns") }, returns: v.null(),
+  args: { runId: v.id("missionRuns"), contentionRetry: v.optional(v.number()) }, returns: v.null(),
   handler: async (c, a) => {
+    const identity = await c.runQuery((internal as any).missionRunner.getInternal, { runId: a.runId });
+    if (!identity) return null;
+    return await exclusiveWork(c, { missionId: identity.missionId, scope: "tick", workKey: crypto.randomUUID(), retain: false, skipBusy: true, onBusy: async () => { const retry = a.contentionRetry ?? 0; if (Number.isInteger(retry) && retry >= 0 && retry < 3) await c.scheduler.runAfter(1000, (internal as any).missionRunner.tickInternal, { runId: a.runId, contentionRetry: retry + 1 }); } }, async () => {
     const r = await c.runQuery((internal as any).missionRunner.getInternal, { runId: a.runId });
     if (!r || r.status === "complete" || r.status === "blocked") return null;
     const m = await c.runQuery((internal as any).missions.getByIdInternal, { id: r.missionId });
@@ -101,6 +105,16 @@ export const tickInternal: any = (internalAction as any)({
       const rejectedArtifact = latestArtifact?.status === "rejected" ? latestArtifact : null;
       const deliveryForReady = ready ? ds.find((x: any) => x.artifactId === ready._id) : null;
       const approved = deliveryForReady?.approved ? deliveryForReady : null;
+      const councilState = await c.runQuery((internal as any).executionClaims.councilState, { missionId: r.missionId, runId: r._id });
+      if (councilState === "uncertain") {
+        await c.runMutation((internal as any).missionRunner.setState, { runId: a.runId, status: "paused", currentStage: "execution_recovery", nextActionAt: now, lastError: "Council execution is unconfirmed; review its reservation and saved outcomes before continuing." });
+        return null;
+      }
+      if (councilState === "running") {
+        await c.runMutation((internal as any).missionRunner.setState, { runId: a.runId, status: "running", currentStage: "agent_coordination", nextActionAt: now + 3000, lastError: "Waiting for the final Council outcome to be persisted." });
+        await c.scheduler.runAfter(3000, (internal as any).missionRunner.tickInternal, { runId: a.runId });
+        return null;
+      }
       const coordinationStarted = runs.length > 0 && runs.some((x: any) => x.status !== "queued");
       const coordinationDone = runs.length >= 6 && runs.every((x: any) => x.status === "complete" || x.status === "blocked");
       if (runs.length === 0 && ["intent", "artifact_verification_failed", "awaiting_artifact_approval", "awaiting_mission_approval"].includes(r.currentStage)) {
@@ -179,6 +193,7 @@ export const tickInternal: any = (internalAction as any)({
       if (!escalated) await c.scheduler.runAfter(3000, (internal as any).missionRunner.tickInternal, { runId: a.runId });
     }
     return null;
+    });
   },
 });
 

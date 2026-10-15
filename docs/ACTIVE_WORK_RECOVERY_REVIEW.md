@@ -13,6 +13,12 @@ Review date: 2026-10-15 UTC. Scope: source inspection of convex/missionRunner.ts
 
 The findings below describe the reviewed pre-fix boundaries. The first two are narrowed by this provider-stage batch; the execution-wide findings remain open.
 
+## Implemented Council/tick claim batch — 2026-10-15 UTC
+
+See [execution-claims acceptance evidence](evidence/execution-claims-20261015.md). Council passes and ticks now acquire transactional non-expiring claims; delayed runner Council requests reuse the saved whole-pass outcome. Council evidence, final summaries and lessons have atomic effect receipts; stale/terminal-runner writes are rejected. Tick handoff waits for the final Council result, uncertain work pauses for review, and Mission Control displays unresolved reservations. All 389 tests / 64 files passed, including the actual Council action with controlled provider calls. Testing deployment is backward-compatible.
+
+The execution-wide source findings below are now narrowed by this batch. Remaining work is managed interruption evidence, stable context snapshots, explicit reviewed recovery controls and retention policy; no exactly-once external execution guarantee is made.
+
 ## Findings
 
 | Priority | Boundary | Finding | Consequence |
