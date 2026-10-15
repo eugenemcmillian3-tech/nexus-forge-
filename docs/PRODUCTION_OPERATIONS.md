@@ -99,3 +99,13 @@ Scope: bounded persisted-state interruption and sequential tick replay on Testin
 - Whole-Testing counts before and after replay: providerInvocations 1 → 1, deliveries 20 → 20, incidents 5 → 5. No new provider execution, delivery row, or incident was created. The batch including safety export and verification took 12,431 ms; this is not a service RTO.
 - Returned Testing to its pre-drill snapshot and verified the historical runner returned to blocked, with the same ledger/delivery/incident counts. Snapshot files are temporary drill materials, not durable backups.
 - PASS for completed-outcome reconciliation and sequential replay side-effect invariants. Broader recovery gate remains PARTIAL: successful-provider interruption, concurrent replay, and managed-host failure/recovery are not demonstrated. Managed rollback, cloud workload, asset backup and billing evidence remain open; full release HOLD remains.
+
+
+## Managed Testing concurrent reconciliation — 2026-10-15T02:28:56Z
+
+- Target: Testing quick-rabbit-810, mission k97ffpysbj8p230v72yw9rh3m98fnchc and runner m179896f39pgrakmdaszvt8e0n8fm1jq. Production remained on tame-rat-826.
+- Exported a safety snapshot, then used the existing internal state mutation to simulate a stale paused / agent_coordination runner for the already-complete mission. Issued four concurrent CLI tick requests; all four succeeded (client durations 2,286–2,515 ms; batch including final query 3,887 ms). These are overlapping client requests, not traced proof that every backend handler overlapped at each stage.
+- Runner reconciled to complete / complete, retries 0. Whole-Testing counts stayed providerInvocations 1, deliveries 20, incidents 5: zero new rows in all three categories.
+- Restored the pre-drill snapshot and verified original blocked / timeout_escalation runner state and unchanged counts.
+- PASS for four-client concurrent completed-outcome reconciliation. No active provider call, artifact generation, or delivery execution was exercised. This does not establish exactly-once execution or active-work concurrency safety. Source review shows multi-step runner/Council actions that require an active-work claim/idempotency review before a concurrent inference drill; do not mark the wider recovery gate complete from this result.
+- Next engineering priority: review atomic claiming/fencing of active work and its provider-call recovery boundary, then verify with bounded Testing evidence. Managed-host interruption, managed rollback, sustained cloud capacity, original-asset backup and billing reconciliation remain open. Release HOLD remains.
