@@ -14,7 +14,7 @@ When a probe fails: inspect its bounded report, check Macaly deployment status a
 
 ## Backup and restore
 
-**Status: snapshot export and isolated restore demonstrated; Managed Testing restore, uploaded-asset coverage and RPO/RTO remain open.**
+**Status: snapshot export, isolated local restore and Managed Testing table restore demonstrated; uploaded-asset coverage, durable retention and RPO/RTO remain open.**
 
 Recorded evidence (2026-10-14/15 UTC, see [operational evidence](evidence/operational-evidence-20261015.md)): Live snapshot export in 3 seconds (1,532,578 bytes, SHA-256 b111058d…92ae3e) with 1,971 documents across 34 tables and 0 Convex files; isolated restore into a fresh local backend in 2.8 seconds with record, ownership and delivery/workflow verification passing. Limitations: the restore target was an isolated local Convex backend because Managed Testing selection was unavailable; uploaded assets outside Convex need a separate backup path; retention, RPO and RTO are not yet agreed.
 
@@ -73,6 +73,16 @@ Connector inventory returned one media asset and no further page: asset ID `vbul
 
 Before closing asset recovery: obtain the original through a supported Macaly export/download path, store it in approved private backup storage, record its actual byte count and SHA-256, restore it to an isolated destination and verify the restored bytes and rendered asset. If only a transformed derivative is available, label it as a derivative and keep original-file recovery open. Do not copy media into source/public or commit production snapshots to GitHub.
 
-Managed Testing creation/selection is not exposed by the current connector or its database/environment guide catalog. Both sandbox and published project currently report Live / tame-rat-826. Do not treat the preview frontend as database isolation. The remaining prerequisite is a platform-created Testing deployment with a different identity, selected through the supported Macaly controls. Verify both identities before any import or recovery experiment.
+Managed Testing creation/selection is not exposed by the connector, but the authorized browser fallback completed it on 2026-10-15 UTC using Database → Add testing mode. Verified platform identities: sandbox Testing / quick-rabbit-810; publish Live / tame-rat-826. Managed Testing snapshot restore now has evidence below. Continue to verify both identities before every import or recovery experiment; preview alone is not proof of isolation.
+## Managed Testing restore evidence — 2026-10-15 UTC
+
+- Created and selected Testing through the supported Macaly UI. get_project independently confirmed Testing quick-rabbit-810 and Live tame-rat-826; production remained READY.
+- Saved a pre-drill Testing snapshot with file-storage inclusion (2,113 ms), then imported the previously recorded Live snapshot only into identity-guarded Testing (10,163 ms). Snapshot SHA-256: b111058d56bbed44716c2b16d50a33aa4e834318f022d7f6601f17bdf492ae3e.
+- Verified exact counts across all 34 user/auth tables: 1,971 documents, zero count mismatches. Accepted LocalBoost mission k97511n9ds6vq0g5vkym5p2pjd8g756v remained approved/complete; owner query succeeded; related records: 2 research, 2 artifacts, 1 delivery.
+- Foreign-user query returned a generic Server Error at the CLI. Subsequent Testing deployment logs independently showed `Uncaught ConvexError: Mission not found or access denied` from requireOwnedMission for both probes (01:54:51Z and 01:55:08Z). Managed ownership denial is therefore confirmed by backend evidence.
+- Restored the pre-drill Testing snapshot (9,796 ms); verified 51 missions, 29 research rows and 1 provider invocation. The older snapshot had 28 research rows and no provider invocations, as expected from its earlier capture time.
+- No provider execution, external dispatch, production import, or code rollback was invoked. Temporary sandbox ZIPs are drill materials, not durable private backup storage.
+- Managed table restore is demonstrated. External original-asset recovery, durable backup retention, agreed RPO/RTO, managed code rollback, controlled cloud recovery, cloud load and provider billing reconciliation remain open. Full release HOLD remains.
+
 
 Recovery policy decisions remain unapproved: private storage destination, backup frequency, retention, maximum acceptable data loss (RPO) and full service recovery time (RTO). Drill durations already recorded are observations, not agreed objectives. Record these decisions and an actual private backup/restore receipt before marking backup coverage complete.
