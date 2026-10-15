@@ -19,8 +19,7 @@ export const begin = internalMutation({
       // cannot both reserve the same active runner stage. Never expire an
       // unresolved reservation automatically: inference may already have run.
       const active = await ctx.db.query('providerInvocations')
-        .withIndex('by_mission', q => q.eq('missionId', args.missionId))
-        .filter(q => q.and(q.eq(q.field('missionRunId'), args.missionRunId), q.eq(q.field('stage'), args.stage), q.eq(q.field('role'), args.role), q.eq(q.field('outcome'), 'pending')))
+        .withIndex('by_missionRunId_and_stage_and_role_and_outcome', q => q.eq('missionRunId', args.missionRunId).eq('stage', args.stage).eq('role', args.role).eq('outcome', 'pending'))
         .first()
       if (active) throw new Error('Provider work is already pending for this run stage; review its invocation before retrying')
     }

@@ -14,11 +14,10 @@ export const reserve = internalMutation({
     if (args.missionRunId) {
       const run = await ctx.db.get(args.missionRunId)
       if (!args.missionId || !run || run.missionId !== args.missionId) throw new Error('Run does not match this mission')
-      // Read every matching row, including legacy invocations. An unresolved row
-      // must never be hidden by a later success. One transaction serializes admission.
+      // Two rows suffice to reject ambiguity, including legacy invocations.
+      // Never select a success while hiding another unresolved matching row.
       const prior = await ctx.db.query('providerInvocations')
-        .withIndex('by_mission', q => q.eq('missionId', args.missionId))
-        .filter(q => q.and(q.eq(q.field('missionRunId'), args.missionRunId), q.eq(q.field('stage'), args.stage), q.eq(q.field('role'), args.role))).collect()
+        .withIndex('by_missionRunId_and_stage_and_role_and_outcome', q => q.eq('missionRunId', args.missionRunId).eq('stage', args.stage).eq('role', args.role)).take(2)
       if (prior.length) {
         if (prior.length !== 1 || prior[0].outcome !== 'succeeded') throw new Error('Runner provider work is pending, failed or ambiguous; review before starting a new run')
         const row = prior[0]

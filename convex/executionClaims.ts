@@ -6,7 +6,7 @@ export const councilState = internalQuery({
   args: { missionId: v.id('missions'), runId: v.id('missionRuns') },
   returns: v.union(v.null(), v.union(v.literal('running'), v.literal('uncertain'), v.literal('complete'))),
   handler: async (ctx, args) => {
-    const claim = await ctx.db.query('executionClaims').withIndex('by_mission', q => q.eq('missionId', args.missionId)).filter(q => q.and(q.eq(q.field('scope'), 'council'), q.eq(q.field('workKey'), 'runner:' + args.runId))).unique()
+    const claim = await ctx.db.query('executionClaims').withIndex('by_missionId_and_scope_and_workKey', q => q.eq('missionId', args.missionId).eq('scope', 'council').eq('workKey', 'runner:' + args.runId)).unique()
     return claim?.status ?? null
   },
 })
@@ -15,7 +15,11 @@ export const unresolved = query({
   returns: v.array(v.object({ id: v.id('executionClaims'), scope: v.string(), status: v.string(), createdAt: v.number() })),
   handler: async (ctx, args) => {
     await requireOwnedMission(ctx, args.missionId)
-    const rows = await ctx.db.query('executionClaims').withIndex('by_mission', q => q.eq('missionId', args.missionId)).filter(q => q.neq(q.field('status'), 'complete')).collect()
+    const groups = await Promise.all((['running', 'uncertain'] as const).map(status => ctx.db.query('executionClaims').withIndex('by_missionId_and_status', q => q.eq('missionId', args.missionId).eq('status', status)).take(101)))
+    // Normal writers allow one active claim per scope. Fail visibly on corrupt
+    // legacy state rather than silently omitting recovery locks.
+    if (groups.some(rows => rows.length > 100)) throw new Error('Too many unresolved claims; operator review required')
+    const rows = groups.flat().sort((a, b) => a._creationTime - b._creationTime)
     return rows.map(row => ({ id: row._id, scope: row.scope, status: row.status, createdAt: row.createdAt }))
   },
 })
@@ -26,11 +30,13 @@ export const acquire = internalMutation({
     if (!args.workKey || args.workKey.length > 256) throw new Error('Invalid execution identity')
     const mission = await ctx.db.get(args.missionId)
     if (!mission) throw new Error('Mission not found')
-    const rows = await ctx.db.query('executionClaims').withIndex('by_mission', q => q.eq('missionId', args.missionId)).filter(q => q.eq(q.field('scope'), args.scope)).collect()
+    // Exact status ranges keep old completed claims out of admission reads.
     // Never time out or steal a claim: the previous worker may still be executing.
-    if (rows.some(row => row.status === 'uncertain')) return { acquired: false, busy: 'uncertain' as const }
-    if (rows.some(row => row.status === 'running')) return { acquired: false, busy: 'running' as const }
-    const complete = rows.find(row => row.workKey === args.workKey && row.status === 'complete')
+    const uncertain = await ctx.db.query('executionClaims').withIndex('by_missionId_and_scope_and_status', q => q.eq('missionId', args.missionId).eq('scope', args.scope).eq('status', 'uncertain')).first()
+    if (uncertain) return { acquired: false, busy: 'uncertain' as const }
+    const running = await ctx.db.query('executionClaims').withIndex('by_missionId_and_scope_and_status', q => q.eq('missionId', args.missionId).eq('scope', args.scope).eq('status', 'running')).first()
+    if (running) return { acquired: false, busy: 'running' as const }
+    const complete = await ctx.db.query('executionClaims').withIndex('by_missionId_and_scope_and_workKey', q => q.eq('missionId', args.missionId).eq('scope', args.scope).eq('workKey', args.workKey)).unique()
     if (complete) return { acquired: false, result: complete.result }
     const claimId = await ctx.db.insert('executionClaims', { ...args, status: 'running', createdAt: Date.now() })
     return { acquired: true, claimId }

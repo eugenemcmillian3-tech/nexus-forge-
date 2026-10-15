@@ -18,7 +18,7 @@ export async function claimEffect(ctx: MutationCtx, claimId: Id<'executionClaims
   const payload = JSON.stringify(value)
   const claim = await ctx.db.get(claimId)
   if (!claim || claim.missionId !== missionId || claim.scope !== 'council') throw new Error('Council execution claim does not match mission')
-  const existing = await ctx.db.query('executionEffects').withIndex('by_claim', q => q.eq('claimId', claimId)).filter(q => q.eq(q.field('effectKey'), effectKey)).unique()
+  const existing = await ctx.db.query('executionEffects').withIndex('by_claimId_and_effectKey', q => q.eq('claimId', claimId).eq('effectKey', effectKey)).unique()
   if (existing) {
     if (existing.payload !== payload) throw new Error('Conflicting execution effect')
     return false
