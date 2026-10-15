@@ -123,3 +123,11 @@ Scope: bounded persisted-state interruption and sequential tick replay on Testin
 ## Operator visibility for unresolved provider work — 2026-10-15 UTC
 
 The existing Providers ledger now displays mission and role attribution and a per-record explanation for pending work. Runner-linked pending invocations explain that the runner/stage/role reservation blocks overlapping inference; direct invocations explicitly have no runner reservation. Both explain that pending does not prove failure, and that the provider response and mission state must be checked before retrying. No reset, inferred finalization, reservation expiry, or replay action was added. Ledger rendering tests (3) and strict validation passed. This improves recovery visibility without closing provider-interruption or exactly-once recovery evidence gaps.
+
+
+## Managed Testing cloud read workload — 2026-10-15T02:44:33Z
+
+- Deployment quick-rabbit-810, distinct from Live tame-rat-826. Four workers for 60,070 ms, each paced 500 ms after requests; five owner-scoped paths: mission ledger, owner ledger, mission list, portfolio decision snapshot, runner state.
+- 448 requests, 448 succeeded, 0 failures, 0 observed throttling. Overall p50 33 ms, p95 38 ms, max 143 ms. Post-load portfolio recovery probe 36 ms. Per-path p95: mission ledger 42 ms, owner ledger 38 ms, mission list 53 ms, portfolio 39 ms, runner state 35 ms.
+- Identity: managed administrative impersonation of an existing owner. This exercises owner-scoped reads, not sign-in/session-validation throughput. No inference, writes or delivery execution were invoked. Before/after counts unchanged: missions 51, deliveries 20, providerInvocations 1.
+- PASS for the observed bounded workload only. No expected production traffic profile, agreed SLA, saturation capacity, write/provider workload, budget/rate-limit boundary or storage-capacity certification was established. The capacity gate remains PARTIAL. Follow-up replaces the previous local-only limitation, not all capacity exit criteria.
