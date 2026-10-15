@@ -49,3 +49,8 @@ The follow-up implementation closes code-side attribution and persistence-gap vi
 ### Managed rollback follow-up — 2026-10-15 UTC
 
 Accounting-module rollback and return succeeded through managed Testing deploys, with compatible contracts, preserved checked records/ledger and exact source return (78.7-second data-verification window). See the operations runbook. The platform UI Version History reports 'No previous versions yet'; whole-version restore and Live/full-release recovery remain unverified. Keep rollback PARTIAL; operator sign-in is no longer the current blocker.
+
+
+### Media backup follow-up — 2026-10-15 UTC
+
+The one current design asset was downloaded through Macaly's supported Download control as a PNG matching the declared 1,191,209 bytes, retained privately, retrieved separately, byte/hash compared and rendered successfully. Both Production and Development App user uploads inventories were empty. See the operations runbook for the digest and scope. Durable database backup storage, recurring backup/retention policy, future upload coverage and agreed RPO/RTO remain open; backup stays PARTIAL.
