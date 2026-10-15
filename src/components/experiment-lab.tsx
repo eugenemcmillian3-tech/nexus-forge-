@@ -1,4 +1,5 @@
 import { RuntimeWorkbench } from './runtime-workbench'
+import { LiveModelComparison } from './live-model-comparison'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
@@ -15,7 +16,7 @@ export function ExperimentLab({kind}:{kind:LabKind}) {
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('')
  async function work(fn:()=>Promise<void>){setBusy(true);setError('');setMessage('');try{await fn()}catch(e){setError(e instanceof Error?e.message:'Unable to save')}finally{setBusy(false)}}
  return <section className="workspace frontier-feature"><p>{descriptions[kind]}</p>
- <RuntimeWorkbench area="evaluation"/><div className="console-grid"><form className="glass-card research-card" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);void work(async()=>{const id=await create({kind,title:String(f.get('title')),hypothesis:String(f.get('hypothesis')),metric:String(f.get('metric')),unit:String(f.get('unit')),direction:f.get('direction') as 'higher'|'lower',target:Number(f.get('target')),minimumSamples:Number(f.get('samples')),domains:String(f.get('domains')).split(',').map(x=>x.trim()).filter(Boolean),heldOutDomains:String(f.get('heldout')??'').split(',').map(x=>x.trim()).filter(Boolean)});setSelected(id);setMessage('Protocol preregistered. Its metric, domain split and target are immutable.')})}}>
+ {kind==='comparison'&&<LiveModelComparison/>}<RuntimeWorkbench area="evaluation"/><div className="console-grid"><form className="glass-card research-card" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);void work(async()=>{const id=await create({kind,title:String(f.get('title')),hypothesis:String(f.get('hypothesis')),metric:String(f.get('metric')),unit:String(f.get('unit')),direction:f.get('direction') as 'higher'|'lower',target:Number(f.get('target')),minimumSamples:Number(f.get('samples')),domains:String(f.get('domains')).split(',').map(x=>x.trim()).filter(Boolean),heldOutDomains:String(f.get('heldout')??'').split(',').map(x=>x.trim()).filter(Boolean)});setSelected(id);setMessage('Protocol preregistered. Its metric, domain split and target are immutable.')})}}>
  <h2>Preregister a protocol</h2>
  <label>Title<input name="title" required maxLength={160}/></label>
  <label>{kind==='comparison'?'Baseline, candidate and comparison question':'Falsifiable hypothesis'}<textarea name="hypothesis" required maxLength={2000}/></label>

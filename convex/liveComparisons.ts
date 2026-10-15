@@ -1,0 +1,18 @@
+import {v} from 'convex/values'
+import {action} from './_generated/server'
+import {internal} from './_generated/api'
+import {requireOperator} from './permissions'
+import {callNamedEvaluationProvider} from './aiProvider'
+export const comparisonCases=[{key:'arithmetic',domain:'arithmetic',question:'What is 32 plus 57?',expected:'89'},{key:'sorting',domain:'ordering',question:'Sort 9, 2, 5 in ascending order. Use comma-separated integers without spaces.',expected:'2,5,9'},{key:'logic',domain:'deduction',question:'A is greater than B and B is greater than C. Is A greater than C? Answer yes or no.',expected:'yes'}] as const
+export function scoreAnswer(answer:string){let object:Record<string,unknown>={};try{object=JSON.parse(answer)}catch{/* Invalid format is retained as failure. */}return comparisonCases.map(c=>({key:c.key,domain:c.domain,expected:c.expected,observed:typeof object?.[c.key]==='string'?String(object[c.key]).trim():'',passed:typeof object?.[c.key]==='string'&&String(object[c.key]).trim()===c.expected}))}
+export const run=action({args:{requestKey:v.string()},handler:async(ctx,a):Promise<string>=>{
+ const ownerKey=await requireOperator(ctx),version='matched-provider-comparison-v1',admission=await ctx.runMutation(internal.runtimeReceipts.admit,{ownerKey,requestKey:a.requestKey,kind:'provider-comparison',input:JSON.stringify({version})});if(admission.cached)return admission.cached;
+ const rows:Record<string,unknown>[]=[];
+ for(const provider of ['cloudflare','groq','cerebras'] as const)for(const style of ['baseline','candidate'] as const){
+ const questions=comparisonCases.map(c=>c.key+': '+c.question).join('\n'),prompt=style==='baseline'?'Answer these questions as a JSON object with string values keyed arithmetic, sorting, logic.\n'+questions:'Return ONLY one valid JSON object. Exactly three string fields: arithmetic, sorting, logic. No Markdown or explanation. Verify arithmetic and ordering before returning.\n'+questions;
+ const startedAt=Date.now(),invocationId=await ctx.runMutation(internal.providerUsage.begin,{ownerKey,stage:version+'-'+provider+'-'+style,role:'research'});let observedReports=0;
+ try{const answer=await callNamedEvaluationProvider(provider,prompt,384,async usage=>{observedReports++;await ctx.runMutation(internal.manifestIntelligence.recordProviderUsageInternal,{ownerKey,...usage,invocationId,reportOrdinal:observedReports})});await ctx.runMutation(internal.providerUsage.finish,{invocationId,outcome:'succeeded',observedReports});const scores=scoreAnswer(answer);rows.push({provider,style,invocationId,status:'complete',latencyMs:Date.now()-startedAt,prompt,answer:answer.slice(0,6000),scores,passed:scores.filter(s=>s.passed).length,total:scores.length,observedReports})}
+ catch{try{await ctx.runMutation(internal.providerUsage.finish,{invocationId,outcome:'failed',observedReports})}catch{/* Pending accounting remains visible. */}rows.push({provider,style,invocationId,status:'failed',latencyMs:Date.now()-startedAt,prompt,passed:0,total:comparisonCases.length,observedReports,detail:'Provider failed or accounting could not be confirmed; no provider fallback or retry performed.'})}
+ }
+ const result=JSON.stringify({version,cases:comparisonCases,rows,scope:'Small published matched-task prompt comparison on named configured models. Not independent competitor certification, unseen transfer, causal learning improvement or scientific novelty.',billing:'Read invocation usage receipts; missing cost is unknown.'});await ctx.runMutation(internal.runtimeReceipts.finish,{jobId:admission.jobId,status:'complete',result});return result
+}})

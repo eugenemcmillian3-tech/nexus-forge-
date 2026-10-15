@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction, useQuery } from 'convex/react'
 import { useState } from 'react'
 import { api } from '../../convex/_generated/api'
+import { RealServiceEvidence } from '../components/real-service-evidence'
 import { ProductionReleaseReadiness } from '../components/production-release-readiness'
 import { ArtifactBenchmarkEvidence } from '../components/artifact-benchmark-evidence'
 import { WorkspaceLayout } from '../components/workspace-layout'
@@ -68,7 +69,7 @@ function CapabilityDashboard() {
         </div>
       </div>
 
-      <ProductionReleaseReadiness />
+      <RealServiceEvidence/><ProductionReleaseReadiness />
       <ArtifactBenchmarkEvidence />
       <div className="stats-strip">
         <div><strong>{missions ? missionRows.length : '—'}</strong><span>Recent missions</span></div>

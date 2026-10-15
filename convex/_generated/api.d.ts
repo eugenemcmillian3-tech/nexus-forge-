@@ -50,6 +50,7 @@ import type * as incidents from "../incidents.js";
 import type * as intelligenceOrchestrator from "../intelligenceOrchestrator.js";
 import type * as intentContract from "../intentContract.js";
 import type * as learningEngine from "../learningEngine.js";
+import type * as liveComparisons from "../liveComparisons.js";
 import type * as manifestIntelligence from "../manifestIntelligence.js";
 import type * as manifestStrategyParser from "../manifestStrategyParser.js";
 import type * as memory from "../memory.js";
@@ -130,6 +131,7 @@ declare const fullApi: ApiFromModules<{
   intelligenceOrchestrator: typeof intelligenceOrchestrator;
   intentContract: typeof intentContract;
   learningEngine: typeof learningEngine;
+  liveComparisons: typeof liveComparisons;
   manifestIntelligence: typeof manifestIntelligence;
   manifestStrategyParser: typeof manifestStrategyParser;
   memory: typeof memory;

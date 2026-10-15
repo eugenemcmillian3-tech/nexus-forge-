@@ -114,6 +114,9 @@ export async function callAiProvider(role: ChatRole, prompt: string, maxTokens: 
   throw new Error(`All configured AI providers failed: ${failures.join(" | ")}`);
 }
 
+// Explicit evaluation calls never fall back, so comparisons cannot silently measure a different provider.
+export async function callNamedEvaluationProvider(provider:'cloudflare'|'groq'|'cerebras',prompt:string,maxTokens:number,onUsage?:UsageRecorder){return call(provider,prompt,maxTokens,onUsage)}
+
 export const COUNCIL_MODELS = {
   planner: "planner" as const,
   wave1: "wave1" as const,

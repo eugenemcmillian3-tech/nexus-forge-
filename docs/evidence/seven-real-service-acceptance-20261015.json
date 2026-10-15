@@ -1,0 +1,163 @@
+{
+  "version": "seven-real-service-acceptance-v1",
+  "observedAt": "2026-10-15",
+  "environment": "Managed Testing; real services; trusted administrative identities, not browser OTP",
+  "missionId": "k97fjhre91z0vzn1ttj2mgs3v58gbrb8",
+  "teamLaunch": {
+    "alreadyRunning": false,
+    "runId": "m17a4k2zenq62hjp3mbb7ttean8gbsb3"
+  },
+  "privateMissionBoundary": true,
+  "generation": {
+    "status": "provider-rejected",
+    "httpStatus": 400,
+    "providerCode": 8007,
+    "reason": "Cloudflare input content-filter rejection for a geometric prompt; no bypass attempted"
+  },
+  "description": "The image features a square with a red background, possibly a red box or a red square. The square is positioned in the center of the image, and its red color stands out against the white background. The square appears to be the main focus of the image, with no other objects or distractions visible.",
+  "transcription": {
+    "expected": "Nexus Forge acceptance test. The number is seven.",
+    "observed": "NEXUS FORGE ACCEPTANCE TEST, THE NUMBER IS SEVEN",
+    "assessment": "Matched after case/punctuation normalization"
+  },
+  "sampledFrames": {
+    "fixture": "Three references to the same deterministic red-square image; transport test, not full video",
+    "outputs": [
+      {
+        "sampledAtSeconds": 0,
+        "text": "The image features a square with a red background. The square is divided into four smaller squares, each with a red border. The red squares are arranged in a way that they form a larger square, creating a visually striking pattern. The red squares are positioned in a way that they fill the entire image, creating a vibrant and eye-catching display."
+      },
+      {
+        "sampledAtSeconds": 1,
+        "text": "The image features a square with a red background, possibly a red square or a red box. The square is positioned in the center of the image, and it appears to be the main focus of the scene. The red square is surrounded by a white background, which creates a striking contrast between the red and white colors."
+      },
+      {
+        "sampledAtSeconds": 2,
+        "text": "The image features a square with a red background, possibly a red square or a red box. The square is positioned in the center of the image, and its red color stands out against the white background. The square's shape and color make it visually striking and prominent in the scene."
+      }
+    ],
+    "assessment": "2/3 descriptions consistent with ground truth; first invented four squares/borders"
+  },
+  "external": {
+    "status": "complete",
+    "fields": [
+      "args",
+      "headers",
+      "origin",
+      "url"
+    ]
+  },
+  "imports": [
+    {
+      "id": "nn73bzxg4k2qw6jchzr82f6v8d8gaq3s",
+      "actual": 100,
+      "sampleSize": 6,
+      "targetMet": true,
+      "provenance": "github-report",
+      "receipt": {
+        "blobSha": "f188eebec081c8da1aff600d90bae8b3201987fa",
+        "commitSha": "c1405c12397a67115c934521115c852df71fad51",
+        "importedAt": 1792093855611,
+        "path": "nexus-forge-outcomes/k97fjhre91z0vzn1ttj2mgs3v58gbrb8/cerebras.json",
+        "reportSha256": "10959c5c1beb6990070cb7f829f126942c2bd079536ac327d6447ea0e2a74c09",
+        "repository": "eugenemcmillian3-tech/nexus-forge-"
+      }
+    },
+    {
+      "id": "nn7dbybwx8cnyfbyg03ac87kw98gbpe1",
+      "actual": 83.33333333333334,
+      "sampleSize": 6,
+      "targetMet": true,
+      "provenance": "github-report",
+      "receipt": {
+        "blobSha": "5ddf78804f8b456f4e55baaea1e78db80df03bb1",
+        "commitSha": "c1405c12397a67115c934521115c852df71fad51",
+        "importedAt": 1792093855520,
+        "path": "nexus-forge-outcomes/k97fjhre91z0vzn1ttj2mgs3v58gbrb8/cloudflare.json",
+        "reportSha256": "b3e1f2fc455ed38a139c73f76d0ffd116ccd50cdd3a5ef22201f36c7562fc5e5",
+        "repository": "eugenemcmillian3-tech/nexus-forge-"
+      }
+    },
+    {
+      "id": "nn75cdjktdhbkhpjtwphaga5es8gbjwz",
+      "actual": 100,
+      "sampleSize": 6,
+      "targetMet": true,
+      "provenance": "github-report",
+      "receipt": {
+        "blobSha": "88501c994f0893e14fb162c82fd0f18e83dd3581",
+        "commitSha": "c1405c12397a67115c934521115c852df71fad51",
+        "importedAt": 1792093855466,
+        "path": "nexus-forge-outcomes/k97fjhre91z0vzn1ttj2mgs3v58gbrb8/groq.json",
+        "reportSha256": "dd30d00db0c34536a40fd5890b762a3f9fc6f4cf397f21fde612d34e66191ae6",
+        "repository": "eugenemcmillian3-tech/nexus-forge-"
+      }
+    }
+  ],
+  "adaptive": {
+    "evidenceIds": [
+      "nn73bzxg4k2qw6jchzr82f6v8d8gaq3s",
+      "nn75cdjktdhbkhpjtwphaga5es8gbjwz",
+      "nn7dbybwx8cnyfbyg03ac87kw98gbpe1"
+    ],
+    "limitations": "GitHub integrity verifies source bytes, not measurement truth or causality. This policy changes planning guidance only.",
+    "reason": "Repeated imported measurements meet their fixed target; reuse the same bounded method and retain acceptance checks.",
+    "strategy": "reuse-with-verification"
+  },
+  "policyBenchmark": {
+    "baselinePassed": 3,
+    "candidatePassed": 10,
+    "total": 10
+  },
+  "modelComparison": [
+    {
+      "provider": "cloudflare",
+      "style": "baseline",
+      "status": "complete",
+      "passed": 2,
+      "total": 3,
+      "latencyMs": 593
+    },
+    {
+      "provider": "cloudflare",
+      "style": "candidate",
+      "status": "complete",
+      "passed": 3,
+      "total": 3,
+      "latencyMs": 441
+    },
+    {
+      "provider": "groq",
+      "style": "baseline",
+      "status": "complete",
+      "passed": 3,
+      "total": 3,
+      "latencyMs": 565
+    },
+    {
+      "provider": "groq",
+      "style": "candidate",
+      "status": "complete",
+      "passed": 3,
+      "total": 3,
+      "latencyMs": 528
+    },
+    {
+      "provider": "cerebras",
+      "style": "baseline",
+      "status": "complete",
+      "passed": 3,
+      "total": 3,
+      "latencyMs": 332
+    },
+    {
+      "provider": "cerebras",
+      "style": "candidate",
+      "status": "complete",
+      "passed": 3,
+      "total": 3,
+      "latencyMs": 293
+    }
+  ],
+  "assessment": "Partial acceptance. Functional paths passed; image generation rejected and frame quality mixed. No general superiority, causal learning or enterprise certification established."
+}
