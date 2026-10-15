@@ -24,10 +24,10 @@ Scope: one operational-evidence batch covering backup/restore, rollback, recover
 - Timeout-escalation path also observed in the isolated environment: an old restored run past deadline transitioned to `blocked` / `timeout_escalation` and recorded an incident with a matching incident-diagnosis ledger row.
 - Limits: drill environment lacks provider credentials; Managed Testing recovery drill still pending platform availability.
 
-## 4. Alert delivery — drill dispatched, delivery confirmation PENDING
+## 4. Alert delivery — operator-confirmed drill receipt
 
 - 2026-10-15T00:10:18Z: dispatched existing read-only workflow `nexus-forge-artifact-checks.yml` on `main` with a nonexistent snapshot input. Run [38658472244](https://github.com/eugenemcmillian3-tech/nexus-forge-/actions/runs/38658472244) failed at the intended "Prepare bounded snapshot input" step; all later steps skipped; `contents: read` permissions; no production side effects. A temporary drill branch was created and deleted; `main` was untouched.
-- Delivery evidence requires the operator to confirm the GitHub failure notification for run 38658472244 reached their configured destination (email/web). An API run failure alone is not delivery evidence, so this gate stays open until confirmed.
+- Operator confirmed receipt of the GitHub failure notification for run 38658472244 in ChatGPT on 2026-10-14 at 20:26 America/New_York (2026-10-15 00:26 UTC). The channel was not specified. This closes receipt confirmation for the artifact-checks drill. Production-release monitoring uses a different workflow; its failure-notification path still needs direct verification.
 
 ## 5. Sustained workload — PASS on the isolated backend, with scope limits
 
