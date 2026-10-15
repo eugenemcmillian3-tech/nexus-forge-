@@ -27,7 +27,7 @@ Scope: one operational-evidence batch covering backup/restore, rollback, recover
 ## 4. Alert delivery — operator-confirmed drill receipt
 
 - 2026-10-15T00:10:18Z: dispatched existing read-only workflow `nexus-forge-artifact-checks.yml` on `main` with a nonexistent snapshot input. Run [38658472244](https://github.com/eugenemcmillian3-tech/nexus-forge-/actions/runs/38658472244) failed at the intended "Prepare bounded snapshot input" step; all later steps skipped; `contents: read` permissions; no production side effects. A temporary drill branch was created and deleted; `main` was untouched.
-- Operator confirmed receipt of the GitHub failure notification for run 38658472244 in ChatGPT on 2026-10-14 at 20:26 America/New_York (2026-10-15 00:26 UTC). The channel was not specified. This closes receipt confirmation for the artifact-checks drill. Production-release monitoring uses a different workflow; its failure-notification path still needs direct verification.
+- Operator confirmed receipt of the GitHub failure notification for run 38658472244 in ChatGPT on 2026-10-14 at 20:26 America/New_York (2026-10-15 00:26 UTC). The channel was not specified. This closes receipt confirmation for the artifact-checks drill. Production-release workflow verification is recorded below.
 
 ## 5. Sustained workload — PASS on the isolated backend, with scope limits
 
@@ -41,3 +41,10 @@ Scope: one operational-evidence batch covering backup/restore, rollback, recover
 - Live ledger row `p97dfs6pz17xw654vskndk83fd8gbbn6`: outcome `succeeded`, usageStatus `recorded`, observedReports 1, provider-reported usage groq / `openai/gpt-oss-20b`, 1,288 prompt + 928 completion = 2,216 tokens; ownerKey, missionId and stage `research-discovery` attributed; no runner ID for a direct operator call, by design.
 - Runner attribution (missionRunId) verified separately in the drill environment on the `council-plan` rows. The owner-scoped `providerUsage:history` query (the `/providers` data path) returns the live row.
 - Billing reconciliation: no provider billing access is available, so actual charges remain unknown; token metadata is not billing evidence. Historical invocations before the ledger deployment are not backfilled.
+
+### Production-monitor workflow verification and receipt — 2026-10-15 UTC
+
+- Commit `9332a773b597ed5c54e4faa7ac4f21818ba87e96`: [drill run 38664996942](https://github.com/eugenemcmillian3-tech/nexus-forge-/actions/runs/38664996942) passed public route/anonymous-denial probes, skipped browser steps, and failed exactly at `Deliberate monitoring alert drill`. Artifact `production-release-observations` retained (668 bytes; expires 2026-10-29).
+- [Normal run 38665052731](https://github.com/eugenemcmillian3-tech/nexus-forge-/actions/runs/38665052731) on the same commit passed public probes and desktop/mobile hydration, skipped the drill, and retained its report (1,567 bytes; expires 2026-10-29). Job steps and artifact metadata independently checked through GitHub.
+- Operator explicitly confirmed notification receipt for drill run 38664996942 in ChatGPT on 2026-10-14 at 21:25 America/New_York (2026-10-15 01:25 UTC). Channel unspecified; no claim of email versus web delivery.
+- Monitoring gate VERIFIED for bounded scheduled probes and demonstrated workflow failure notification delivery. GitHub schedules may be delayed or disabled; this is not continuous uptime coverage. Other release gates remain open.
