@@ -6,6 +6,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      alert_drill:
+        description: 'Run monitor probes then deliberately fail to verify notifications (no production writes)'
+        type: boolean
+        required: false
+        default: false
   schedule:
     - cron: '17 * * * *'
 
@@ -13,7 +19,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: production-release-${{ github.ref }}
+  group: production-release-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.alert_drill && 'alert-drill' || 'normal' }}
   cancel-in-progress: true
 
 jobs:
@@ -23,7 +29,7 @@ jobs:
     timeout-minutes: 10
     env:
       RELEASE_BACKEND_URL: https://tame-rat-826.eu-west-1.convex.cloud
-      RELEASE_PROBE_MODE: ${{ github.event_name == 'schedule' && 'monitor' || 'full' }}
+      RELEASE_PROBE_MODE: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.alert_drill)) && 'monitor' || 'full' }}
       RELEASE_REPORT_PATH: production-probe.json
       RELEASE_BROWSER_REPORT_PATH: production-browser.json
     steps:
@@ -38,15 +44,22 @@ jobs:
       - name: Check public routes and anonymous access denial
         run: node --experimental-strip-types scripts/check-production.mjs
       - name: Install isolated browser tooling
-        if: github.event_name != 'schedule'
+        if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && inputs.alert_drill)
         run: |
           npm install --prefix /tmp/nexus-release-browser --no-save --ignore-scripts playwright@1.56.1
           /tmp/nexus-release-browser/node_modules/.bin/playwright install --with-deps chromium
       - name: Check live desktop and mobile hydration
-        if: github.event_name != 'schedule'
+        if: github.event_name != 'schedule' && !(github.event_name == 'workflow_dispatch' && inputs.alert_drill)
         env:
           NEXUS_BROWSER_PACKAGE: /tmp/nexus-release-browser
         run: node --experimental-strip-types scripts/check-production-browser.mjs
+      - name: Deliberate monitoring alert drill
+        if: github.event_name == 'workflow_dispatch' && inputs.alert_drill
+        run: |
+          echo 'ALERT DRILL: monitor probes passed; this intentional failure tests workflow notifications. No production writes.'
+          echo '## Intentional production-monitor alert drill' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Monitor probes passed. This run deliberately fails to test notification delivery; operator receipt must be confirmed separately.' >> "$GITHUB_STEP_SUMMARY"
+          exit 1
       - name: Retain release observations
         if: always()
         uses: actions/upload-artifact@v4

@@ -58,3 +58,11 @@ Supported stages retain provider-reported usage, with unknown charges kept unkno
 ## Release decision
 
 Use PRODUCTION_RELEASE_CHECKLIST.md and the checklist on Capability & Reliability. Partial/blocked evidence holds full production sign-off. Existing accepted Research, Manifest and LocalBoost receipts remain valid evidence for their recorded scope. Authentication and approval are not repeated as setup exercises.
+
+## Production monitor notification drill
+
+Run `production-release.yml` manually on `main` with boolean input `alert_drill: true`. The default is false. This uses the hourly monitor probe mode, skips browser installation, and deliberately fails only after the live read-only probes pass. It does not modify production data or deploy code. Its separate concurrency group cannot cancel normal monitoring.
+
+CLI equivalent: `gh workflow run production-release.yml --repo eugenemcmillian3-tech/nexus-forge- --ref main -f alert_drill=true`.
+
+Verify the run fails at `Deliberate monitoring alert drill`, its public probes passed, and `production-release-observations` was retained. If it fails earlier, investigate the real failure; that is not a completed synthetic drill. Record the run URL, commit, timestamp and operator-confirmed notification receipt before closing the monitoring gate. The earlier confirmed artifact-checks notification does not by itself verify this workflow. A later normal run must pass; never change the drill input default or hourly schedule to force failures.
