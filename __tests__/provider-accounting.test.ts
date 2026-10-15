@@ -1,3 +1,4 @@
+// @vitest-environment edge-runtime
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { convexTest } from 'convex-test'
 import { getFunctionName } from 'convex/server'
@@ -47,8 +48,8 @@ describe('durable provider invocation accounting', () => {
   it('leaves a durable pending record if finalization fails after inference', async () => {
     const { owner, ctx, args, fetchMock } = await fixture()
     vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const fault = { runMutation: (ref: any, values: any) => getFunctionName(ref) === 'providerUsage:finish' ? Promise.reject(new Error('Controlled finish failure')) : ctx.runMutation(ref, values) }
-    expect(await callManagedAi(fault, args)).toBe('Controlled answer')
+    const fault = { runMutation: (ref: any, values: any) => getFunctionName(ref) === 'providerRecovery:complete' ? Promise.reject(new Error('Controlled finish failure')) : ctx.runMutation(ref, values) }
+    await expect(callManagedAi(fault, args)).rejects.toThrow(/durable result confirmation failed/)
     expect((await owner.query(api.providerUsage.history, { paginationOpts: page })).page[0]).toMatchObject({ outcome: 'pending', usageStatus: 'pending' })
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
@@ -58,7 +59,7 @@ describe('durable provider invocation accounting', () => {
     await callManagedAi(ctx, args)
     expect((await owner.query(api.providerUsage.history, { paginationOpts: page })).page[0]).toMatchObject({ outcome: 'succeeded', usageStatus: 'missing', reports: [] })
     fetchMock.mockImplementationOnce(async () => new Response('Unavailable', { status: 503 }))
-    await expect(callManagedAi(ctx, args)).rejects.toThrow()
+    await expect(callManagedAi(ctx, { ...args, stage: 'failed-provider' })).rejects.toThrow()
     expect((await owner.query(api.providerUsage.history, { paginationOpts: page })).page[0]).toMatchObject({ outcome: 'failed', usageStatus: 'missing' })
   })
   it('rejects foreign history, mismatched runs and ledger start failure before network access', async () => {
@@ -71,7 +72,7 @@ describe('durable provider invocation accounting', () => {
     expect(fetchMock).not.toHaveBeenCalled()
     expect((await owner.query(api.providerUsage.history, { paginationOpts: page })).page).toEqual([])
   })
-  it('rejects a duplicate while inference is active, then permits a later explicit invocation', async () => {
+  it('rejects an active duplicate and reuses the completed answer for a delayed worker', async () => {
     const { owner, ctx, args, fetchMock } = await fixture()
     let release!: () => void
     let entered!: () => void
@@ -90,18 +91,65 @@ describe('durable provider invocation accounting', () => {
       expect((await owner.query(api.providerUsage.history, { paginationOpts: page })).page).toHaveLength(1)
     } finally { release() }
     expect(await first).toBe('First answer')
-    expect(await callManagedAi(ctx, args)).toBe('Controlled answer')
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(await callManagedAi(ctx, args)).toBe('First answer')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
   it('keeps unresolved finalization reserved across runner retries', async () => {
     const { t, owner, ctx, args, missionRunId, fetchMock } = await fixture()
     vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const fault = { runMutation: (ref: any, values: any) => getFunctionName(ref) === 'providerUsage:finish' ? Promise.reject(new Error('Interrupted finalization')) : ctx.runMutation(ref, values) }
-    await callManagedAi(fault, args)
+    const fault = { runMutation: (ref: any, values: any) => getFunctionName(ref) === 'providerRecovery:complete' ? Promise.reject(new Error('Interrupted finalization')) : ctx.runMutation(ref, values) }
+    await expect(callManagedAi(fault, args)).rejects.toThrow(/durable result confirmation failed/)
     await t.run(c => c.db.patch(missionRunId, { retries: 1 }))
     await expect(callManagedAi(ctx, args)).rejects.toThrow(/No inference request was started/)
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect((await owner.query(api.providerUsage.history, { paginationOpts: page })).page).toHaveLength(1)
+  })
+  it('recovers a committed answer after a lost completion acknowledgement', async () => {
+    const { owner, ctx, args, fetchMock } = await fixture()
+    const fault = { runMutation: async (ref: any, values: any) => {
+      const result = await ctx.runMutation(ref, values)
+      if (getFunctionName(ref) === 'providerRecovery:complete') throw new Error('Lost acknowledgement')
+      return result
+    } }
+    await expect(callManagedAi(fault, args)).rejects.toThrow(/durable result confirmation failed/)
+    expect(await callManagedAi(ctx, args)).toBe('Controlled answer')
+    const rows = (await owner.query(api.providerUsage.history, { paginationOpts: page })).page
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).not.toHaveProperty('answer')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+  it('rejects changed requests and preserves immutable stored answers', async () => {
+    const { t, ctx, args, fetchMock } = await fixture()
+    await callManagedAi(ctx, args)
+    await expect(callManagedAi(ctx, { ...args, prompt: 'Changed prompt' })).rejects.toThrow(/No inference request was started/)
+    await expect(callManagedAi(ctx, { ...args, maxTokens: 101 })).rejects.toThrow(/No inference request was started/)
+    const result = (await t.run(c => c.db.query('providerResults').collect()))[0]
+    await expect(t.mutation(internal.providerRecovery.complete, { invocationId: result.invocationId, requestDigest: result.requestDigest, answer: 'Conflicting answer', observedReports: 1 })).rejects.toThrow(/immutable/)
+    expect(await callManagedAi(ctx, args)).toBe('Controlled answer')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+  it('blocks legacy succeeded rows without inventing an answer or rerunning inference', async () => {
+    const { t, ctx, args, fetchMock } = await fixture()
+    const { prompt: _prompt, maxTokens: _tokens, ...identityArgs } = args
+    const invocationId = await t.mutation(internal.providerUsage.begin, identityArgs)
+    await t.mutation(internal.providerUsage.finish, { invocationId, outcome: 'succeeded', observedReports: 0 })
+    await expect(callManagedAi(ctx, args)).rejects.toThrow(/No inference request was started/)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+  it('keeps direct operator invocations independent', async () => {
+    const { ctx, args, fetchMock } = await fixture()
+    const { missionRunId: _run, ...direct } = args
+    await callManagedAi(ctx, direct)
+    await callManagedAi(ctx, direct)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+  it('leaves oversized responses pending without persisting partial answers', async () => {
+    const { t, ctx, args, fetchMock } = await fixture()
+    fetchMock.mockImplementationOnce(async () => new Response(JSON.stringify({ choices: [{ message: { content: 'x'.repeat(262145) } }] }), { status: 200 }))
+    await expect(callManagedAi(ctx, args)).rejects.toThrow(/durable result confirmation failed/)
+    expect(await t.run(c => c.db.query('providerResults').collect())).toEqual([])
+    await expect(callManagedAi(ctx, args)).rejects.toThrow(/No inference request was started/)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
   it('handles concurrent independent invocations without combining their receipts', async () => {
     const { owner, ctx, args, fetchMock } = await fixture()

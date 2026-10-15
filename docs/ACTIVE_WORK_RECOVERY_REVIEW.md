@@ -2,6 +2,17 @@
 
 Review date: 2026-10-15 UTC. Scope: source inspection of convex/missionRunner.ts, convex/forge.ts, convex/providerAccounting.ts and convex/providerUsage.ts. This is a source review, not an observed production duplicate, live interruption drill, or proof of exactly-once execution. Platform project bphntw8kdojl9qvuifywyjtk; source eugenemcmillian3-tech/nexus-forge-. Dispatch QA nexus-forge1/no-dispatch is separate.
 
+## Implemented provider-stage batch — 2026-10-15 UTC
+
+- Added internal providerRecovery.reserve/complete and private providerResults storage. For runner-linked requests, transactional admission checks all matching invocation rows. Exactly one succeeded invocation with a matching request digest and persisted answer can be reused. Pending, failed, ambiguous or legacy succeeded-without-answer work blocks network replay; changed prompts/token limits require explicit new work.
+- Answer bytes (maximum 256 KiB UTF-8) and invocation success commit atomically. A failure to confirm completion throws without marking the answered call failed. A lost acknowledgement after commit is recoverable on the next matching call. A crash before commit remains uncertain and blocked; no provider-side exactly-once claim is made.
+- Provider answers are not added to the public ledger history shape. Recovery functions are internal; owner/mission/run identity is checked before reuse. Direct operator invocations remain independent. No expiry or automatic deletion of recovery results is configured; they currently follow database backup/access controls. A retention policy still needs to balance privacy/storage against recoverability.
+- All 13 controlled provider-accounting tests passed in edge-runtime, including active contender, delayed replay, result-save failure, lost acknowledgement, changed request, immutable answer, legacy row and size bound. Full suite: 376 tests / 63 files passed.
+- Managed deploy to isolated Testing succeeded; public contract backward-compatible. No real inference interruption or managed-host crash was induced.
+- Remaining: execution-wide Council/tick claiming and fencing, idempotent domain evidence/artifact commits, stable stage-context snapshots, recovery operator controls, managed interruption drill and production publication verification. Reusing the provider answer alone does not prevent duplicate domain evidence writes. Existing runner retries that change their context or encounter failed/legacy work stop for review rather than silently reissue inference.
+
+The findings below describe the reviewed pre-fix boundaries. The first two are narrowed by this provider-stage batch; the execution-wide findings remain open.
+
 ## Findings
 
 | Priority | Boundary | Finding | Consequence |
