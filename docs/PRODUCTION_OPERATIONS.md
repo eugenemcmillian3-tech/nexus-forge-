@@ -151,3 +151,12 @@ The existing Providers ledger now displays mission and role attribution and a pe
 - Restored exact current module bytes and deployed through the managed command again; contract remained backward-compatible. All checked data and ledger fields matched the pre-drill snapshot. Source diff from starting HEAD was empty before documentation updates. Eight provider-accounting regressions and strict types passed after returning to current.
 - Data verification window 02:57:17.908Z → 02:58:36.627Z, 78,720 ms including tool round trips, two deployments and verification; not a service RTO or total user-facing outage measure. No Live rollback or publish of the historical candidate occurred.
 - PASS for this module-scoped managed backend round trip. Whole-version platform UI restore, full-release rollback and Live recovery remain unverified; rollback gate stays PARTIAL. A GitHub/local source commit alone does not identify a recoverable platform version.
+
+
+## Original media backup and retrieval — 2026-10-15 UTC
+
+- Current media inventory: one asset, generated-nexus-forge-banner-htW.png, declared PNG / 1,191,209 bytes. Used the supported Macaly Assets → media actions → Download control rather than deriving an original URL from the optimized CDN address.
+- Downloaded file is PNG, 1536 × 864 RGB, exactly 1,191,209 bytes; SHA-256 e6ec36540b03f43123ac7157365acefcbafd5d8941801bbf3c6e8772598c8171. This matches declared original format/size; no separate pre-existing original digest was available.
+- Retained a private backup copy named nexus-forge-banner-backup-20261015.png, then independently retrieved it into an isolated restore-check directory. Byte comparison and SHA-256 matched, and the retrieved image decoded/rendered correctly. No media replacement, source/public copy, or production mutation was performed.
+- Macaly App user uploads was separately checked with All files in both Development and Production: both reported 'No app files yet'. This is the observed inventory at drill time, not a guarantee about future uploads.
+- PASS for backup/retrieval of the currently inventoried asset. Database snapshots remain temporary drill materials; durable table-backup storage, recurring backup frequency, retention, agreed RPO/RTO, and ongoing coverage for new assets are not established. The backup gate remains PARTIAL.
