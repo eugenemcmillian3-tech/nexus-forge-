@@ -105,7 +105,7 @@ const roadmap:Milestone[] = [
     "n": 17,
     "title": "Multimodal creation and perception",
     "status": "partial",
-    "detail": "Multimodal Studio now stores private image/audio/video/text assets, creates PNG visual cards, plays browser speech and inspects decoded dimensions/duration. Cloudflare FLUX generation, Whisper transcription, LLaVA image description and three-frame video sampling now have authenticated runtime actions, durable receipts and controlled integration tests. Full-video understanding, music generation and live provider quality acceptance remain open."
+    "detail": "Multimodal Studio now stores private image/audio/video/text assets, creates PNG visual cards, plays browser speech and inspects decoded dimensions/duration. Cloudflare FLUX generation, Whisper transcription, LLaVA image description and three-frame video sampling now have authenticated runtime actions, durable receipts and controlled integration tests. Gemini original-video analysis, image generation and 30-second music composition are implemented. A known original-video fixture passed; real Gemini image/music requests returned HTTP 429. Broader provider quality acceptance remains open."
   },
   {
     "n": 18,

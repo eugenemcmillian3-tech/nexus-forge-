@@ -44,6 +44,7 @@ import type * as frontierControls from "../frontierControls.js";
 import type * as frontierLab from "../frontierLab.js";
 import type * as frontierModel from "../frontierModel.js";
 import type * as frontierSupport from "../frontierSupport.js";
+import type * as geminiMedia from "../geminiMedia.js";
 import type * as githubWriteTools from "../githubWriteTools.js";
 import type * as http from "../http.js";
 import type * as incidentParser from "../incidentParser.js";
@@ -130,6 +131,7 @@ declare const fullApi: ApiFromModules<{
   frontierLab: typeof frontierLab;
   frontierModel: typeof frontierModel;
   frontierSupport: typeof frontierSupport;
+  geminiMedia: typeof geminiMedia;
   githubWriteTools: typeof githubWriteTools;
   http: typeof http;
   incidentParser: typeof incidentParser;

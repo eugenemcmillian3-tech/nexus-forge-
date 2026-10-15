@@ -23,7 +23,7 @@ Configure AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET and AUTH_GOOGLE_HOSTED_DOMAIN on th
 
 The provider is not registered unless all three values are valid. The hosted-domain request hint is not treated as proof: the verified profile must contain email_verified=true, matching hd and matching email domain. Arbitrary email-suffix assertions are rejected. Explicit team grants remain separate from authentication; domain membership never grants team access by itself.
 
-No SSO credentials were present in the inspected Testing configuration. Live configuration readiness is checked after publishing. No secrets were requested or exposed. SAML, SCIM and multi-tenant enterprise configuration are not implemented.
+Update: Google client ID and secret are now present, and the client ID has the expected suffix. AUTH_GOOGLE_HOSTED_DOMAIN fails bare-domain validation, so Workspace SSO remains disabled. Supply the organization's exact domain (for example, example.com), without a URL, email address or path. Live configuration readiness is checked after publishing. No secrets were requested or exposed. SAML, SCIM and multi-tenant enterprise configuration are not implemented.
 
 ## Product integration
 
@@ -51,7 +51,7 @@ Preparation is read-only at GitHub and saves the exact base commit/tree and cont
 - Broader enterprise directory synchronization and additional authenticated write-service integrations.
 - Instrument actual products and collect sufficiently long representative outcome periods to assess improvement.
 - Resolve the previously recorded image-generation provider rejection and evaluate perception quality on a labeled corpus.
-- Full-video understanding and music generation require selected capable runtimes; neither is implemented.
+- Gemini original-video analysis, image generation and 30-second music composition are now implemented. Native-video known-fixture acceptance passed; image and music real checks returned HTTP 429. See [Gemini integration evidence](GEMINI_MEDIA_BATCH.md).
 - Independent competitor/scientific replication, unseen-task evaluation and a complete signed-in all-seven mission remain empirical acceptance work.
 - Billing reconciliation, scheduled-backup acceptance, production workload certification and real provider/host-failure acceptance remain on hold.
 
