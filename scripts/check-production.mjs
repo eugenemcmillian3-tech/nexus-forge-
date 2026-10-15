@@ -1,12 +1,12 @@
 import { writeFile } from 'node:fs/promises'
-import { guidedWorkspaces } from '../src/lib/workspaces.ts'
+import { allWorkspaces } from '../src/lib/workspaces.ts'
 import { productionOrigin, inspectPublicShell, summarizeProbe, confirmsAnonymousDenial } from '../src/lib/production-probe.ts'
 const productionBackend = process.env.RELEASE_BACKEND_URL
 if (!productionBackend) throw new Error('Set RELEASE_BACKEND_URL to the verified Live Convex URL')
 const backendUrl = new URL(productionBackend)
 if (backendUrl.protocol !== 'https:' || !backendUrl.hostname.endsWith('.convex.cloud') || backendUrl.username || backendUrl.password || backendUrl.port || backendUrl.pathname !== '/' || backendUrl.search || backendUrl.hash) throw new Error('Invalid Live Convex probe target')
 const full = process.env.RELEASE_PROBE_MODE !== 'monitor'
-const paths = full ? guidedWorkspaces.map(page => page.path) : ['/', '/workflow', '/artifacts', '/delivery']
+const paths = full ? allWorkspaces.map(page => page.path) : ['/', '/workflow', '/artifacts', '/delivery']
 const rounds = full ? 2 : 1
 const jobs = Array.from({ length: rounds }, (_, round) => paths.map(path => ({ path, round: round + 1 }))).flat()
 const rows = []

@@ -26,7 +26,7 @@ describe('feature page registry', () => {
       expect(allWorkspaces.some(page => page.path === path)).toBe(true)
       expect(primaryWorkspaces.some(page => page.path === path)).toBe(false)
     }
-    expect(primaryWorkspaces.length).toBe(12)
+    expect(primaryWorkspaces.length).toBe(19)
   })
 
   it('keeps Overview, Master Roadmap, and Guided Workflow as distinct destinations', () => {

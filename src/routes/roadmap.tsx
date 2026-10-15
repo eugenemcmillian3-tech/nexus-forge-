@@ -3,7 +3,8 @@ import { WorkspaceLayout } from '../components/workspace-layout'
 
 export const Route = createFileRoute('/roadmap')({ component: RoadmapPage })
 
-const roadmap = [
+type Milestone={n:number;title:string;status:'done'|'partial'|'later';detail:string}
+const roadmap:Milestone[] = [
   {
     "n": 1,
     "title": "Verify current live platform",
@@ -103,8 +104,8 @@ const roadmap = [
   {
     "n": 17,
     "title": "Multimodal creation and perception",
-    "status": "later",
-    "detail": "Build multimodal creation and perception workflows."
+    "status": "partial",
+    "detail": "Multimodal Studio now stores private image/audio/video/text assets, creates PNG visual cards, plays browser speech and inspects decoded dimensions/duration. AI generation, transcription and semantic perception are still unimplemented."
   },
   {
     "n": 18,
@@ -115,40 +116,40 @@ const roadmap = [
   {
     "n": 19,
     "title": "Advanced security and resilience at scale",
-    "status": "later",
-    "detail": "Build advanced security and resilience capabilities for scale."
+    "status": "partial",
+    "detail": "Security & Resilience now enforces transactional owner quotas for new protocols, packages and registered media, with private audit history. Existing safety guards remain. Hosting-wide rate limits, scale certification and real host interruption remain open."
   },
   {
     "n": 20,
     "title": "Multi-user and enterprise governance",
-    "status": "later",
-    "detail": "Build multi-user workspaces and enterprise governance."
+    "status": "partial",
+    "detail": "Team Governance now supports team creation, explicit join requests, admin-reviewed viewer/contributor/admin roles, revocation and permission-checked shared notes. Private missions stay private. Shared mission execution, SSO and enterprise provisioning remain open."
   },
   {
     "n": 21,
     "title": "External agent and developer ecosystem",
-    "status": "later",
-    "detail": "Build external agent integrations and a developer ecosystem."
+    "status": "partial",
+    "detail": "Developer Integrations now registers immutable semantic versions, validates exact JSON field examples and retires versions with audit history. It does not execute external agents. Scoped runtime execution, marketplace distribution and revenue sharing remain open."
   },
   {
     "n": 22,
     "title": "Competitive validation and genuine novelty",
-    "status": "later",
-    "detail": "Establish comparative benchmarks and evidence of useful novelty."
+    "status": "partial",
+    "detail": "Comparative Validation now preregisters paired baseline/candidate protocols, immutable source-linked observations, direction-aware improvement and domain coverage with JSON exports. Independent competitor runs and reproducible novelty evidence remain open."
   },
   {
     "n": 23,
     "title": "Frontier scientific research",
-    "status": "later",
-    "detail": "Develop and evaluate frontier scientific research capabilities."
+    "status": "partial",
+    "detail": "Scientific Experiments now supports falsifiable preregistration, immutable paired observations, sample/domain gates, standard-error summaries and retained negative results. Actual scientific discovery and independent replication remain research work."
   },
   {
     "n": 24,
     "title": "AGI-oriented generality and superintelligence research",
-    "status": "later",
-    "detail": "Research broader generality with explicit evaluations. This is a research direction, not an implemented AGI or superintelligence claim."
+    "status": "partial",
+    "detail": "Generality Research now freezes training/held-out domains, measures paired transfer observations by domain and rejects closure before sample/domain coverage. This implements an evaluation workflow, not AGI or superintelligence."
   }
-] as const
+]
 
 function RoadmapPage() {
   const done = roadmap.filter(item => item.status === 'done')
@@ -160,7 +161,9 @@ function RoadmapPage() {
     <div className="hero-actions"><Link className="primary-button" to="/workflow">Continue guided workflow →</Link><Link className="secondary-button" to="/evidence">Review research evidence →</Link><Link className="secondary-button" to="/incidents">Review recovery →</Link></div>
     <div className="stats-strip compact"><div><strong>{done.length}</strong><span>Completed milestone</span></div><div><strong>{partial.length}</strong><span>Partially implemented</span></div><div><strong>{deferred.length}</strong><span>Deferred / not implemented</span></div></div>
     <div className="glass-card research-card"><div className="panel-title"><span>NEXT WORK · FOUNDATION FIRST</span><span className="status-chip">IN PROGRESS</span></div>
-      <p>Production release audit is now available in Capability &amp; Reliability. Full sign-off remains on hold: the 2026-10-14/15 operational-evidence batch recorded backup/restore, rollback, recovery, alert-drill, sustained-workload and live provider-accounting evidence, and follow-up Managed Testing restore, replay, pending-call reservation and paced read-workload checks are recorded. Real provider/host interruption, managed rollback, original-asset backup and billing reconciliation remain open. Production-monitor drill and normal runs are verified, and the operator confirmed receipt of the drill notification. <Link to="/capabilities">Open the production release checklist →</Link></p><ol><li>Close the remaining production-release gates: finish managed rollback and provider/host interruption checks, original-asset backup and recovery policy, expected-load certification, and provider billing reconciliation where access allows.</li><li>Extend acceptance and integration benchmarks beyond the twenty controlled fixtures now checked in JSDOM and Chromium.</li><li>Collect representative Council-context relevance labels across varied missions, use the saved candidate comparisons, and repeat lesson-reuse outcome comparisons.</li><li>Extend source-specific analytics to other deployed products and collect representative repeated strategy/outcome comparisons.</li></ol><p><a href="https://github.com/eugenemcmillian3-tech/nexus-forge-/blob/main/docs/FEATURE_FUNCTION_REVIEW.md" target="_blank" rel="noreferrer">Review page functions, components, and remaining capability gaps →</a></p>
+      <p>External-access acceptance work is on hold at the operator's request. Seven formerly deferred areas now have working first-release controls on dedicated pages. Their broader milestones remain partial; this page records unfinished engineering and empirical research separately.</p>
+      <ol><li>Complete AI multimodal generation/perception through an explicitly selected runtime provider.</li><li>Extend team collaboration to governed shared missions and implement scoped external-agent execution.</li><li>Finish intermediate-work recovery, automatic source-specific outcome ingestion and measured adaptive policy selection.</li><li>Run representative comparative, learning-reuse and held-out-domain experiments using the new preregistered protocols. Preserve regressions and independent evidence.</li></ol>
+      <div className="hero-actions"><Link className="primary-button" to="/multimodal">Open seven expanded capabilities →</Link><Link className="secondary-button" to="/capabilities">Operational evidence →</Link></div>
       <p>Dependency and resource preflight checks block execution in the backend. Mission Control displays blockers, advisories, and resource availability; authorization and execution wait for ready preflight and incident clearance.</p>
     </div>
     <div className="glass-card research-card"><div className="panel-title"><span>IMPLEMENTED FOUNDATION</span><span className="live-pill">SAVED EVIDENCE</span></div>

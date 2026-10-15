@@ -69,5 +69,33 @@
     "openGraph": {
       "images": "https://assets.macaly-user-data.dev/a7122926vj2ys4x7zsc7e0sj/bphntw8kdojl9qvuifywyjtk/9JW4kw1Ijwp1qyfM2L09h/generated-3u8Zbs_7.png"
     }
+  },
+  "/multimodal": {
+    "title": "Multimodal Studio — NEXUS FORGE",
+    "description": "Create visual cards, retain private media, preview audio and video, and inspect file properties."
+  },
+  "/resilience": {
+    "title": "Security & Resilience — NEXUS FORGE",
+    "description": "Manage admission limits and inspect private audit evidence for resource and recovery controls."
+  },
+  "/teams": {
+    "title": "Team Governance — NEXUS FORGE",
+    "description": "Create teams, review join requests, manage roles and collaborate through permission-checked notes."
+  },
+  "/developers": {
+    "title": "Developer Integrations — NEXUS FORGE",
+    "description": "Register immutable versioned agent contracts, validate JSON examples and retire package versions."
+  },
+  "/comparisons": {
+    "title": "Comparative Validation — NEXUS FORGE",
+    "description": "Preregister baseline and candidate comparisons and retain paired observations and measured results."
+  },
+  "/science": {
+    "title": "Scientific Experiments — NEXUS FORGE",
+    "description": "Preregister falsifiable hypotheses, collect immutable measurements and export reproducible evidence."
+  },
+  "/generality": {
+    "title": "Generality Research — NEXUS FORGE",
+    "description": "Measure bounded transfer across preregistered training and held-out task domains."
   }
 }

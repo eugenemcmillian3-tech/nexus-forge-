@@ -42,6 +42,68 @@ export const workspaceGroups = [
     ],
   },
   {
+  "title": "06 · EXPANDED CAPABILITIES",
+  "intro": "Create media, collaborate, govern integrations and evaluate evidence.",
+  "pages": [
+    {
+      "path": "/multimodal",
+      "title": "Multimodal Studio",
+      "icon": "◐",
+      "purpose": "Create visual cards, retain private media, preview audio and video, and inspect file properties.",
+      "use": "Use this optional capability when its inputs are available.",
+      "output": "A persisted record and explicit evidence limits."
+    },
+    {
+      "path": "/resilience",
+      "title": "Security & Resilience",
+      "icon": "⬡",
+      "purpose": "Manage admission limits and inspect private audit evidence for resource and recovery controls.",
+      "use": "Use this optional capability when its inputs are available.",
+      "output": "A persisted record and explicit evidence limits."
+    },
+    {
+      "path": "/teams",
+      "title": "Team Governance",
+      "icon": "◫",
+      "purpose": "Create teams, review join requests, manage roles and collaborate through permission-checked notes.",
+      "use": "Use this optional capability when its inputs are available.",
+      "output": "A persisted record and explicit evidence limits."
+    },
+    {
+      "path": "/developers",
+      "title": "Developer Integrations",
+      "icon": "⌘",
+      "purpose": "Register immutable versioned agent contracts, validate JSON examples and retire package versions.",
+      "use": "Use this optional capability when its inputs are available.",
+      "output": "A persisted record and explicit evidence limits."
+    },
+    {
+      "path": "/comparisons",
+      "title": "Comparative Validation",
+      "icon": "⇄",
+      "purpose": "Preregister baseline and candidate comparisons and retain paired observations and measured results.",
+      "use": "Use this optional capability when its inputs are available.",
+      "output": "A persisted record and explicit evidence limits."
+    },
+    {
+      "path": "/science",
+      "title": "Scientific Experiments",
+      "icon": "⚗",
+      "purpose": "Preregister falsifiable hypotheses, collect immutable measurements and export reproducible evidence.",
+      "use": "Use this optional capability when its inputs are available.",
+      "output": "A persisted record and explicit evidence limits."
+    },
+    {
+      "path": "/generality",
+      "title": "Generality Research",
+      "icon": "◇",
+      "purpose": "Measure bounded transfer across preregistered training and held-out task domains.",
+      "use": "Use this optional capability when its inputs are available.",
+      "output": "A persisted record and explicit evidence limits."
+    }
+  ]
+},
+  {
     title: 'SUPPORT TOOLS',
     intro: 'Specialist diagnostics and recovery pages remain available when needed, without crowding the main navigation.',
     pages: [

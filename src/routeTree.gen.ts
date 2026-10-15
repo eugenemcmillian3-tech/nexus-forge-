@@ -12,18 +12,25 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArtifactsRouteImport } from './routes/artifacts'
 import { Route as CapabilitiesRouteImport } from './routes/capabilities'
+import { Route as ComparisonsRouteImport } from './routes/comparisons'
 import { Route as CouncilRouteImport } from './routes/council'
 import { Route as DeliveryRouteImport } from './routes/delivery'
+import { Route as DevelopersRouteImport } from './routes/developers'
 import { Route as EvidenceRouteImport } from './routes/evidence'
+import { Route as GeneralityRouteImport } from './routes/generality'
 import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as LearningRouteImport } from './routes/learning'
 import { Route as ManifestRouteImport } from './routes/manifest'
 import { Route as MissionRouteImport } from './routes/mission'
+import { Route as MultimodalRouteImport } from './routes/multimodal'
 import { Route as OrchestratorRouteImport } from './routes/orchestrator'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as ProvidersRouteImport } from './routes/providers'
 import { Route as ReadinessRouteImport } from './routes/readiness'
+import { Route as ResilienceRouteImport } from './routes/resilience'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
+import { Route as ScienceRouteImport } from './routes/science'
+import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as WorkflowRouteImport } from './routes/workflow'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +48,11 @@ const CapabilitiesRoute = CapabilitiesRouteImport.update({
   path: '/capabilities',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComparisonsRoute = ComparisonsRouteImport.update({
+  id: '/comparisons',
+  path: '/comparisons',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CouncilRoute = CouncilRouteImport.update({
   id: '/council',
   path: '/council',
@@ -51,9 +63,19 @@ const DeliveryRoute = DeliveryRouteImport.update({
   path: '/delivery',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevelopersRoute = DevelopersRouteImport.update({
+  id: '/developers',
+  path: '/developers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EvidenceRoute = EvidenceRouteImport.update({
   id: '/evidence',
   path: '/evidence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GeneralityRoute = GeneralityRouteImport.update({
+  id: '/generality',
+  path: '/generality',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IncidentsRoute = IncidentsRouteImport.update({
@@ -76,6 +98,11 @@ const MissionRoute = MissionRouteImport.update({
   path: '/mission',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MultimodalRoute = MultimodalRouteImport.update({
+  id: '/multimodal',
+  path: '/multimodal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrchestratorRoute = OrchestratorRouteImport.update({
   id: '/orchestrator',
   path: '/orchestrator',
@@ -96,9 +123,24 @@ const ReadinessRoute = ReadinessRouteImport.update({
   path: '/readiness',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResilienceRoute = ResilienceRouteImport.update({
+  id: '/resilience',
+  path: '/resilience',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RoadmapRoute = RoadmapRouteImport.update({
   id: '/roadmap',
   path: '/roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScienceRoute = ScienceRouteImport.update({
+  id: '/science',
+  path: '/science',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamsRoute = TeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorkflowRoute = WorkflowRouteImport.update({
@@ -111,36 +153,50 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/artifacts': typeof ArtifactsRoute
   '/capabilities': typeof CapabilitiesRoute
+  '/comparisons': typeof ComparisonsRoute
   '/council': typeof CouncilRoute
   '/delivery': typeof DeliveryRoute
+  '/developers': typeof DevelopersRoute
   '/evidence': typeof EvidenceRoute
+  '/generality': typeof GeneralityRoute
   '/incidents': typeof IncidentsRoute
   '/learning': typeof LearningRoute
   '/manifest': typeof ManifestRoute
   '/mission': typeof MissionRoute
+  '/multimodal': typeof MultimodalRoute
   '/orchestrator': typeof OrchestratorRoute
   '/portfolio': typeof PortfolioRoute
   '/providers': typeof ProvidersRoute
   '/readiness': typeof ReadinessRoute
+  '/resilience': typeof ResilienceRoute
   '/roadmap': typeof RoadmapRoute
+  '/science': typeof ScienceRoute
+  '/teams': typeof TeamsRoute
   '/workflow': typeof WorkflowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/artifacts': typeof ArtifactsRoute
   '/capabilities': typeof CapabilitiesRoute
+  '/comparisons': typeof ComparisonsRoute
   '/council': typeof CouncilRoute
   '/delivery': typeof DeliveryRoute
+  '/developers': typeof DevelopersRoute
   '/evidence': typeof EvidenceRoute
+  '/generality': typeof GeneralityRoute
   '/incidents': typeof IncidentsRoute
   '/learning': typeof LearningRoute
   '/manifest': typeof ManifestRoute
   '/mission': typeof MissionRoute
+  '/multimodal': typeof MultimodalRoute
   '/orchestrator': typeof OrchestratorRoute
   '/portfolio': typeof PortfolioRoute
   '/providers': typeof ProvidersRoute
   '/readiness': typeof ReadinessRoute
+  '/resilience': typeof ResilienceRoute
   '/roadmap': typeof RoadmapRoute
+  '/science': typeof ScienceRoute
+  '/teams': typeof TeamsRoute
   '/workflow': typeof WorkflowRoute
 }
 export interface FileRoutesById {
@@ -148,18 +204,25 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/artifacts': typeof ArtifactsRoute
   '/capabilities': typeof CapabilitiesRoute
+  '/comparisons': typeof ComparisonsRoute
   '/council': typeof CouncilRoute
   '/delivery': typeof DeliveryRoute
+  '/developers': typeof DevelopersRoute
   '/evidence': typeof EvidenceRoute
+  '/generality': typeof GeneralityRoute
   '/incidents': typeof IncidentsRoute
   '/learning': typeof LearningRoute
   '/manifest': typeof ManifestRoute
   '/mission': typeof MissionRoute
+  '/multimodal': typeof MultimodalRoute
   '/orchestrator': typeof OrchestratorRoute
   '/portfolio': typeof PortfolioRoute
   '/providers': typeof ProvidersRoute
   '/readiness': typeof ReadinessRoute
+  '/resilience': typeof ResilienceRoute
   '/roadmap': typeof RoadmapRoute
+  '/science': typeof ScienceRoute
+  '/teams': typeof TeamsRoute
   '/workflow': typeof WorkflowRoute
 }
 export interface FileRouteTypes {
@@ -168,54 +231,75 @@ export interface FileRouteTypes {
     | '/'
     | '/artifacts'
     | '/capabilities'
+    | '/comparisons'
     | '/council'
     | '/delivery'
+    | '/developers'
     | '/evidence'
+    | '/generality'
     | '/incidents'
     | '/learning'
     | '/manifest'
     | '/mission'
+    | '/multimodal'
     | '/orchestrator'
     | '/portfolio'
     | '/providers'
     | '/readiness'
+    | '/resilience'
     | '/roadmap'
+    | '/science'
+    | '/teams'
     | '/workflow'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/artifacts'
     | '/capabilities'
+    | '/comparisons'
     | '/council'
     | '/delivery'
+    | '/developers'
     | '/evidence'
+    | '/generality'
     | '/incidents'
     | '/learning'
     | '/manifest'
     | '/mission'
+    | '/multimodal'
     | '/orchestrator'
     | '/portfolio'
     | '/providers'
     | '/readiness'
+    | '/resilience'
     | '/roadmap'
+    | '/science'
+    | '/teams'
     | '/workflow'
   id:
     | '__root__'
     | '/'
     | '/artifacts'
     | '/capabilities'
+    | '/comparisons'
     | '/council'
     | '/delivery'
+    | '/developers'
     | '/evidence'
+    | '/generality'
     | '/incidents'
     | '/learning'
     | '/manifest'
     | '/mission'
+    | '/multimodal'
     | '/orchestrator'
     | '/portfolio'
     | '/providers'
     | '/readiness'
+    | '/resilience'
     | '/roadmap'
+    | '/science'
+    | '/teams'
     | '/workflow'
   fileRoutesById: FileRoutesById
 }
@@ -223,18 +307,25 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArtifactsRoute: typeof ArtifactsRoute
   CapabilitiesRoute: typeof CapabilitiesRoute
+  ComparisonsRoute: typeof ComparisonsRoute
   CouncilRoute: typeof CouncilRoute
   DeliveryRoute: typeof DeliveryRoute
+  DevelopersRoute: typeof DevelopersRoute
   EvidenceRoute: typeof EvidenceRoute
+  GeneralityRoute: typeof GeneralityRoute
   IncidentsRoute: typeof IncidentsRoute
   LearningRoute: typeof LearningRoute
   ManifestRoute: typeof ManifestRoute
   MissionRoute: typeof MissionRoute
+  MultimodalRoute: typeof MultimodalRoute
   OrchestratorRoute: typeof OrchestratorRoute
   PortfolioRoute: typeof PortfolioRoute
   ProvidersRoute: typeof ProvidersRoute
   ReadinessRoute: typeof ReadinessRoute
+  ResilienceRoute: typeof ResilienceRoute
   RoadmapRoute: typeof RoadmapRoute
+  ScienceRoute: typeof ScienceRoute
+  TeamsRoute: typeof TeamsRoute
   WorkflowRoute: typeof WorkflowRoute
 }
 
@@ -261,6 +352,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CapabilitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/comparisons': {
+      id: '/comparisons'
+      path: '/comparisons'
+      fullPath: '/comparisons'
+      preLoaderRoute: typeof ComparisonsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/council': {
       id: '/council'
       path: '/council'
@@ -275,11 +373,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeliveryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/developers': {
+      id: '/developers'
+      path: '/developers'
+      fullPath: '/developers'
+      preLoaderRoute: typeof DevelopersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/evidence': {
       id: '/evidence'
       path: '/evidence'
       fullPath: '/evidence'
       preLoaderRoute: typeof EvidenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/generality': {
+      id: '/generality'
+      path: '/generality'
+      fullPath: '/generality'
+      preLoaderRoute: typeof GeneralityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/incidents': {
@@ -310,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MissionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/multimodal': {
+      id: '/multimodal'
+      path: '/multimodal'
+      fullPath: '/multimodal'
+      preLoaderRoute: typeof MultimodalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orchestrator': {
       id: '/orchestrator'
       path: '/orchestrator'
@@ -338,11 +457,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReadinessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/resilience': {
+      id: '/resilience'
+      path: '/resilience'
+      fullPath: '/resilience'
+      preLoaderRoute: typeof ResilienceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/roadmap': {
       id: '/roadmap'
       path: '/roadmap'
       fullPath: '/roadmap'
       preLoaderRoute: typeof RoadmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/science': {
+      id: '/science'
+      path: '/science'
+      fullPath: '/science'
+      preLoaderRoute: typeof ScienceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teams': {
+      id: '/teams'
+      path: '/teams'
+      fullPath: '/teams'
+      preLoaderRoute: typeof TeamsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/workflow': {
@@ -359,18 +499,25 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArtifactsRoute: ArtifactsRoute,
   CapabilitiesRoute: CapabilitiesRoute,
+  ComparisonsRoute: ComparisonsRoute,
   CouncilRoute: CouncilRoute,
   DeliveryRoute: DeliveryRoute,
+  DevelopersRoute: DevelopersRoute,
   EvidenceRoute: EvidenceRoute,
+  GeneralityRoute: GeneralityRoute,
   IncidentsRoute: IncidentsRoute,
   LearningRoute: LearningRoute,
   ManifestRoute: ManifestRoute,
   MissionRoute: MissionRoute,
+  MultimodalRoute: MultimodalRoute,
   OrchestratorRoute: OrchestratorRoute,
   PortfolioRoute: PortfolioRoute,
   ProvidersRoute: ProvidersRoute,
   ReadinessRoute: ReadinessRoute,
+  ResilienceRoute: ResilienceRoute,
   RoadmapRoute: RoadmapRoute,
+  ScienceRoute: ScienceRoute,
+  TeamsRoute: TeamsRoute,
   WorkflowRoute: WorkflowRoute,
 }
 export const routeTree = rootRouteImport

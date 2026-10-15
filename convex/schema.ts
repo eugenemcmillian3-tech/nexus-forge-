@@ -1,3 +1,4 @@
+import { frontierTables } from './frontierModel'
 import { invocationFields } from './providerUsageModel'
 import { councilSelectionFields, councilEvaluationFields, councilPolicyFields } from "./councilMemoryModel"
 import { trafficFields } from "./siteTrafficModel"
@@ -9,6 +10,7 @@ import { authTables } from "@convex-dev/auth/server"
 
 export default defineSchema({
   ...authTables,
+  ...frontierTables,
   providerInvocations: defineTable(invocationFields).index('by_owner', ['ownerKey']).index('by_mission', ['missionId']).index('by_missionRunId_and_stage_and_role_and_outcome', ['missionRunId', 'stage', 'role', 'outcome']),
   executionEffects: defineTable({ claimId: v.id('executionClaims'), effectKey: v.string(), payload: v.string() }).index('by_claim', ['claimId']).index('by_claimId_and_effectKey', ['claimId', 'effectKey']),
   executionClaims: defineTable({ missionId: v.id('missions'), scope: v.string(), workKey: v.string(), status: v.union(v.literal('running'), v.literal('uncertain'), v.literal('complete')), result: v.optional(v.string()), createdAt: v.number() }).index('by_mission', ['missionId']).index('by_missionId_and_scope_and_status', ['missionId', 'scope', 'status']).index('by_missionId_and_scope_and_workKey', ['missionId', 'scope', 'workKey']).index('by_missionId_and_status', ['missionId', 'status']),
