@@ -131,3 +131,12 @@ The existing Providers ledger now displays mission and role attribution and a pe
 - 448 requests, 448 succeeded, 0 failures, 0 observed throttling. Overall p50 33 ms, p95 38 ms, max 143 ms. Post-load portfolio recovery probe 36 ms. Per-path p95: mission ledger 42 ms, owner ledger 38 ms, mission list 53 ms, portfolio 39 ms, runner state 35 ms.
 - Identity: managed administrative impersonation of an existing owner. This exercises owner-scoped reads, not sign-in/session-validation throughput. No inference, writes or delivery execution were invoked. Before/after counts unchanged: missions 51, deliveries 20, providerInvocations 1.
 - PASS for the observed bounded workload only. No expected production traffic profile, agreed SLA, saturation capacity, write/provider workload, budget/rate-limit boundary or storage-capacity certification was established. The capacity gate remains PARTIAL. Follow-up replaces the previous local-only limitation, not all capacity exit criteria.
+
+
+## Managed Testing paced draft writes — 2026-10-15T02:52:31Z
+
+- Identity-guarded Testing quick-rabbit-810; managed administrative owner impersonation, not session-authentication throughput. Four workers, 12 iterations each, 5-second pacing, elapsed 61,660 ms.
+- 48 mission creates and 48 owner read-backs, zero failures/throttling; 48 unique IDs, all draft/unapproved with budget 0. Exactly 48 matching mission:mission_created audit records verified by mission ID. Write p50 69 ms / p95 180 ms / max 218 ms; read-back p50 40 ms / p95 58 ms / max 80 ms.
+- Before/after workload: missions 51 → 99, auditEvents 334 → 382, providerInvocations 1 → 1, deliveries 20 → 20. No inference or mission execution was requested. Restored the pre-drill Testing snapshot afterward; verified original counts returned.
+- The initial harness checked the mutation argument name action instead of persisted eventType, so its audit relationship assertion was invalid. After inspecting audit.ts, corrected the assertion to eventType=mission:mission_created and repeated the bounded drill; the metrics above are from the corrected run. No product audit defect was found.
+- PASS for this paced draft-write/read-back/audit workload. Provider inference, concurrent mission execution, billing and budget enforcement under inference, saturation, multi-owner/session load, agreed workload targets and storage capacity remain outside scope. Capacity remains PARTIAL; the read-only limitation is now narrowed to missing execution/inference and scale evidence.
