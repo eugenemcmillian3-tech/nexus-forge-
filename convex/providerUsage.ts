@@ -15,6 +15,14 @@ export const begin = internalMutation({
     if (args.missionRunId) {
       const run = await ctx.db.get(args.missionRunId)
       if (!args.missionId || !run || run.missionId !== args.missionId) throw new Error('Run does not match this mission')
+      // The indexed read and insert share one transaction: overlapping workers
+      // cannot both reserve the same active runner stage. Never expire an
+      // unresolved reservation automatically: inference may already have run.
+      const active = await ctx.db.query('providerInvocations')
+        .withIndex('by_mission', q => q.eq('missionId', args.missionId))
+        .filter(q => q.and(q.eq(q.field('missionRunId'), args.missionRunId), q.eq(q.field('stage'), args.stage), q.eq(q.field('role'), args.role), q.eq(q.field('outcome'), 'pending')))
+        .first()
+      if (active) throw new Error('Provider work is already pending for this run stage; review its invocation before retrying')
     }
     return ctx.db.insert('providerInvocations', { ...args, startedAt: Date.now(), outcome: 'pending', usageStatus: 'pending', reports: [] })
   },
