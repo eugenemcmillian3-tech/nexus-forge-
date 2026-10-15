@@ -86,3 +86,16 @@ Managed Testing creation/selection is not exposed by the connector, but the auth
 
 
 Recovery policy decisions remain unapproved: private storage destination, backup frequency, retention, maximum acceptable data loss (RPO) and full service recovery time (RTO). Drill durations already recorded are observations, not agreed objectives. Record these decisions and an actual private backup/restore receipt before marking backup coverage complete.
+
+
+## Managed Testing persisted-state recovery — 2026-10-15T02:13:25Z
+
+Scope: bounded persisted-state interruption and sequential tick replay on Testing quick-rabbit-810. This is not evidence of a managed-host crash, concurrent workers, or interruption during successful provider inference. Live tame-rat-826 was not modified.
+
+- Exported a pre-drill Testing snapshot with file storage before state changes.
+- Selected completed mission k97ffpysbj8p230v72yw9rh3m98fnchc, run m179896f39pgrakmdaszvt8e0n8fm1jq. Its historical runner was blocked at timeout_escalation. Using the existing internal state mutation in Testing only, set the runner to paused / agent_coordination to simulate a stale persisted runner after mission completion; kept the mission approved/complete and its expired deadline unchanged.
+- Invoked the existing runner tick twice sequentially. The first reconciled the stale runner to complete / complete despite its expired deadline; the second was a no-op for provider/delivery/incident effects. Retries remained zero.
+- A second restored draft mission k971tsrea7x25je0wrgkps90xd8fmv6h, run m172tpx5v47pm8fczbcddv8rhn8fnzkm, safely parked at paused / awaiting_mission_approval on both ticks. No new authentication or approval setup was performed.
+- Whole-Testing counts before and after replay: providerInvocations 1 → 1, deliveries 20 → 20, incidents 5 → 5. No new provider execution, delivery row, or incident was created. The batch including safety export and verification took 12,431 ms; this is not a service RTO.
+- Returned Testing to its pre-drill snapshot and verified the historical runner returned to blocked, with the same ledger/delivery/incident counts. Snapshot files are temporary drill materials, not durable backups.
+- PASS for completed-outcome reconciliation and sequential replay side-effect invariants. Broader recovery gate remains PARTIAL: successful-provider interruption, concurrent replay, and managed-host failure/recovery are not demonstrated. Managed rollback, cloud workload, asset backup and billing evidence remain open; full release HOLD remains.
