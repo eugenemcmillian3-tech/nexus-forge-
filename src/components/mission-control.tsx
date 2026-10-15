@@ -3,6 +3,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { ExecutionReview } from './execution-review';
 
 export function MissionControl({
   missionId,
@@ -244,6 +245,7 @@ export function MissionControl({
       {!!executionClaims?.length && <div className="glass-card research-card">
         <div className="panel-title"><span>EXECUTION RECOVERY</span><span className="status-chip">WORK RESERVED</span></div>
         {executionClaims.map(claim => <p key={claim.id} role="status">{claim.scope === "council" ? "AI Council" : "Mission runner"} · {claim.status === "uncertain" ? "Interrupted or unconfirmed work requires review." : "Work is active or awaiting completion confirmation."} Reference: {claim.id}</p>)}
+        {executionClaims.map(claim => <ExecutionReview key={claim.id} claimId={claim.id} />)}
         <p>Duplicate execution is paused. Check provider records and saved outcomes before retrying. Reservations do not expire automatically; a running reservation alone does not prove a failure.</p>
         <Link className="secondary-button" to="/incidents">Review recovery evidence →</Link>
       </div>}

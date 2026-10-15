@@ -30,6 +30,7 @@ import type * as delivery from "../delivery.js";
 import type * as deliveryEvidence from "../deliveryEvidence.js";
 import type * as exclusiveWork from "../exclusiveWork.js";
 import type * as executionClaims from "../executionClaims.js";
+import type * as executionReview from "../executionReview.js";
 import type * as forge from "../forge.js";
 import type * as http from "../http.js";
 import type * as incidentParser from "../incidentParser.js";
@@ -91,6 +92,7 @@ declare const fullApi: ApiFromModules<{
   deliveryEvidence: typeof deliveryEvidence;
   exclusiveWork: typeof exclusiveWork;
   executionClaims: typeof executionClaims;
+  executionReview: typeof executionReview;
   forge: typeof forge;
   http: typeof http;
   incidentParser: typeof incidentParser;
