@@ -169,3 +169,8 @@ The existing Providers ledger now displays mission and role attribution and a pe
 - Captured a Testing safety snapshot. In the supported database UI selected Testing, imported the retrieved ZIP, and observed '2,009 rows imported'. get_project independently confirmed Testing quick-rabbit-810 and Live tame-rat-826 remained separate.
 - Read-only verification in Testing matched all 34 table counts and 2,009 documents with zero mismatches; accepted LocalBoost mission remained approved/complete and the provider ledger retained one row. Returned Testing to its pre-drill snapshot afterward. Live was only exported, never imported over.
 - PASS for a retained one-time database backup, retrieval integrity and isolated managed restore. Original media is separately covered by the previous asset drill. Recurring scheduling, retention duration, agreed RPO/RTO, backup freshness monitoring and an ongoing runbook remain open; no recurring automation was created. Backup gate remains PARTIAL for those policy/operating requirements.
+
+
+## Backup operating-policy proposal — 2026-10-15 UTC
+
+See [BACKUP_POLICY_DRAFT.md](BACKUP_POLICY_DRAFT.md) for a concrete proposal: daily 03:00 America/New_York captures, 30 daily recovery points, 24-hour RPO target, four-hour full-service RTO target, monthly isolated restore checks and backup-freshness escalation. These are draft business/operating targets, not agreed guarantees or configured jobs. No scheduling/retention controls were exposed by the connector guide searches. The next requirements are operator target selection, a supported recurring private capture mechanism, and demonstrated scheduled capture/freshness evidence. No retention deletion or recurring job was configured; backup remains PARTIAL.
