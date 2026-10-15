@@ -44,3 +44,8 @@ This batch closes the checklist-and-audit task. It does not claim that unavailab
 ## Accounting implementation update
 
 The follow-up implementation closes code-side attribution and persistence-gap visibility for all current generative router paths. See [durable accounting](DURABLE_PROVIDER_ACCOUNTING.md). New controlled fault/concurrency and UI tests verify the ledger; they are not a sustained-capacity or live billing-reconciliation drill. Recovery UI was reached but Google account navigation was blocked by automatic approval review. Isolated recovery drills remain pending specific sign-in authorization.
+
+
+### Managed rollback follow-up — 2026-10-15 UTC
+
+Accounting-module rollback and return succeeded through managed Testing deploys, with compatible contracts, preserved checked records/ledger and exact source return (78.7-second data-verification window). See the operations runbook. The platform UI Version History reports 'No previous versions yet'; whole-version restore and Live/full-release recovery remain unverified. Keep rollback PARTIAL; operator sign-in is no longer the current blocker.
