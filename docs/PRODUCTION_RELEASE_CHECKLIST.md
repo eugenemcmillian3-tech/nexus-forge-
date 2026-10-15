@@ -1,6 +1,6 @@
-# Production release checklist — 2026-10-14
+# Production release checklist — 2026-10-14, updated 2026-10-15
 
-**Decision: HOLD full production-readiness sign-off. The application is live.**
+**Decision: HOLD full production-readiness sign-off. The application is live.** The operational-evidence batch of 2026-10-14/15 UTC recorded drill results for backup/restore, rollback, recovery, alert delivery, sustained workload and provider accounting in [docs/evidence/operational-evidence-20261015.md](evidence/operational-evidence-20261015.md); gates that depend on Managed Testing, operator notification confirmation or provider billing remain open, so the HOLD stands.
 
 This is one finite release checklist for the current operator product. All 16 feature pages remain separate. The nine mission lifecycle checkpoints and the 24-milestone capability roadmap are different inventories. Multimodal, enterprise, external-agent and frontier-research expansions are outside this release scope.
 
@@ -10,12 +10,12 @@ This is one finite release checklist for the current operator product. All 16 fe
 | --- | --- | --- |
 | Automated build/security checks | Recorded baseline | PR #137 / commit 69637006dc7ff1839665f78d4f6aa309768040bc: 379 GitHub tests, types, build and dual-engine fixtures passed. Current release PR must also remain green. |
 | Public live runtime | Recorded | 32/32 route observations across all sixteen URLs at concurrency two; p95 98 ms at 21:26:02 UTC. Twenty Chromium shell checks passed across desktop and mobile. Anonymous mission access denied. Per-check reports are in docs/evidence. |
-| Integrated workflow/recovery | Partial | Existing workflow, ownership, provider-failure, callback-replay, incident and recovery tests plus accepted Research/Manifest/LocalBoost evidence. Still record an integrated changed-stage and interrupted-run review; do not pretend public-shell probes are authenticated E2E. |
-| Monitoring/alerts | Partial | Hourly bounded GitHub checks and retained reports implemented in production-release.yml. Confirm a successful main-branch execution and operator alert delivery. Current configuration alone does not establish notification delivery or continuous monitoring. |
-| Backup/restore | BLOCKED | Private export, separate file backup, isolated Testing restore, row/ownership checks, retention, RPO/RTO and timed evidence required. Managed connector does not expose this browser-only operation. |
-| Rollback | BLOCKED | Controlled Testing rehearsal, backward-compatible backend recovery, resulting publish and data-integrity evidence required. A written runbook is not a completed rehearsal. |
-| Capacity/resource bounds | Partial | Small read-only burst completed. Define expected authenticated workload and run sustained Testing checks, including quota/budget behavior. |
-| Cost attribution | Partial | Durable mission/stage invocations, explicit runner IDs, paginated usage history and pending/missing/gap visibility are implemented. Representative live ledger and billing reconciliation evidence remain open; no complete billing guarantee. |
+| Integrated workflow/recovery | Partial | Existing workflow, ownership, provider-failure, callback-replay, incident and recovery tests plus accepted Research/Manifest/LocalBoost evidence. The 2026-10-14/15 recovery drill adds isolated interrupted-run evidence: bounded retries, hard-crash recovery in 17 seconds with the run safely parked for human review, no duplicate provider calls or dispatches (see docs/evidence/operational-evidence-20261015.md). An integrated changed-stage review is still outstanding. |
+| Monitoring/alerts | Partial | Hourly bounded GitHub checks and retained reports implemented in production-release.yml. A deliberate failing drill (run 38658472244, dispatched 2026-10-15T00:10:18Z, read-only, no side effects) is available for the operator to confirm notification delivery. Until the operator confirms receipt at their configured destination, delivery is not proven. |
+| Backup/restore | Partial (demonstrated locally) | Live snapshot export (3 s, SHA-256 recorded) and isolated restore (2.8 s, 1,971 documents/34 tables) with record, ownership and delivery verification passed. Managed Testing restore remains unavailable; Convex file storage is empty so uploaded assets need a separate backup path; retention, RPO/RTO and end-to-end timed recovery remain open. |
+| Rollback | Partial (rehearsed) | Isolated rehearsal completed 2026-10-14/15: pre-accounting code restore is not backward-compatible (ledger indexes deleted); compatible known version restored, verified and returned to current within ~2.5 minutes with data integrity confirmed. Live was never rolled back; the platform UI code restore and a Testing rehearsal remain pending operator sign-in/platform availability. |
+| Capacity/resource bounds | Partial | Sustained authenticated workload on the isolated restored backend: 90 s at concurrency 4, 270,213 owner-scoped requests, 0 failures, 0 throttled, p50 1 ms / p95 2–3 ms / max 54 ms, recovery probe 5 ms. Not a cloud/Testing result and not sustained provider inference; expected-workload certification remains open. |
+| Cost attribution | Partial | Durable mission/stage invocations, explicit runner IDs, paginated usage history and pending/missing/gap visibility are implemented. A representative live ledger record is now verified (groq / openai/gpt-oss-20b, 2,216 tokens, mission/stage/owner attributed, usageStatus recorded). Billing reconciliation remains unknown: no provider billing access, so actual charges cannot be confirmed from token metadata. |
 
 ## What this batch completes
 
@@ -33,7 +33,7 @@ This is one finite release checklist for the current operator product. All 16 fe
 - Ownership and private data: ownership-isolation.test.ts, orchestration-ownership.test.ts and feature-specific isolation cases.
 - Generated artifact execution: artifact-behavior-benchmark.test.ts, artifact-browser-runner.test.ts, exact-artifact-ci.test.ts and the isolated exact-artifact GitHub workflow.
 - Current release package: production-release.test.tsx plus the production release workflow reports.
-- Operational procedures: PRODUCTION_OPERATIONS.md. Recordings of backup/restore, rollback, alert delivery and sustained workload are still required.
+- Operational procedures: PRODUCTION_OPERATIONS.md. Backup/restore, rollback, recovery, alert-drill and sustained-workload evidence recorded on 2026-10-14/15 UTC: docs/evidence/operational-evidence-20261015.md.
 
 ## Closure rule
 
