@@ -53,4 +53,15 @@ describe('execution evidence review', () => {
     expect(screen.queryByRole('button', { name: 'Record recovery decision' })).not.toBeInTheDocument()
     expect(screen.getByText(/Work is active/)).toBeInTheDocument()
   })
+  it('distinguishes reused stages from remaining provider work before deliberate continuation', async () => {
+    state.evidence = { ...state.evidence, continuationBlock: null, reusableStages: 2, remainingStages: 6 }
+    render(<ExecutionReview claimId={'claim-test' as Id<'executionClaims'>} />)
+    fireEvent.change(screen.getByLabelText('Recovery decision'), { target: { value: 'continue-saved' } })
+    expect(screen.getByText(/reuse 2 saved stage/)).toHaveTextContent('allow up to 6 unstarted Council stage')
+    fireEvent.change(screen.getByLabelText('Evidence reviewed and next investigation'), { target: { value: 'Reviewed saved inputs, durable answers and original execution bounds.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue saved Council work' }))
+    expect(await screen.findByText(/Saved-work continuation authorized/)).toBeInTheDocument()
+    expect(state.record.mock.calls[0][0].decision).toBe('continue-saved')
+  })
+
 })

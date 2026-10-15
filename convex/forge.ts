@@ -3,7 +3,7 @@ import { action, internalAction, internalMutation, internalQuery, query } from "
 import { internal } from "./_generated/api"
 import { COUNCIL_MODELS } from "./aiProvider"
 import { callManagedAi } from "./providerAccounting"
-import { exclusiveWork } from "./exclusiveWork"
+import { exclusiveWork, runClaimedWork } from "./exclusiveWork"
 import { getFunctionName } from "convex/server"
 import { assertClaim, claimEffect } from "./claimedEffects"
 
@@ -50,18 +50,33 @@ const runAgent = async (ctx: any, missionId: any, ownerKey: string, agent: strin
 }
 
 export const orchestrateInternal = internalAction({
-  args: { missionId: v.id("missions"), mission: v.string(), missionRunId: v.optional(v.id("missionRuns")) }, returns: v.object({ ok: v.boolean(), summary: v.string() }),
+  args: { missionId: v.id("missions"), mission: v.string(), missionRunId: v.optional(v.id("missionRuns")), recoveryClaimId: v.optional(v.id("executionClaims")) }, returns: v.object({ ok: v.boolean(), summary: v.string() }),
   handler: async (ctx, args) => {
     const missionRecord = await ctx.runQuery(internal.missions.getByIdInternal, { id: args.missionId })
     if (!missionRecord) throw new Error("Mission not found")
-    if (!missionRecord.approved) throw new Error("Human mission approval is required before council execution")
-    if (missionRecord.status === "complete") throw new Error("Mission is already complete")
+    if (!missionRecord.approved && !args.recoveryClaimId) throw new Error("Human mission approval is required before council execution")
+    if (missionRecord.status === "complete" && !args.recoveryClaimId) throw new Error("Mission is already complete")
     const actionCtx = ctx
-    return (await exclusiveWork<{ ok: boolean; summary: string }>(actionCtx, { missionId: args.missionId, scope: "council", workKey: args.missionRunId ? `runner:${args.missionRunId}` : `direct:${crypto.randomUUID()}`, retain: !!args.missionRunId }, async executionClaimId => {
+    const validationErrors: string[] = []
+    const perform = async (executionClaimId: Id<'executionClaims'>, dryRun = false): Promise<{ok:boolean;summary:string}> => {
     const guarded = new Set(["providerRecovery:reserve", "providerUsage:begin", "forge:updateRun", "forge:recordAgentEvidence", "forge:recordCouncilResult", "forge:recordLearningLesson"])
-    const ctx: typeof actionCtx = { ...actionCtx, runMutation: ((ref: any, values: any) => actionCtx.runMutation(ref, guarded.has(getFunctionName(ref)) ? { ...values, executionClaimId } : values)) as typeof actionCtx.runMutation }
+    const ctx: typeof actionCtx = { ...actionCtx, runMutation: (async (ref: any, values: any) => {
+      if (dryRun) {
+        if (getFunctionName(ref) === 'providerRecovery:reserve') {
+          let answer: string | null = null
+          try { answer = await actionCtx.runQuery(internal.continuation.replayLookup, { claimId: executionClaimId, stage: values.stage, role: values.role, requestDigest: values.requestDigest }) }
+          catch (e) { validationErrors.push(e instanceof Error ? e.message : 'Saved request validation failed') }
+          return { invocationId: executionClaimId, answer: answer ?? '__UNSTARTED_DRY_RUN__' }
+        }
+        // Deliberately suppress every mutation during request-contract validation.
+        return null
+      }
+      return actionCtx.runMutation(ref, guarded.has(getFunctionName(ref)) ? { ...values, executionClaimId } : values)
+    }) as typeof actionCtx.runMutation }
     await ctx.runMutation(internal.forge.createRuns, { missionId: args.missionId })
     try {
+      const { missionText, researchContext, learningContext, preflightContext, memoryReceiptId } = await (async () => {
+      if (args.recoveryClaimId) return await ctx.runQuery(internal.continuation.inputs, { claimId: executionClaimId })
       const missionText = missionRecord.mission
       const synthesis = await ctx.runQuery(internal.memory.getMissionSynthesis, { missionId: args.missionId })
       const memorySelection = await ctx.runQuery(internal.memory.getCouncilMemorySelection, { missionId: args.missionId, missionText: missionText })
@@ -81,6 +96,8 @@ CITATIONS: ${row.citations.join(", ") || "none"}`).join("\n\n")}${synthesis ? `\
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Adaptive Preflight", message: preparedPreflightContext, score: adaptive.riskSignals.length ? 0.85 : 0.8, severity: "verified" })
       const memoryReceiptId = await ctx.runMutation(internal.memory.recordCouncilMemorySelection, { missionId: args.missionId, missionText: missionText, selected: memorySelection.selected, ...(memorySelection.candidate ? { candidate: memorySelection.candidate } : {}), corpusCutoff: memorySelection.corpusCutoff, learningContext: preparedLearningContext, preflightContext: preparedPreflightContext, executionClaimId, researchContext: preparedResearchContext })
       const researchContext = preparedResearchContext, learningContext = preparedLearningContext, preflightContext = preparedPreflightContext
+      return { missionText, researchContext, learningContext, preflightContext, memoryReceiptId }
+      })()
       const planner = await askCouncil(`You are the NEXUS FORGE Council Planner. Produce a governed execution plan. Never invent research. Clearly label unverified assumptions. Return OBJECTIVE, MILESTONES with acceptance evidence, RISKS with mitigation, AGENT ASSIGNMENTS, DEPENDENCY WAVES, HANDOFFS, NEXT ACTION, LEARNING INFLUENCE, APPROVAL GATE. Preserve human approval. Adaptive preflight is advisory and must not authorize execution.\n\nMission:\n${missionText}\n\n${researchContext}\n\n${learningContext}\n\n${preflightContext}`, 1400, "planner", ctx, missionRecord.ownerKey, args.missionId, "council-plan", args.missionRunId)
       await ctx.runMutation(internal.memory.markCouncilPlannerResponded, { receiptId: memoryReceiptId })
       await ctx.runMutation(internal.forge.recordAgentEvidence, { missionId: args.missionId, agent: "Council Planner", message: `Model ${COUNCIL_MODELS.planner}\n${planner}`, score: 0.9, severity: "verified" })
@@ -157,6 +174,18 @@ ${decision}`
       for (const run of runs.filter(x => x.status === "queued" || x.status === "running")) await ctx.runMutation(internal.forge.updateRun, { missionId: args.missionId, agent: run.agent, status: "blocked", progress: 100, note: `Blocked by orchestration failure: ${message}` })
       throw error
     }
-    }))!
+    }
+    if (args.recoveryClaimId) {
+      if (!args.missionRunId) throw new Error('Continuation requires its original runner')
+      const taken = await actionCtx.runMutation(internal.continuation.take, { claimId: args.recoveryClaimId, missionId: args.missionId, runId: args.missionRunId })
+      if (!taken) return { ok: false, summary: 'Continuation was already consumed or its prerequisites changed.' }
+      return runClaimedWork(actionCtx, args.recoveryClaimId, true, async claimId => {
+        // Validate every retained request before the first remaining inference call.
+        await perform(claimId, true)
+        if (validationErrors.length) throw new Error('Saved Council request contract changed; continuation remains blocked.')
+        return perform(claimId)
+      })
+    }
+    return (await exclusiveWork<{ok:boolean;summary:string}>(actionCtx, { missionId: args.missionId, scope: 'council', workKey: args.missionRunId ? 'runner:'+args.missionRunId : 'direct:'+crypto.randomUUID(), retain: !!args.missionRunId }, claimId => perform(claimId)))!
   },
 })

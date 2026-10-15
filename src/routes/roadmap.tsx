@@ -69,7 +69,7 @@ const roadmap:Milestone[] = [
     "n": 11,
     "title": "Checkpoints and long-horizon execution",
     "status": "partial",
-    "detail": "Validate checkpoint recovery and long-horizon reliability across repeated runs."
+    "detail": "Owner-reviewed Council continuation now retires stale worker authority, reuses matching durable answers and runs only unstarted stages from frozen inputs. Controlled interrupted/uninterrupted outputs matched. Pending/failed/ambiguous work and real host interruption remain blocked or unverified."
   },
   {
     "n": 12,
@@ -162,8 +162,8 @@ function RoadmapPage() {
     <div className="stats-strip compact"><div><strong>{done.length}</strong><span>Completed milestone</span></div><div><strong>{partial.length}</strong><span>Partially implemented</span></div><div><strong>{deferred.length}</strong><span>Deferred / not implemented</span></div></div>
     <div className="glass-card research-card"><div className="panel-title"><span>NEXT WORK · FOUNDATION FIRST</span><span className="status-chip">IN PROGRESS</span></div>
       <p>External-access acceptance work is on hold at the operator's request. Seven formerly deferred areas now have working first-release controls on dedicated pages. Their broader milestones remain partial; this page records unfinished engineering and empirical research separately.</p>
-      <ol><li>Complete AI multimodal generation/perception through an explicitly selected runtime provider.</li><li>Extend team collaboration to governed shared missions and implement scoped external-agent execution.</li><li>Finish intermediate-work recovery, automatic source-specific outcome ingestion and measured adaptive policy selection.</li><li>Run representative comparative, learning-reuse and held-out-domain experiments using the new preregistered protocols. Preserve regressions and independent evidence.</li></ol>
-      <div className="hero-actions"><Link className="primary-button" to="/multimodal">Open seven expanded capabilities →</Link><Link className="secondary-button" to="/capabilities">Operational evidence →</Link></div>
+      <ol><li>Complete AI multimodal generation/perception through an explicitly selected runtime provider.</li><li>Extend team collaboration to governed shared missions and implement scoped external-agent execution.</li><li>Finish pending-provider recovery, automatic source-specific outcome ingestion and measured adaptive policy selection.</li><li>Run representative comparative, learning-reuse and held-out-domain experiments using the new preregistered protocols. Preserve regressions and independent evidence.</li></ol>
+      <p>Reviewed intermediate Council continuation is implemented and compared against an uninterrupted baseline. <a href="https://github.com/eugenemcmillian3-tech/nexus-forge-/blob/main/docs/COUNCIL_CONTINUATION.md" target="_blank" rel="noreferrer">Review comparison results and safety limits →</a></p><div className="hero-actions"><Link className="primary-button" to="/multimodal">Open seven expanded capabilities →</Link><Link className="secondary-button" to="/capabilities">Operational evidence →</Link></div>
       <p>Dependency and resource preflight checks block execution in the backend. Mission Control displays blockers, advisories, and resource availability; authorization and execution wait for ready preflight and incident clearance.</p>
     </div>
     <div className="glass-card research-card"><div className="panel-title"><span>IMPLEMENTED FOUNDATION</span><span className="live-pill">SAVED EVIDENCE</span></div>

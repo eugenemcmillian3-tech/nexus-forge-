@@ -1,3 +1,4 @@
+import { continuationPreflight } from './continuationPolicy'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 
@@ -16,5 +17,7 @@ export async function checkProviderClaim(ctx: MutationCtx, args: { missionId?: I
     if (!run || run.missionId !== mission._id || run.status === 'blocked' || run.status === 'complete' || Date.now() >= run.deadlineAt) throw new Error('Runner no longer permits Council inference')
   }
   if (args.missionRunId && claim.workKey !== 'runner:'+args.missionRunId) throw new Error('Council claim does not match runner')
+  const continuation = await ctx.db.query('executionEffects').withIndex('by_claimId_and_effectKey', q => q.eq('claimId', claim._id).eq('effectKey', 'continuation-ticket:v1')).unique()
+  if (continuation) { if (JSON.parse(continuation.payload).status !== 'consumed') throw new Error('Continuation has not been claimed'); const block = await continuationPreflight(ctx, claim); if (block) throw new Error(block) }
   if (!args.missionRunId && !claim.workKey.startsWith('direct:')) throw new Error('Council claim does not match direct invocation')
 }

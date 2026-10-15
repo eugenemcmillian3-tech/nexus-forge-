@@ -1,5 +1,7 @@
 # Production operations runbook
 
+Latest recovery update (2026-10-15 18:30 UTC): [reviewed Council continuation](COUNCIL_CONTINUATION.md) is implemented. Controlled interrupted/uninterrupted results matched; 443 regressions across 73 files passed. Existing input snapshots and successful durable answers are reused through a replacement claim; pending/failed/ambiguous provider calls remain blocked. External-access acceptance work remains on hold. Older dated notes below retain their original scope.
+
 Current batch status (2026-10-15 17:20 UTC): see [consolidated evidence](evidence/consolidated-batch-20261015.md). 409 tests / 70 files passed. Saved-completion confirmation, fresh retained/retrieved backup restore and exact Testing return, backend-changing application rollback/return, bounded Live capacity and supported usage history are verified for their recorded scopes. Older dated limitations below are historical; the current consolidated evidence controls. Scheduled backup success, achieved recovery targets, actual billing, expected execution load and real host/provider interruption remain open.
 
 Audit date: 2026-10-14, operational evidence batch 2026-10-14/15 UTC. Scope: the current NEXUS FORGE operator product, with 16 feature pages and a separate nine-checkpoint mission lifecycle. The procedures below are now backed by the recorded drill evidence in [docs/evidence/operational-evidence-20261015.md](evidence/operational-evidence-20261015.md).

@@ -1,3 +1,4 @@
+import { continuationInspection } from './continuationPolicy'
 import { completedCouncilOutcome } from './completedCouncil'
 import { unstartedRetryBlock } from './unstartedRetry'
 import { internal } from './_generated/api'
@@ -28,7 +29,8 @@ async function inspect(ctx: Pick<QueryCtx, 'db' | 'auth'>, claimId: Id<'executio
   // Token represents exactly the bounded evidence displayed, excluding review notes.
   // It is compared transactionally, not treated as authorization.
   const completionOutcome = await completedCouncilOutcome(ctx, claim)
-  const evidenceToken = JSON.stringify([claim.status, completionOutcome.proof ?? completionOutcome.block, snapshot?._id ?? null, runMatches ? run!.status : null, invocations, effects.slice(0, 5).filter(e => e.effectKey !== 'recovery-review:v1').map(e => e._id), effectsTruncated, invocationsTruncated])
+  const continuation = await continuationInspection(ctx, claim)
+  const evidenceToken = JSON.stringify([claim.status, continuation.proof ?? continuation.block, completionOutcome.proof ?? completionOutcome.block, snapshot?._id ?? null, runMatches ? run!.status : null, invocations, effects.slice(0, 5).filter(e => e.effectKey !== 'recovery-review:v1').map(e => e._id), effectsTruncated, invocationsTruncated])
   let context: string | null = null
   if (snapshot) {
     try {
@@ -41,20 +43,21 @@ async function inspect(ctx: Pick<QueryCtx, 'db' | 'auth'>, claimId: Id<'executio
     try { const saved = JSON.parse(review.payload); if (typeof saved.decision === 'string' && typeof saved.note === 'string' && typeof saved.recordedAt === 'number') lastReview = saved } catch { /* Legacy payload is unavailable. */ }
   }
   return { claim, review, context, lastReview, invocations, effectsTruncated, invocationsTruncated, evidenceToken,
+    continuation, continuationBlock: continuation.block, reusableStages: continuation.reused, remainingStages: continuation.remaining,
     completionOutcome, completionBlock: completionOutcome.block, retryBlock: await unstartedRetryBlock(ctx, claim), effectCount: Math.min(effects.length, 5), providerScope: runMatches ? 'runner-council' : 'unattributed-direct-or-missing-run' }
 }
 const invocation = v.object({ id: v.id('providerInvocations'), stage: v.string(), outcome: v.string(), usageStatus: v.string(), recoverable: v.boolean(), reports: v.number(), finishedAt: v.union(v.number(), v.null()) })
 export const evidence = query({
   args: { claimId: v.id('executionClaims') },
-  returns: v.object({ completionBlock: v.union(v.string(), v.null()), retryBlock: v.union(v.string(), v.null()), status: v.string(), scope: v.string(), context: v.union(v.string(), v.null()), lastReview: v.union(v.null(), v.object({ decision: v.string(), note: v.string(), recordedAt: v.number() })), invocations: v.array(invocation), effectsTruncated: v.boolean(), invocationsTruncated: v.boolean(), evidenceToken: v.string(), effectCount: v.number(), providerScope: v.string() }),
+  returns: v.object({ continuationBlock: v.union(v.string(), v.null()), reusableStages: v.number(), remainingStages: v.number(), completionBlock: v.union(v.string(), v.null()), retryBlock: v.union(v.string(), v.null()), status: v.string(), scope: v.string(), context: v.union(v.string(), v.null()), lastReview: v.union(v.null(), v.object({ decision: v.string(), note: v.string(), recordedAt: v.number() })), invocations: v.array(invocation), effectsTruncated: v.boolean(), invocationsTruncated: v.boolean(), evidenceToken: v.string(), effectCount: v.number(), providerScope: v.string() }),
   handler: async (ctx, args) => {
     const result = await inspect(ctx, args.claimId)
-    const { claim, review: _review, completionOutcome: _completion, ...visible } = result
+    const { claim, review: _review, completionOutcome: _completion, continuation: _continuation, ...visible } = result
     return { ...visible, status: claim.status, scope: claim.scope }
   },
 })
 export const record = mutation({
-  args: { claimId: v.id('executionClaims'), evidenceToken: v.string(), decision: v.union(v.literal('hold'), v.literal('escalate'), v.literal('retry-unstarted'), v.literal('confirm-completion')), note: v.string() },
+  args: { claimId: v.id('executionClaims'), evidenceToken: v.string(), decision: v.union(v.literal('hold'), v.literal('escalate'), v.literal('retry-unstarted'), v.literal('confirm-completion'), v.literal('continue-saved')), note: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {
     const note = args.note.trim()
@@ -62,6 +65,22 @@ export const record = mutation({
     const result = await inspect(ctx, args.claimId)
     if (result.claim.status !== 'uncertain') throw new ConvexError('Only uncertain work can receive a recovery decision')
     if (result.evidenceToken !== args.evidenceToken) throw new ConvexError('Execution evidence changed. Review the current evidence before saving')
+    if (args.decision === 'continue-saved') {
+      const continuation = result.continuation
+      if (continuation.block) throw new ConvexError(continuation.block)
+      const runId = ctx.db.normalizeId('missionRuns', result.claim.workKey.slice(7))!
+      const run = (await ctx.db.get(runId))!
+      const replacementId = await ctx.db.insert('executionClaims', { missionId: result.claim.missionId, scope: 'council', workKey: result.claim.workKey, status: 'running', createdAt: Date.now() })
+      // Atomically revoke the original worker's exact claim authority.
+      await ctx.db.patch(args.claimId, { scope: 'council-retired', status: 'complete', result: JSON.stringify({ retired: true, replacementId }) })
+      for (const effect of continuation.effects.filter(e => !['recovery-review:v1', 'continuation-ticket:v1'].includes(e.effectKey))) await ctx.db.insert('executionEffects', { claimId: replacementId, effectKey: effect.effectKey, payload: effect.payload })
+      await ctx.db.insert('executionEffects', { claimId: replacementId, effectKey: 'continuation-ticket:v1', payload: JSON.stringify({ status: 'ready', originalClaimId: args.claimId, authorizedAt: Date.now(), reused: continuation.reused, remaining: continuation.remaining }) })
+      await ctx.db.patch(runId, { retries: run.retries + 1, lastError: 'Reviewed Council continuation authorized; retained request contracts will be validated before inference.' })
+      await ctx.db.insert('auditEvents', { missionId: result.claim.missionId, runId, eventType: 'execution-saved-continuation', source: 'operator', message: 'Operator authorized fenced Council continuation using saved inputs and matching durable answers.', metadata: JSON.stringify({ originalClaimId: args.claimId, replacementId, reused: continuation.reused, remaining: continuation.remaining, note }), createdAt: Date.now() })
+      const mission = (await ctx.db.get(result.claim.missionId))!
+      await ctx.scheduler.runAfter(0, internal.forge.orchestrateInternal, { missionId: mission._id, mission: mission.mission, missionRunId: runId, recoveryClaimId: replacementId })
+      return null
+    }
     if (args.decision === 'confirm-completion') {
       const outcome = result.completionOutcome
       if (outcome.block || !outcome.result) throw new ConvexError(outcome.block ?? 'Council completion cannot be confirmed')

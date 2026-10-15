@@ -7,7 +7,7 @@ export function ExecutionReview({ claimId }: { claimId: Id<'executionClaims'> })
   const evidence = useQuery(api.executionReview.evidence, { claimId })
   const record = useMutation(api.executionReview.record)
   const [note, setNote] = useState('')
-  const [decision, setDecision] = useState<'hold' | 'escalate' | 'retry-unstarted' | 'confirm-completion'>('hold')
+  const [decision, setDecision] = useState<'hold' | 'escalate' | 'retry-unstarted' | 'confirm-completion' | 'continue-saved'>('hold')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -17,7 +17,7 @@ export function ExecutionReview({ claimId }: { claimId: Id<'executionClaims'> })
     setBusy(true); setError(''); setMessage('')
     try {
       await record({ claimId, evidenceToken: evidence.evidenceToken, decision, note })
-      setNote(''); setMessage(decision === 'confirm-completion' ? 'Saved Council completion confirmed. No inference or workflow advance was scheduled.' : decision === 'retry-unstarted' ? 'Unstarted retry authorized. The runner will recheck execution prerequisites.' : 'Review recorded. Execution remains blocked.')
+      setNote(''); setMessage(decision === 'continue-saved' ? 'Saved-work continuation authorized. Matching answers will be reused; only unstarted Council stages may call configured providers.' : decision === 'confirm-completion' ? 'Saved Council completion confirmed. No inference or workflow advance was scheduled.' : decision === 'retry-unstarted' ? 'Unstarted retry authorized. The runner will recheck execution prerequisites.' : 'Review recorded. Execution remains blocked.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not save review') }
     finally { setBusy(false) }
   }
@@ -30,13 +30,14 @@ export function ExecutionReview({ claimId }: { claimId: Id<'executionClaims'> })
     {evidence.lastReview && <p>Latest decision: {evidence.lastReview.decision === 'hold' ? 'Keep blocked' : 'Escalate'}. {evidence.lastReview.note}</p>}
     {evidence.status === 'uncertain' ? <>
       <label htmlFor={'decision-'+claimId}>Recovery decision</label>
-      <select id={'decision-'+claimId} value={decision} onChange={e => setDecision(e.target.value as 'hold' | 'escalate' | 'retry-unstarted' | 'confirm-completion')} disabled={busy}><option value="hold">Keep blocked</option><option value="escalate">Escalate for investigation</option>{evidence.retryBlock === null && <option value="retry-unstarted">Authorize retry of unstarted work</option>}{evidence.completionBlock === null && <option value="confirm-completion">Confirm saved Council completion</option>}</select>
+      <select id={'decision-'+claimId} value={decision} onChange={e => setDecision(e.target.value as 'hold' | 'escalate' | 'retry-unstarted' | 'confirm-completion' | 'continue-saved')} disabled={busy}><option value="hold">Keep blocked</option><option value="escalate">Escalate for investigation</option>{evidence.retryBlock === null && <option value="retry-unstarted">Authorize retry of unstarted work</option>}{evidence.completionBlock === null && <option value="confirm-completion">Confirm saved Council completion</option>}{evidence.continuationBlock === null && <option value="continue-saved">Continue saved Council work</option>}</select>
       <label htmlFor={'review-'+claimId}>Evidence reviewed and next investigation</label>
       <textarea id={'review-'+claimId} value={note} onChange={e => setNote(e.target.value)} maxLength={2000} disabled={busy} rows={3} />
-      <p>{decision === 'confirm-completion' ? 'Confirm only the already-saved final outcome. This does not start inference or advance the workflow.' : decision === 'retry-unstarted' ? 'This retires the old claim and schedules the runner. Provider inference may start within the original approved scope and deadline.' : 'Record what the evidence establishes and what remains unknown. Saving this review preserves the reservation.'}</p>
+      <p>{decision === 'continue-saved' ? `Retire the old worker authority, retain original inputs and receipts, reuse ${evidence.reusableStages} saved stage(s) and allow up to ${evidence.remainingStages} unstarted Council stage(s) using current configured providers. The original deadline and retry allowance remain in force.` : decision === 'confirm-completion' ? 'Confirm only the already-saved final outcome. This does not start inference or advance the workflow.' : decision === 'retry-unstarted' ? 'This retires the old claim and schedules the runner. Provider inference may start within the original approved scope and deadline.' : 'Record what the evidence establishes and what remains unknown. Saving this review preserves the reservation.'}</p>
+      {evidence.continuationBlock && <p>Saved-work continuation unavailable: {evidence.continuationBlock}</p>}
       {evidence.retryBlock && <p>Retry unavailable: {evidence.retryBlock}</p>}
-      <button className="secondary-button" disabled={busy || note.trim().length < 20 || (decision === 'retry-unstarted' && evidence.retryBlock !== null) || (decision === 'confirm-completion' && evidence.completionBlock !== null)} onClick={() => void save()}>{busy ? 'Saving decision…' : decision === 'retry-unstarted' ? 'Authorize unstarted retry' : decision === 'confirm-completion' ? 'Confirm saved completion' : 'Record recovery decision'}</button>
-    </> : <p>Work is active. A recovery decision becomes available only when its claim is uncertain.</p>}
+      <button className="secondary-button" disabled={busy || note.trim().length < 20 || (decision === 'retry-unstarted' && evidence.retryBlock !== null) || (decision === 'confirm-completion' && evidence.completionBlock !== null) || (decision === 'continue-saved' && evidence.continuationBlock !== null)} onClick={() => void save()}>{busy ? 'Saving decision…' : decision === 'retry-unstarted' ? 'Authorize unstarted retry' : decision === 'confirm-completion' ? 'Confirm saved completion' : decision === 'continue-saved' ? 'Continue saved Council work' : 'Record recovery decision'}</button>
+    </> : <p>{evidence.status === 'complete' ? 'This claim is complete or retired. Review the current mission state for any remaining recovery work.' : 'Work is active. A recovery decision becomes available only when its claim is uncertain.'}</p>}
     {error && <p role="alert">{error}</p>}
     {message && <p role="status">{message}</p>}
   </div>

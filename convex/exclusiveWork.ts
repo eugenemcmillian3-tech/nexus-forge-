@@ -12,14 +12,17 @@ export async function exclusiveWork<T>(ctx: Pick<ActionCtx, 'runMutation'>, opti
     }
     throw new Error('Mission work is already active or uncertain; inspect recovery evidence before retrying')
   }
+  return runClaimedWork(ctx, claim.claimId, options.retain, work)
+}
+export async function runClaimedWork<T>(ctx:Pick<ActionCtx,'runMutation'>,claimId:Id<'executionClaims'>,retain:boolean,work:(claimId:Id<'executionClaims'>)=>Promise<T>):Promise<T> {
   try {
-    const result = await work(claim.claimId)
-    await ctx.runMutation(internal.executionClaims.finish, { claimId: claim.claimId, result: JSON.stringify(result), retain: options.retain })
+    const result = await work(claimId)
+    await ctx.runMutation(internal.executionClaims.finish, { claimId: claimId, result: JSON.stringify(result), retain: retain })
     return result
   } catch (error) {
     // No automatic release on error: remote work or a commit may have succeeded.
     // A lost finish acknowledgement can leave a completed result; uncertain is a no-op then.
-    try { await ctx.runMutation(internal.executionClaims.uncertain, { claimId: claim.claimId }) } catch { /* running remains reserved */ }
+    try { await ctx.runMutation(internal.executionClaims.uncertain, { claimId: claimId }) } catch { /* running remains reserved */ }
     throw error
   }
 }
