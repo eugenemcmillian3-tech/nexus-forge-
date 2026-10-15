@@ -30,11 +30,11 @@ describe('release evidence boundaries', () => {
     expect(confirmsAnonymousDenial({ status: 'error', errorData: 'Server Error' })).toBe(false)
     expect(confirmsAnonymousDenial({ status: 'success', errorData: 'Authenticated operator session required' })).toBe(false)
   })
-  it('shows the dated release hold, unverified recovery work and evidence links', () => {
+  it('shows the dated release hold, demonstrated-but-open recovery work and evidence links', () => {
     render(<ProductionReleaseReadiness />)
     expect(screen.getByText('RELEASE HOLD')).toBeInTheDocument()
-    expect(screen.getByText(/Backup and isolated restore · BLOCKED/)).toBeInTheDocument()
-    expect(screen.getByText(/Rollback rehearsal · BLOCKED/)).toBeInTheDocument()
+    expect(screen.getByText(/Backup and isolated restore · PARTIAL/)).toBeInTheDocument()
+    expect(screen.getByText(/Rollback rehearsal · PARTIAL/)).toBeInTheDocument()
     expect(screen.getByText(/This snapshot is not live telemetry/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Open monitoring runs/ })).toHaveAttribute('href', expect.stringContaining('/actions/workflows/production-release.yml'))
   })
