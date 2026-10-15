@@ -55,6 +55,10 @@ The live production service was not deliberately rolled back or disrupted to man
 
 Supported stages retain provider-reported usage, with unknown charges kept unknown and no inference replay after a usage-save failure. Explicit runner attribution and accounting-gap visibility are implemented and have scoped evidence; provider billing reconciliation and broader workload validation remain open. Do not infer zero cost, complete billing, or a hard spend guarantee from incomplete metadata.
 
+## Managed claim recovery drill — 2026-10-15T05:51:59Z
+
+See [managed claim recovery evidence](evidence/managed-claim-recovery-20261015.md): four deployed concurrent acquire requests produced one winner and three rejections; saved-result replay and uncertain-work takeover exclusion passed. The original empty claim table was restored, with counts and record hashes unchanged across 13 inspected tables. No inference, delivery or Live mutation occurred. This is persisted-state simulation on managed Testing, not a host crash or real-provider interruption. Recovery remains PARTIAL.
+
 ## Release decision
 
 Current active-work source review: [ACTIVE_WORK_RECOVERY_REVIEW.md](ACTIVE_WORK_RECOVERY_REVIEW.md). Runner provider-stage recovery now uses transactional admission and a private durable answer, reusing a matching completed result without inference. Thirteen controlled recovery tests and the full 376-test suite passed; isolated Testing deployment is backward-compatible. Council/tick claims, fenced Council writes, atomic Council effect receipts, ordered final-result handoff and owner-visible reservations are implemented; full regressions now pass 389 tests / 64 files. See [execution claim evidence](evidence/execution-claims-20261015.md). Stable context snapshots, reviewed uncertain-claim recovery controls, retention policy and a managed interruption drill remain next. This does not establish exactly-once execution; recovery remains PARTIAL.
