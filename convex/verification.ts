@@ -51,16 +51,7 @@ export const importProductOutcomeInternal = internalMutation({
   handler: async (ctx, args) => {
     const ownerKey = await requireOperator(ctx)
     await requireOwnedMission(ctx, args.missionId)
-    const { receipt, ...input } = args
-    const importKey = receipt.repository + ":" + receipt.commitSha + ":" + receipt.path
-    const existing = await ctx.db.query("productOutcomes").withIndex("by_owner_import", q => q.eq("ownerKey", ownerKey).eq("importKey", importKey)).unique()
-    if (existing) {
-      if (existing.importReceipt?.reportSha256 !== receipt.reportSha256 || existing.missionId !== args.missionId) throw new Error("Conflicting immutable report import.")
-      return existing._id
-    }
-    const recordedAt = Date.now()
-    const result = evaluateProductOutcome(input, recordedAt)
-    return ctx.db.insert("productOutcomes", { ...input, ...result, ownerKey, recordedAt, provenance: "github-report", importKey, importReceipt: receipt })
+    return storeImportedProductOutcome(ctx,args,ownerKey)
   },
 })
 
@@ -84,3 +75,15 @@ export const siteTrafficHistory = query({
     return ctx.db.query("siteTrafficReceipts").withIndex("by_owner", q => q.eq("ownerKey", ownerKey)).order("desc").paginate(args.paginationOpts)
   },
 })
+
+export async function storeImportedProductOutcome(ctx:any,args:any,ownerKey:string){    const { receipt, ...input } = args
+    const importKey = receipt.repository + ":" + receipt.commitSha + ":" + receipt.path
+    const existing = await ctx.db.query("productOutcomes").withIndex("by_owner_import", q => q.eq("ownerKey", ownerKey).eq("importKey", importKey)).unique()
+    if (existing) {
+      if (existing.importReceipt?.reportSha256 !== receipt.reportSha256 || existing.missionId !== args.missionId) throw new Error("Conflicting immutable report import.")
+      return existing._id
+    }
+    const recordedAt = Date.now()
+    const result = evaluateProductOutcome(input, recordedAt)
+    return ctx.db.insert("productOutcomes", { ...input, ...result, ownerKey, recordedAt, provenance: "github-report", importKey, importReceipt: receipt })
+}

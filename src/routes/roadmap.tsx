@@ -15,7 +15,7 @@ const roadmap:Milestone[] = [
     "n": 2,
     "title": "Finish Manifest Intelligence outcome system",
     "status": "partial",
-    "detail": "Add world context, automatic outcome metrics, complete resource accounting, and measured adaptive improvement."
+    "detail": "Opt-in hourly GitHub outcome ingestion and evidence-based planning selection are implemented. Broader world context, complete resource accounting and representative measured adaptive improvement remain open."
   },
   {
     "n": 3,
@@ -105,7 +105,7 @@ const roadmap:Milestone[] = [
     "n": 17,
     "title": "Multimodal creation and perception",
     "status": "partial",
-    "detail": "Multimodal Studio now stores private image/audio/video/text assets, creates PNG visual cards, plays browser speech and inspects decoded dimensions/duration. AI generation, transcription and semantic perception are still unimplemented."
+    "detail": "Multimodal Studio now stores private image/audio/video/text assets, creates PNG visual cards, plays browser speech and inspects decoded dimensions/duration. Cloudflare FLUX generation, Whisper transcription, LLaVA image description and three-frame video sampling now have authenticated runtime actions, durable receipts and controlled integration tests. Full-video understanding, music generation and live provider quality acceptance remain open."
   },
   {
     "n": 18,
@@ -123,13 +123,13 @@ const roadmap:Milestone[] = [
     "n": 20,
     "title": "Multi-user and enterprise governance",
     "status": "partial",
-    "detail": "Team Governance now supports team creation, explicit join requests, admin-reviewed viewer/contributor/admin roles, revocation and permission-checked shared notes. Private missions stay private. Shared mission execution, SSO and enterprise provisioning remain open."
+    "detail": "Team Governance now supports team creation, explicit join requests, admin-reviewed viewer/contributor/admin roles, revocation and permission-checked shared notes. Mission owners can explicitly share selected briefs and delegate approved execution through the original dependency/resource/incident preflight. Unshared missions and credentials remain private. SSO and enterprise provisioning remain open."
   },
   {
     "n": 21,
     "title": "External agent and developer ecosystem",
     "status": "partial",
-    "detail": "Developer Integrations now registers immutable semantic versions, validates exact JSON field examples and retires versions with audit history. It does not execute external agents. Scoped runtime execution, marketplace distribution and revenue sharing remain open."
+    "detail": "Developer Integrations now registers immutable semantic versions, validates exact JSON field examples and retires versions with audit history. Explicitly enabled public HTTPS GET JSON agents now execute through hardened egress with exact declared fields, revocation and durable receipts. Arbitrary code, authenticated POST tools, marketplace distribution and revenue sharing remain open."
   },
   {
     "n": 22,
@@ -162,7 +162,7 @@ function RoadmapPage() {
     <div className="stats-strip compact"><div><strong>{done.length}</strong><span>Completed milestone</span></div><div><strong>{partial.length}</strong><span>Partially implemented</span></div><div><strong>{deferred.length}</strong><span>Deferred / not implemented</span></div></div>
     <div className="glass-card research-card"><div className="panel-title"><span>NEXT WORK · FOUNDATION FIRST</span><span className="status-chip">IN PROGRESS</span></div>
       <p>External-access acceptance work is on hold at the operator's request. Seven formerly deferred areas now have working first-release controls on dedicated pages. Their broader milestones remain partial; this page records unfinished engineering and empirical research separately.</p>
-      <ol><li>Complete AI multimodal generation/perception through an explicitly selected runtime provider.</li><li>Extend team collaboration to governed shared missions and implement scoped external-agent execution.</li><li>Finish pending-provider recovery, automatic source-specific outcome ingestion and measured adaptive policy selection.</li><li>Run representative comparative, learning-reuse and held-out-domain experiments using the new preregistered protocols. Preserve regressions and independent evidence.</li></ol>
+      <ol><li>Validate media quality and real product measurements against representative workloads; bounded runtimes and permissioned team/tool execution are implemented.</li><li>Opt-in hourly GitHub outcome feeds now preserve commit/blob/report identities. Outcome-based planning automatically selects a bounded policy from comparable nonoverlapping periods, retaining evidence IDs.</li><li>The versioned policy evaluator compares a naive baseline with guarded selection on published regression, provenance, overlap and drift fixtures. Controlled all-seven acceptance passes; public fixtures do not establish unseen transfer or model superiority.</li><li>Remaining empirical work includes representative learning improvement, independent competitor/scientific replication, pending-provider uncertainty and enterprise-scale acceptance. External billing and real host-failure acceptance remain on hold.</li></ol>
       <p>Reviewed intermediate Council continuation is implemented and compared against an uninterrupted baseline. <a href="https://github.com/eugenemcmillian3-tech/nexus-forge-/blob/main/docs/COUNCIL_CONTINUATION.md" target="_blank" rel="noreferrer">Review comparison results and safety limits →</a></p><div className="hero-actions"><Link className="primary-button" to="/multimodal">Open seven expanded capabilities →</Link><Link className="secondary-button" to="/capabilities">Operational evidence →</Link></div>
       <p>Dependency and resource preflight checks block execution in the backend. Mission Control displays blockers, advisories, and resource availability; authorization and execution wait for ready preflight and incident clearance.</p>
     </div>

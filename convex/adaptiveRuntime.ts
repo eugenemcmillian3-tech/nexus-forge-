@@ -1,0 +1,14 @@
+import {v} from 'convex/values'
+import {mutation,query,internalMutation} from './_generated/server'
+import {requireOwnedMission} from './permissions'
+export type Observation={_id:string;metric:string;target:number;method:string;periodStart:number;periodEnd:number;targetMet:boolean;provenance:string;sampleSize:number}
+export function chooseStrategy(rows:Observation[]){
+ const sorted=[...rows].sort((a,b)=>b.periodEnd-a.periodEnd||a._id.localeCompare(b._id));const anchor=sorted.find(r=>r.provenance==='github-report');const evidence:Observation[]=[];
+ if(anchor)for(const r of sorted){if(r.provenance!=='github-report'||r.metric!==anchor.metric||r.target!==anchor.target||r.method!==anchor.method||r.sampleSize<5||evidence.some(e=>r.periodStart<e.periodEnd&&r.periodEnd>e.periodStart))continue;evidence.push(r);if(evidence.length===5)break}
+ const repeated=evidence.length>=3,pass=repeated&&evidence.every(e=>e.targetMet);
+ return{strategy:pass?'reuse-with-verification':'evidence-first',evidenceIds:evidence.map(e=>e._id),reason:!repeated?'Fewer than three comparable nonoverlapping imported periods; retain evidence-first planning.':pass?'Repeated imported measurements meet their fixed target; reuse the same bounded method and retain acceptance checks.':'Comparable imported evidence contains a missed target; require a revised hypothesis and stronger verification.',limitations:'GitHub integrity verifies source bytes, not measurement truth or causality. This policy changes planning guidance only.'}
+}
+export async function selectForMission(ctx:any,missionId:any){const mission=await ctx.db.get(missionId);if(!mission)throw Error('Mission unavailable');const rows=await ctx.db.query('productOutcomes').withIndex('by_mission',(q:any)=>q.eq('missionId',missionId)).order('desc').take(100);const selected=chooseStrategy(rows);const old=await ctx.db.query('adaptiveSelections').withIndex('by_mission',(q:any)=>q.eq('missionId',missionId)).order('desc').first();if(!old||old.strategy!==selected.strategy||JSON.stringify(old.evidenceIds)!==JSON.stringify(selected.evidenceIds))await ctx.db.insert('adaptiveSelections',{ownerKey:mission.ownerKey,missionId,strategy:selected.strategy,evidenceIds:selected.evidenceIds,reason:selected.reason,createdAt:Date.now()});return selected}
+export const refresh=mutation({args:{missionId:v.id('missions')},handler:async(ctx,a)=>{await requireOwnedMission(ctx,a.missionId);return selectForMission(ctx,a.missionId)}})
+export const history=query({args:{missionId:v.id('missions')},handler:async(ctx,a)=>{await requireOwnedMission(ctx,a.missionId);return ctx.db.query('adaptiveSelections').withIndex('by_mission',q=>q.eq('missionId',a.missionId)).order('desc').take(20)}})
+export const selectInternal=internalMutation({args:{missionId:v.id('missions')},handler:async(ctx,a)=>selectForMission(ctx,a.missionId)})

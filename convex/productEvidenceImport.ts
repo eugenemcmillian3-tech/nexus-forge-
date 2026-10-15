@@ -3,18 +3,14 @@ import { createHash } from "node:crypto"
 import { Buffer } from "node:buffer"
 import { ConvexError, v } from "convex/values"
 import type { Infer } from "convex/values"
-import { action } from "./_generated/server"
+import { action, internalAction } from "./_generated/server"
 import type { Id } from "./_generated/dataModel"
 import { api, internal } from "./_generated/api"
 import { productOutcomeInput } from "./productOutcomeModel"
 
 const repository = "eugenemcmillian3-tech/nexus-forge-"
 const inputValidator = v.object(productOutcomeInput)
-export const importReport = action({
-  args: { missionId: v.id("missions"), commitSha: v.string(), reportId: v.string() }, returns: v.id("productOutcomes"),
-  handler: async (ctx, args): Promise<Id<"productOutcomes">> => {
-    await ctx.runQuery(api.missions.getById, { id: args.missionId })
-    const commitSha = args.commitSha.toLowerCase()
+async function fetchReport(args:{missionId:Id<"missions">;commitSha:string;reportId:string}) {    const commitSha = args.commitSha.toLowerCase()
     if (!/^[0-9a-f]{40}$/.test(commitSha) || !/^[A-Za-z0-9_-]{1,64}$/.test(args.reportId)) throw new ConvexError("Use a full 40-character commit SHA and a report ID with letters, numbers, underscore or hyphen.")
     const token = process.env.GITHUB_ACCESS_TOKEN
     if (!token) throw new ConvexError("Server GitHub access is not configured for report import.")
@@ -52,6 +48,11 @@ export const importReport = action({
     if (!report || typeof report !== "object" || Array.isArray(report) || report.version !== "product-outcome-v1" || report.missionId !== args.missionId || Object.keys(report).some(key => !allowed.has(key))) throw new ConvexError("Report version, mission or fields do not match the product-outcome-v1 contract.")
     const { version: _version, ...input } = report
     const receipt = { repository, path, commitSha, blobSha, reportSha256: createHash("sha256").update(bytes).digest("hex"), importedAt: Date.now() }
-    return ctx.runMutation(internal.verification.importProductOutcomeInternal, { ...input as Infer<typeof inputValidator>, receipt })
-  },
-})
+    return { input: input as Infer<typeof inputValidator>, receipt }
+}
+export const importReport=action({args:{missionId:v.id("missions"),commitSha:v.string(),reportId:v.string()},returns:v.id("productOutcomes"),handler:async(ctx,args):Promise<Id<"productOutcomes">>=>{await ctx.runQuery(api.missions.getById,{id:args.missionId});const report=await fetchReport(args);return ctx.runMutation(internal.verification.importProductOutcomeInternal,{...report.input,receipt:report.receipt})}})
+export const pollFeed=internalAction({args:{feedId:v.id("outcomeFeeds"),generation:v.number()},handler:async(ctx,a)=>{
+ const feed=await ctx.runQuery(internal.outcomeFeeds.authorized,a);if(!feed)return;
+ try{const token=process.env.GITHUB_ACCESS_TOKEN;if(!token)throw Error('GitHub access not configured');const response=await fetch("https://api.github.com/repos/"+repository+"/commits/main",{headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github+json"},redirect:"error",signal:AbortSignal.timeout(15000)});if(!response.ok)throw Error('GitHub branch lookup failed');const {boundedText}=await import('./boundedResponse');const data=JSON.parse(await boundedText(response,100000));if(!/^[a-f0-9]{40}$/.test(data.sha))throw Error('Invalid GitHub commit');const report=await fetchReport({missionId:feed.missionId,reportId:feed.reportId,commitSha:data.sha});await ctx.runMutation(internal.outcomeFeeds.ingest,{...a,...report.input,receipt:report.receipt});await ctx.runMutation(internal.outcomeFeeds.reschedule,{...a,lastCommit:data.sha,error:""})}
+ catch{await ctx.runMutation(internal.outcomeFeeds.reschedule,{...a,error:"Report unavailable or invalid; previous evidence retained."})}
+}})

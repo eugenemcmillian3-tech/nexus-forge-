@@ -1,5 +1,7 @@
 # Seven-feature expansion — 2026-10-15
 
+Historical first-release snapshot below. Superseded runtime status and comparison results: [SEVEN_RUNTIME_RELEASE.md](SEVEN_RUNTIME_RELEASE.md).
+
 External-access acceptance work is on hold at the operator's request. Existing backup schedules were not paused or duplicated. This batch adds first-release functions across all seven formerly deferred initiatives. It does not finish all 24 roadmap milestones.
 
 | Initiative | Dedicated page | Implemented | Remaining |
