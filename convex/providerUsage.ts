@@ -1,3 +1,4 @@
+import { checkProviderClaim } from './providerClaimFence'
 import { v } from 'convex/values'
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server'
 import { internalMutation, query } from './_generated/server'
@@ -5,8 +6,9 @@ import { invocationFields } from './providerUsageModel'
 import { requireOperator, requireOwnedMission } from './permissions'
 
 export const begin = internalMutation({
-  args: { ownerKey: v.string(), missionId: v.optional(v.id('missions')), missionRunId: v.optional(v.id('missionRuns')), stage: v.string(), role: v.string() }, returns: v.id('providerInvocations'),
+  args: { executionClaimId: v.optional(v.id('executionClaims')), ownerKey: v.string(), missionId: v.optional(v.id('missions')), missionRunId: v.optional(v.id('missionRuns')), stage: v.string(), role: v.string() }, returns: v.id('providerInvocations'),
   handler: async (ctx, args) => {
+    await checkProviderClaim(ctx, args)
     if (!args.ownerKey.trim() || args.ownerKey.length > 256 || !args.stage.trim() || args.stage.length > 120 || !args.role.trim() || args.role.length > 40) throw new Error('Invalid invocation identity')
     if (args.missionId) {
       const mission = await ctx.db.get(args.missionId)
@@ -23,7 +25,8 @@ export const begin = internalMutation({
         .first()
       if (active) throw new Error('Provider work is already pending for this run stage; review its invocation before retrying')
     }
-    return ctx.db.insert('providerInvocations', { ...args, startedAt: Date.now(), outcome: 'pending', usageStatus: 'pending', reports: [] })
+    const { executionClaimId: _claim, ...fields } = args
+    return ctx.db.insert('providerInvocations', { ...fields, startedAt: Date.now(), outcome: 'pending', usageStatus: 'pending', reports: [] })
   },
 })
 export const finish = internalMutation({

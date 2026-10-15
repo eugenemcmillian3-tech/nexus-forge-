@@ -1,11 +1,13 @@
+import { checkProviderClaim } from './providerClaimFence'
 import { v } from 'convex/values'
 import { internalMutation } from './_generated/server'
 
-const identity = { ownerKey: v.string(), missionId: v.optional(v.id('missions')), missionRunId: v.optional(v.id('missionRuns')), stage: v.string(), role: v.string(), requestDigest: v.string() }
+const identity = { executionClaimId: v.optional(v.id('executionClaims')), ownerKey: v.string(), missionId: v.optional(v.id('missions')), missionRunId: v.optional(v.id('missionRuns')), stage: v.string(), role: v.string(), requestDigest: v.string() }
 export const reserve = internalMutation({
   args: identity,
   returns: v.object({ invocationId: v.id('providerInvocations'), answer: v.optional(v.string()) }),
   handler: async (ctx, args) => {
+    await checkProviderClaim(ctx, args)
     if (!args.ownerKey.trim() || args.ownerKey.length > 256 || !args.stage.trim() || args.stage.length > 120 || !args.role.trim() || args.role.length > 40 || !/^[a-f0-9]{64}$/.test(args.requestDigest)) throw new Error('Invalid invocation identity')
     if (args.missionId) {
       const mission = await ctx.db.get(args.missionId)
@@ -27,7 +29,7 @@ export const reserve = internalMutation({
         return { invocationId: row._id, answer: result.answer }
       }
     }
-    const { requestDigest: _digest, ...fields } = args
+    const { requestDigest: _digest, executionClaimId: _claim, ...fields } = args
     const invocationId = await ctx.db.insert('providerInvocations', { ...fields, startedAt: Date.now(), outcome: 'pending', usageStatus: 'pending', reports: [] })
     return { invocationId }
   },

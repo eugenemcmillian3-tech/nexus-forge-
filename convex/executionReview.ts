@@ -1,3 +1,5 @@
+import { unstartedRetryBlock } from './unstartedRetry'
+import { internal } from './_generated/api'
 import { v, ConvexError } from 'convex/values'
 import { query, mutation } from './_generated/server'
 import type { QueryCtx } from './_generated/server'
@@ -37,12 +39,12 @@ async function inspect(ctx: Pick<QueryCtx, 'db' | 'auth'>, claimId: Id<'executio
     try { const saved = JSON.parse(review.payload); if (typeof saved.decision === 'string' && typeof saved.note === 'string' && typeof saved.recordedAt === 'number') lastReview = saved } catch { /* Legacy payload is unavailable. */ }
   }
   return { claim, review, context, lastReview, invocations, effectsTruncated, invocationsTruncated, evidenceToken,
-    effectCount: Math.min(effects.length, 10), providerScope: runMatches ? 'runner-council' : 'unattributed-direct-or-missing-run' }
+    retryBlock: await unstartedRetryBlock(ctx, claim), effectCount: Math.min(effects.length, 10), providerScope: runMatches ? 'runner-council' : 'unattributed-direct-or-missing-run' }
 }
 const invocation = v.object({ id: v.id('providerInvocations'), stage: v.string(), outcome: v.string(), usageStatus: v.string(), recoverable: v.boolean(), reports: v.number(), finishedAt: v.union(v.number(), v.null()) })
 export const evidence = query({
   args: { claimId: v.id('executionClaims') },
-  returns: v.object({ status: v.string(), scope: v.string(), context: v.union(v.string(), v.null()), lastReview: v.union(v.null(), v.object({ decision: v.string(), note: v.string(), recordedAt: v.number() })), invocations: v.array(invocation), effectsTruncated: v.boolean(), invocationsTruncated: v.boolean(), evidenceToken: v.string(), effectCount: v.number(), providerScope: v.string() }),
+  returns: v.object({ retryBlock: v.union(v.string(), v.null()), status: v.string(), scope: v.string(), context: v.union(v.string(), v.null()), lastReview: v.union(v.null(), v.object({ decision: v.string(), note: v.string(), recordedAt: v.number() })), invocations: v.array(invocation), effectsTruncated: v.boolean(), invocationsTruncated: v.boolean(), evidenceToken: v.string(), effectCount: v.number(), providerScope: v.string() }),
   handler: async (ctx, args) => {
     const result = await inspect(ctx, args.claimId)
     const { claim, review: _review, ...visible } = result
@@ -50,7 +52,7 @@ export const evidence = query({
   },
 })
 export const record = mutation({
-  args: { claimId: v.id('executionClaims'), evidenceToken: v.string(), decision: v.union(v.literal('hold'), v.literal('escalate')), note: v.string() },
+  args: { claimId: v.id('executionClaims'), evidenceToken: v.string(), decision: v.union(v.literal('hold'), v.literal('escalate'), v.literal('retry-unstarted')), note: v.string() },
   returns: v.null(),
   handler: async (ctx, args) => {
     const note = args.note.trim()
@@ -58,6 +60,18 @@ export const record = mutation({
     const result = await inspect(ctx, args.claimId)
     if (result.claim.status !== 'uncertain') throw new ConvexError('Only uncertain work can receive a recovery decision')
     if (result.evidenceToken !== args.evidenceToken) throw new ConvexError('Execution evidence changed. Review the current evidence before saving')
+    if (args.decision === 'retry-unstarted') {
+      if (result.retryBlock) throw new ConvexError(result.retryBlock)
+      const runId = ctx.db.normalizeId('missionRuns', result.claim.workKey.slice(7))!
+      // Deleting this exact ID fences stale Council writes and provider admission.
+      // Provider reservations and this absence proof serialize transactionally.
+      await ctx.db.delete(args.claimId)
+      const run = await ctx.db.get('missionRuns', runId)
+      await ctx.db.patch(runId, { retries: run!.retries + 1, status: 'running', currentStage: 'orchestration', nextActionAt: Date.now(), lastError: undefined })
+      await ctx.db.insert('auditEvents', { missionId: result.claim.missionId, runId, eventType: 'execution-unstarted-retry', source: 'operator', message: 'Operator authorized retry of unstarted Council work; old claim retired.', metadata: JSON.stringify({ claimId: args.claimId, note }), createdAt: Date.now() })
+      await ctx.scheduler.runAfter(0, internal.missionRunner.tickInternal, { runId })
+      return null
+    }
     if (result.lastReview?.decision === args.decision && result.lastReview.note === note) return null
     const payload = JSON.stringify({ decision: args.decision, note, recordedAt: Date.now() })
     if (result.review) await ctx.db.patch(result.review._id, { payload })

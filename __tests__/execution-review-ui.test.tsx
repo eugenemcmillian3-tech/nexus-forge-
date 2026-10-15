@@ -9,6 +9,16 @@ beforeEach(() => {
   state.evidence = { status: 'uncertain', scope: 'council', context: null, lastReview: null, invocations: [], effectsTruncated: false, invocationsTruncated: false, evidenceToken: 'current-evidence', effectCount: 0, providerScope: 'unattributed-direct-or-missing-run' }
 })
 describe('execution evidence review', () => {
+  it('offers a separate deliberate authorization only for proven unstarted work', async () => {
+    state.evidence = { ...state.evidence, retryBlock: null }
+    render(<ExecutionReview claimId={'claim-test' as Id<'executionClaims'>} />)
+    fireEvent.change(screen.getByLabelText('Recovery decision'), { target: { value: 'retry-unstarted' } })
+    expect(screen.getByText(/Provider inference may start/)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Evidence reviewed and next investigation'), { target: { value: 'Verified zero provider admission and no Council effects.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Authorize unstarted retry' }))
+    expect(await screen.findByText(/Unstarted retry authorized/)).toBeInTheDocument()
+    expect(state.record.mock.calls[0][0].decision).toBe('retry-unstarted')
+  })
   it('submits a deliberate review and confirms reservation stays blocked', async () => {
     render(<ExecutionReview claimId={'claim-test' as Id<'executionClaims'>} />)
     const button = screen.getByRole('button', { name: 'Record recovery decision' })

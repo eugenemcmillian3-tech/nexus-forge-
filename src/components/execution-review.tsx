@@ -7,7 +7,7 @@ export function ExecutionReview({ claimId }: { claimId: Id<'executionClaims'> })
   const evidence = useQuery(api.executionReview.evidence, { claimId })
   const record = useMutation(api.executionReview.record)
   const [note, setNote] = useState('')
-  const [decision, setDecision] = useState<'hold' | 'escalate'>('hold')
+  const [decision, setDecision] = useState<'hold' | 'escalate' | 'retry-unstarted'>('hold')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -17,7 +17,7 @@ export function ExecutionReview({ claimId }: { claimId: Id<'executionClaims'> })
     setBusy(true); setError(''); setMessage('')
     try {
       await record({ claimId, evidenceToken: evidence.evidenceToken, decision, note })
-      setNote(''); setMessage('Review recorded. Execution remains blocked.')
+      setNote(''); setMessage(decision === 'retry-unstarted' ? 'Unstarted retry authorized. The runner will recheck execution prerequisites.' : 'Review recorded. Execution remains blocked.')
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not save review') }
     finally { setBusy(false) }
   }
@@ -30,11 +30,12 @@ export function ExecutionReview({ claimId }: { claimId: Id<'executionClaims'> })
     {evidence.lastReview && <p>Latest decision: {evidence.lastReview.decision === 'hold' ? 'Keep blocked' : 'Escalate'}. {evidence.lastReview.note}</p>}
     {evidence.status === 'uncertain' ? <>
       <label htmlFor={'decision-'+claimId}>Recovery decision</label>
-      <select id={'decision-'+claimId} value={decision} onChange={e => setDecision(e.target.value as 'hold' | 'escalate')} disabled={busy}><option value="hold">Keep blocked</option><option value="escalate">Escalate for investigation</option></select>
+      <select id={'decision-'+claimId} value={decision} onChange={e => setDecision(e.target.value as 'hold' | 'escalate' | 'retry-unstarted')} disabled={busy}><option value="hold">Keep blocked</option><option value="escalate">Escalate for investigation</option>{evidence.retryBlock === null && <option value="retry-unstarted">Authorize retry of unstarted work</option>}</select>
       <label htmlFor={'review-'+claimId}>Evidence reviewed and next investigation</label>
       <textarea id={'review-'+claimId} value={note} onChange={e => setNote(e.target.value)} maxLength={2000} disabled={busy} rows={3} />
-      <p>Record what the evidence establishes and what remains unknown. Saving a review preserves the reservation.</p>
-      <button className="secondary-button" disabled={busy || note.trim().length < 20} onClick={() => void save()}>{busy ? 'Saving review…' : 'Record recovery decision'}</button>
+      <p>{decision === 'retry-unstarted' ? 'This retires the old claim and schedules the runner. Provider inference may start within the original approved scope and deadline.' : 'Record what the evidence establishes and what remains unknown. Saving this review preserves the reservation.'}</p>
+      {evidence.retryBlock && <p>Retry unavailable: {evidence.retryBlock}</p>}
+      <button className="secondary-button" disabled={busy || note.trim().length < 20 || (decision === 'retry-unstarted' && evidence.retryBlock !== null)} onClick={() => void save()}>{busy ? 'Saving decision…' : decision === 'retry-unstarted' ? 'Authorize unstarted retry' : 'Record recovery decision'}</button>
     </> : <p>Work is active. A recovery decision becomes available only when its claim is uncertain.</p>}
     {error && <p role="alert">{error}</p>}
     {message && <p role="status">{message}</p>}

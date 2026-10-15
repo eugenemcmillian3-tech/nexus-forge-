@@ -58,7 +58,7 @@ export const orchestrateInternal = internalAction({
     if (missionRecord.status === "complete") throw new Error("Mission is already complete")
     const actionCtx = ctx
     return (await exclusiveWork<{ ok: boolean; summary: string }>(actionCtx, { missionId: args.missionId, scope: "council", workKey: args.missionRunId ? `runner:${args.missionRunId}` : `direct:${crypto.randomUUID()}`, retain: !!args.missionRunId }, async executionClaimId => {
-    const guarded = new Set(["forge:updateRun", "forge:recordAgentEvidence", "forge:recordCouncilResult", "forge:recordLearningLesson"])
+    const guarded = new Set(["providerRecovery:reserve", "providerUsage:begin", "forge:updateRun", "forge:recordAgentEvidence", "forge:recordCouncilResult", "forge:recordLearningLesson"])
     const ctx: typeof actionCtx = { ...actionCtx, runMutation: ((ref: any, values: any) => actionCtx.runMutation(ref, guarded.has(getFunctionName(ref)) ? { ...values, executionClaimId } : values)) as typeof actionCtx.runMutation }
     await ctx.runMutation(internal.forge.createRuns, { missionId: args.missionId })
     try {

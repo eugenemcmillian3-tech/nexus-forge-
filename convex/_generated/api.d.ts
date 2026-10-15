@@ -51,6 +51,7 @@ import type * as portfolio from "../portfolio.js";
 import type * as productEvidenceImport from "../productEvidenceImport.js";
 import type * as productOutcomeModel from "../productOutcomeModel.js";
 import type * as providerAccounting from "../providerAccounting.js";
+import type * as providerClaimFence from "../providerClaimFence.js";
 import type * as providerHealth from "../providerHealth.js";
 import type * as providerRecovery from "../providerRecovery.js";
 import type * as providerUsage from "../providerUsage.js";
@@ -60,6 +61,7 @@ import type * as research from "../research.js";
 import type * as researchData from "../researchData.js";
 import type * as siteTraffic from "../siteTraffic.js";
 import type * as siteTrafficModel from "../siteTrafficModel.js";
+import type * as unstartedRetry from "../unstartedRetry.js";
 import type * as users from "../users.js";
 import type * as verification from "../verification.js";
 
@@ -113,6 +115,7 @@ declare const fullApi: ApiFromModules<{
   productEvidenceImport: typeof productEvidenceImport;
   productOutcomeModel: typeof productOutcomeModel;
   providerAccounting: typeof providerAccounting;
+  providerClaimFence: typeof providerClaimFence;
   providerHealth: typeof providerHealth;
   providerRecovery: typeof providerRecovery;
   providerUsage: typeof providerUsage;
@@ -122,6 +125,7 @@ declare const fullApi: ApiFromModules<{
   researchData: typeof researchData;
   siteTraffic: typeof siteTraffic;
   siteTrafficModel: typeof siteTrafficModel;
+  unstartedRetry: typeof unstartedRetry;
   users: typeof users;
   verification: typeof verification;
 }>;
