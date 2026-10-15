@@ -1,0 +1,16 @@
+{
+  "version": "product-outcome-v1",
+  "missionId": "k97fjhre91z0vzn1ttj2mgs3v58gbrb8",
+  "metric": "task-success-rate",
+  "observed": 5,
+  "target": 80,
+  "sampleSize": 6,
+  "periodStart": 1792093648062,
+  "periodEnd": 1792093649083,
+  "method": "Exact string scoring of three published matched arithmetic, ordering and deduction tasks under baseline and structured prompts.",
+  "evidence": [
+    "Provider invocation p97bpa99e184ph0fg11ck94zx18gaxvj",
+    "Provider invocation p97erpga1bx8fsxamyqjs0sb8n8gadr5"
+  ],
+  "notes": "Actual configured cloudflare calls in Managed Testing. Small public acceptance tasks, not production product/business outcomes, independent unseen evaluation or causal adaptive improvement."
+}

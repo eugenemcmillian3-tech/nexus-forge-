@@ -1,0 +1,16 @@
+{
+  "version": "product-outcome-v1",
+  "missionId": "k97fjhre91z0vzn1ttj2mgs3v58gbrb8",
+  "metric": "task-success-rate",
+  "observed": 6,
+  "target": 80,
+  "sampleSize": 6,
+  "periodStart": 1792093649095,
+  "periodEnd": 1792093650173,
+  "method": "Exact string scoring of three published matched arithmetic, ordering and deduction tasks under baseline and structured prompts.",
+  "evidence": [
+    "Provider invocation p9749a3zatbphn1jc26eav5b518gab69",
+    "Provider invocation p9774d25cd80bgqt8h38ptnqnn8gb678"
+  ],
+  "notes": "Actual configured groq calls in Managed Testing. Small public acceptance tasks, not production product/business outcomes, independent unseen evaluation or causal adaptive improvement."
+}

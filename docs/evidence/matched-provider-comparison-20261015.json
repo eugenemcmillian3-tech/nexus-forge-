@@ -1,0 +1,237 @@
+{
+  "version": "matched-provider-comparison-v1",
+  "cases": [
+    {
+      "key": "arithmetic",
+      "domain": "arithmetic",
+      "question": "What is 32 plus 57?",
+      "expected": "89"
+    },
+    {
+      "key": "sorting",
+      "domain": "ordering",
+      "question": "Sort 9, 2, 5 in ascending order. Use comma-separated integers without spaces.",
+      "expected": "2,5,9"
+    },
+    {
+      "key": "logic",
+      "domain": "deduction",
+      "question": "A is greater than B and B is greater than C. Is A greater than C? Answer yes or no.",
+      "expected": "yes"
+    }
+  ],
+  "rows": [
+    {
+      "provider": "cloudflare",
+      "style": "baseline",
+      "invocationId": "p97bpa99e184ph0fg11ck94zx18gaxvj",
+      "status": "complete",
+      "latencyMs": 593,
+      "prompt": "Answer these questions as a JSON object with string values keyed arithmetic, sorting, logic.\narithmetic: What is 32 plus 57?\nsorting: Sort 9, 2, 5 in ascending order. Use comma-separated integers without spaces.\nlogic: A is greater than B and B is greater than C. Is A greater than C? Answer yes or no.",
+      "answer": "{\n  \"arithmetic\": \"32 plus 57 equals 89\",\n  \"sorting\": \"2,5,9\",\n  \"logic\": \"yes\"\n}",
+      "scores": [
+        {
+          "key": "arithmetic",
+          "domain": "arithmetic",
+          "expected": "89",
+          "observed": "32 plus 57 equals 89",
+          "passed": false
+        },
+        {
+          "key": "sorting",
+          "domain": "ordering",
+          "expected": "2,5,9",
+          "observed": "2,5,9",
+          "passed": true
+        },
+        {
+          "key": "logic",
+          "domain": "deduction",
+          "expected": "yes",
+          "observed": "yes",
+          "passed": true
+        }
+      ],
+      "passed": 2,
+      "total": 3,
+      "observedReports": 1
+    },
+    {
+      "provider": "cloudflare",
+      "style": "candidate",
+      "invocationId": "p97erpga1bx8fsxamyqjs0sb8n8gadr5",
+      "status": "complete",
+      "latencyMs": 441,
+      "prompt": "Return ONLY one valid JSON object. Exactly three string fields: arithmetic, sorting, logic. No Markdown or explanation. Verify arithmetic and ordering before returning.\narithmetic: What is 32 plus 57?\nsorting: Sort 9, 2, 5 in ascending order. Use comma-separated integers without spaces.\nlogic: A is greater than B and B is greater than C. Is A greater than C? Answer yes or no.",
+      "answer": "{\n  \"arithmetic\": \"89\",\n  \"sorting\": \"2,5,9\",\n  \"logic\": \"yes\"\n}",
+      "scores": [
+        {
+          "key": "arithmetic",
+          "domain": "arithmetic",
+          "expected": "89",
+          "observed": "89",
+          "passed": true
+        },
+        {
+          "key": "sorting",
+          "domain": "ordering",
+          "expected": "2,5,9",
+          "observed": "2,5,9",
+          "passed": true
+        },
+        {
+          "key": "logic",
+          "domain": "deduction",
+          "expected": "yes",
+          "observed": "yes",
+          "passed": true
+        }
+      ],
+      "passed": 3,
+      "total": 3,
+      "observedReports": 1
+    },
+    {
+      "provider": "groq",
+      "style": "baseline",
+      "invocationId": "p9749a3zatbphn1jc26eav5b518gab69",
+      "status": "complete",
+      "latencyMs": 565,
+      "prompt": "Answer these questions as a JSON object with string values keyed arithmetic, sorting, logic.\narithmetic: What is 32 plus 57?\nsorting: Sort 9, 2, 5 in ascending order. Use comma-separated integers without spaces.\nlogic: A is greater than B and B is greater than C. Is A greater than C? Answer yes or no.",
+      "answer": "{\"arithmetic\":\"89\",\"sorting\":\"2,5,9\",\"logic\":\"yes\"}",
+      "scores": [
+        {
+          "key": "arithmetic",
+          "domain": "arithmetic",
+          "expected": "89",
+          "observed": "89",
+          "passed": true
+        },
+        {
+          "key": "sorting",
+          "domain": "ordering",
+          "expected": "2,5,9",
+          "observed": "2,5,9",
+          "passed": true
+        },
+        {
+          "key": "logic",
+          "domain": "deduction",
+          "expected": "yes",
+          "observed": "yes",
+          "passed": true
+        }
+      ],
+      "passed": 3,
+      "total": 3,
+      "observedReports": 1
+    },
+    {
+      "provider": "groq",
+      "style": "candidate",
+      "invocationId": "p9774d25cd80bgqt8h38ptnqnn8gb678",
+      "status": "complete",
+      "latencyMs": 528,
+      "prompt": "Return ONLY one valid JSON object. Exactly three string fields: arithmetic, sorting, logic. No Markdown or explanation. Verify arithmetic and ordering before returning.\narithmetic: What is 32 plus 57?\nsorting: Sort 9, 2, 5 in ascending order. Use comma-separated integers without spaces.\nlogic: A is greater than B and B is greater than C. Is A greater than C? Answer yes or no.",
+      "answer": "{\"arithmetic\":\"89\",\"sorting\":\"2,5,9\",\"logic\":\"yes\"}",
+      "scores": [
+        {
+          "key": "arithmetic",
+          "domain": "arithmetic",
+          "expected": "89",
+          "observed": "89",
+          "passed": true
+        },
+        {
+          "key": "sorting",
+          "domain": "ordering",
+          "expected": "2,5,9",
+          "observed": "2,5,9",
+          "passed": true
+        },
+        {
+          "key": "logic",
+          "domain": "deduction",
+          "expected": "yes",
+          "observed": "yes",
+          "passed": true
+        }
+      ],
+      "passed": 3,
+      "total": 3,
+      "observedReports": 1
+    },
+    {
+      "provider": "cerebras",
+      "style": "baseline",
+      "invocationId": "p974we7fy473r25jx00tr9pw3h8gawvf",
+      "status": "complete",
+      "latencyMs": 332,
+      "prompt": "Answer these questions as a JSON object with string values keyed arithmetic, sorting, logic.\narithmetic: What is 32 plus 57?\nsorting: Sort 9, 2, 5 in ascending order. Use comma-separated integers without spaces.\nlogic: A is greater than B and B is greater than C. Is A greater than C? Answer yes or no.",
+      "answer": "{\n  \"arithmetic\": \"89\",\n  \"sorting\": \"2,5,9\",\n  \"logic\": \"yes\"\n}",
+      "scores": [
+        {
+          "key": "arithmetic",
+          "domain": "arithmetic",
+          "expected": "89",
+          "observed": "89",
+          "passed": true
+        },
+        {
+          "key": "sorting",
+          "domain": "ordering",
+          "expected": "2,5,9",
+          "observed": "2,5,9",
+          "passed": true
+        },
+        {
+          "key": "logic",
+          "domain": "deduction",
+          "expected": "yes",
+          "observed": "yes",
+          "passed": true
+        }
+      ],
+      "passed": 3,
+      "total": 3,
+      "observedReports": 1
+    },
+    {
+      "provider": "cerebras",
+      "style": "candidate",
+      "invocationId": "p973cdexyscq37s4jqykp5xvks8gaqgq",
+      "status": "complete",
+      "latencyMs": 293,
+      "prompt": "Return ONLY one valid JSON object. Exactly three string fields: arithmetic, sorting, logic. No Markdown or explanation. Verify arithmetic and ordering before returning.\narithmetic: What is 32 plus 57?\nsorting: Sort 9, 2, 5 in ascending order. Use comma-separated integers without spaces.\nlogic: A is greater than B and B is greater than C. Is A greater than C? Answer yes or no.",
+      "answer": "{\"arithmetic\":\"89\",\"sorting\":\"2,5,9\",\"logic\":\"yes\"}",
+      "scores": [
+        {
+          "key": "arithmetic",
+          "domain": "arithmetic",
+          "expected": "89",
+          "observed": "89",
+          "passed": true
+        },
+        {
+          "key": "sorting",
+          "domain": "ordering",
+          "expected": "2,5,9",
+          "observed": "2,5,9",
+          "passed": true
+        },
+        {
+          "key": "logic",
+          "domain": "deduction",
+          "expected": "yes",
+          "observed": "yes",
+          "passed": true
+        }
+      ],
+      "passed": 3,
+      "total": 3,
+      "observedReports": 1
+    }
+  ],
+  "scope": "Small published matched-task prompt comparison on named configured models. Not independent competitor certification, unseen transfer, causal learning improvement or scientific novelty.",
+  "billing": "Read invocation usage receipts; missing cost is unknown."
+}
