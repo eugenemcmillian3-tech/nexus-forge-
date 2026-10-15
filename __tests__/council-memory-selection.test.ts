@@ -39,7 +39,13 @@ describe('actual Council memory selection provenance', () => {
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ status: 'planner-responded', missionText: 'Use reviewed evidence to plan a bounded product experiment', policyVersion: 'council-recent-context-v1' })
     expect(rows[0].selected.map(row => row.memoryId)).toContain(selected)
+    const contexts = await t.run(ctx => ctx.db.query('executionEffects').filter(q => q.eq(q.field('effectKey'), 'council-context:v1')).collect())
+    expect(contexts).toHaveLength(1)
+    const savedContext = JSON.parse(contexts[0].payload)
+    const captured = { ...savedContext.context, memoryReceiptId: savedContext.memoryReceiptId }
+    expect(captured).toMatchObject({ missionText: rows[0].missionText, learningContext: rows[0].learningContext, preflightContext: rows[0].preflightContext, memoryReceiptId: rows[0]._id })
     const plannerPrompt = vi.mocked(callAiProvider).mock.calls[0][1]
+    expect(plannerPrompt).toContain(captured.researchContext)
     expect(plannerPrompt).toContain(rows[0].learningContext)
     expect(plannerPrompt).toContain(rows[0].preflightContext)
     const snapshot = rows[0].learningContext

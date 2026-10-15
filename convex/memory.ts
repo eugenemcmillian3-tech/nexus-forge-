@@ -323,12 +323,36 @@ export const getCouncilMemorySelection = internalQuery({
 })
 
 export const recordCouncilMemorySelection = internalMutation({
-  args: { missionId: v.id("missions"), missionText: v.string(), corpusCutoff: v.number(), selected: v.array(councilMemoryItem), candidate: v.optional(councilCandidate), learningContext: v.string(), preflightContext: v.string() }, returns: v.id("councilMemoryReceipts"),
+  args: { missionId: v.id("missions"), missionText: v.string(), corpusCutoff: v.number(), selected: v.array(councilMemoryItem), candidate: v.optional(councilCandidate), learningContext: v.string(), preflightContext: v.string(), executionClaimId: v.optional(v.id("executionClaims")), researchContext: v.optional(v.string()) }, returns: v.id("councilMemoryReceipts"),
   handler: async (ctx, args) => {
-    const mission = await ctx.db.get(args.missionId)
+    const mission = await ctx.db.get('missions', args.missionId)
     if (!mission) throw new Error("Mission not found")
-    if (new TextEncoder().encode(JSON.stringify(args)).byteLength > 700000) throw new ConvexError("Council memory snapshot is too large. Review oversized saved memories before planning.")
-    return ctx.db.insert("councilMemoryReceipts", { ...args, ownerKey: mission.ownerKey, policyVersion: "council-recent-context-v1", status: "prepared", preparedAt: Date.now() })
+    const { executionClaimId, researchContext, ...receiptFields } = args
+    if (new TextEncoder().encode(JSON.stringify(receiptFields)).byteLength > 700000) throw new ConvexError("Council memory snapshot is too large. Review oversized saved memories before planning.")
+    const context = { missionText: args.missionText, researchContext: researchContext ?? '', learningContext: args.learningContext, preflightContext: args.preflightContext }
+    if (executionClaimId) {
+      const claim = await ctx.db.get('executionClaims', executionClaimId)
+      if (!claim || claim.missionId !== args.missionId || claim.scope !== 'council' || claim.status !== 'running') throw new Error('Council claim is not active')
+      if (researchContext === undefined || new TextEncoder().encode(JSON.stringify(context)).length > 512 * 1024) throw new Error('Council context exceeds recovery limit or is missing')
+      const previous = await ctx.db.query('executionEffects').withIndex('by_claimId_and_effectKey', q => q.eq('claimId', executionClaimId).eq('effectKey', 'council-context:v1')).unique()
+      if (previous) {
+        const saved = JSON.parse(previous.payload)
+        if (JSON.stringify(saved.context) !== JSON.stringify(context)) throw new Error('Council recovery context is immutable')
+        const receiptId = ctx.db.normalizeId('councilMemoryReceipts', saved.memoryReceiptId)
+        const receipt = receiptId ? await ctx.db.get('councilMemoryReceipts', receiptId) : null
+        if (!receipt || receipt.missionId !== mission._id || receipt.ownerKey !== mission.ownerKey) throw new Error('Council context receipt is unavailable')
+        return receipt._id
+      }
+      if (!mission.approved || mission.status === 'complete' || mission.status === 'cancelled' || mission.mission !== args.missionText) throw new Error('Mission changed before Council context capture')
+      if (claim.workKey.startsWith('runner:')) {
+        const runId = ctx.db.normalizeId('missionRuns', claim.workKey.slice(7))
+        const run = runId ? await ctx.db.get('missionRuns', runId) : null
+        if (!run || run.missionId !== mission._id || run.status === 'blocked' || run.status === 'complete') throw new Error('Runner no longer permits Council context capture')
+      }
+    }
+    const memoryReceiptId = await ctx.db.insert("councilMemoryReceipts", { ...receiptFields, ownerKey: mission.ownerKey, policyVersion: "council-recent-context-v1", status: "prepared", preparedAt: Date.now() })
+    if (executionClaimId) await ctx.db.insert('executionEffects', { claimId: executionClaimId, effectKey: 'council-context:v1', payload: JSON.stringify({ context, memoryReceiptId }) })
+    return memoryReceiptId
   },
 })
 export const markCouncilPlannerResponded = internalMutation({
