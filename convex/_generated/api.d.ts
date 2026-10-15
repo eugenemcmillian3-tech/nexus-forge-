@@ -9,6 +9,7 @@
  */
 
 import type * as ResendOTP from "../ResendOTP.js";
+import type * as adaptiveRuntime from "../adaptiveRuntime.js";
 import type * as aiProvider from "../aiProvider.js";
 import type * as artifactBenchmarkCatalog from "../artifactBenchmarkCatalog.js";
 import type * as artifactCi from "../artifactCi.js";
@@ -23,6 +24,7 @@ import type * as audit from "../audit.js";
 import type * as auth from "../auth.js";
 import type * as benchmarkProvenance from "../benchmarkProvenance.js";
 import type * as benchmarks from "../benchmarks.js";
+import type * as boundedResponse from "../boundedResponse.js";
 import type * as claimedEffects from "../claimedEffects.js";
 import type * as completedCouncil from "../completedCouncil.js";
 import type * as continuation from "../continuation.js";
@@ -34,6 +36,7 @@ import type * as deliveryEvidence from "../deliveryEvidence.js";
 import type * as exclusiveWork from "../exclusiveWork.js";
 import type * as executionClaims from "../executionClaims.js";
 import type * as executionReview from "../executionReview.js";
+import type * as externalRuntime from "../externalRuntime.js";
 import type * as forge from "../forge.js";
 import type * as forgeTeams from "../forgeTeams.js";
 import type * as frontierControls from "../frontierControls.js";
@@ -53,7 +56,9 @@ import type * as memory from "../memory.js";
 import type * as missionRunner from "../missionRunner.js";
 import type * as missionSources from "../missionSources.js";
 import type * as missions from "../missions.js";
+import type * as multimodalRuntime from "../multimodalRuntime.js";
 import type * as orchestration from "../orchestration.js";
+import type * as outcomeFeeds from "../outcomeFeeds.js";
 import type * as permissions from "../permissions.js";
 import type * as portfolio from "../portfolio.js";
 import type * as privateMedia from "../privateMedia.js";
@@ -66,8 +71,10 @@ import type * as providerRecovery from "../providerRecovery.js";
 import type * as providerUsage from "../providerUsage.js";
 import type * as providerUsageModel from "../providerUsageModel.js";
 import type * as readiness from "../readiness.js";
+import type * as reproducibleBenchmarks from "../reproducibleBenchmarks.js";
 import type * as research from "../research.js";
 import type * as researchData from "../researchData.js";
+import type * as runtimeReceipts from "../runtimeReceipts.js";
 import type * as siteTraffic from "../siteTraffic.js";
 import type * as siteTrafficModel from "../siteTrafficModel.js";
 import type * as unstartedRetry from "../unstartedRetry.js";
@@ -82,6 +89,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   ResendOTP: typeof ResendOTP;
+  adaptiveRuntime: typeof adaptiveRuntime;
   aiProvider: typeof aiProvider;
   artifactBenchmarkCatalog: typeof artifactBenchmarkCatalog;
   artifactCi: typeof artifactCi;
@@ -96,6 +104,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   benchmarkProvenance: typeof benchmarkProvenance;
   benchmarks: typeof benchmarks;
+  boundedResponse: typeof boundedResponse;
   claimedEffects: typeof claimedEffects;
   completedCouncil: typeof completedCouncil;
   continuation: typeof continuation;
@@ -107,6 +116,7 @@ declare const fullApi: ApiFromModules<{
   exclusiveWork: typeof exclusiveWork;
   executionClaims: typeof executionClaims;
   executionReview: typeof executionReview;
+  externalRuntime: typeof externalRuntime;
   forge: typeof forge;
   forgeTeams: typeof forgeTeams;
   frontierControls: typeof frontierControls;
@@ -126,7 +136,9 @@ declare const fullApi: ApiFromModules<{
   missionRunner: typeof missionRunner;
   missionSources: typeof missionSources;
   missions: typeof missions;
+  multimodalRuntime: typeof multimodalRuntime;
   orchestration: typeof orchestration;
+  outcomeFeeds: typeof outcomeFeeds;
   permissions: typeof permissions;
   portfolio: typeof portfolio;
   privateMedia: typeof privateMedia;
@@ -139,8 +151,10 @@ declare const fullApi: ApiFromModules<{
   providerUsage: typeof providerUsage;
   providerUsageModel: typeof providerUsageModel;
   readiness: typeof readiness;
+  reproducibleBenchmarks: typeof reproducibleBenchmarks;
   research: typeof research;
   researchData: typeof researchData;
+  runtimeReceipts: typeof runtimeReceipts;
   siteTraffic: typeof siteTraffic;
   siteTrafficModel: typeof siteTrafficModel;
   unstartedRetry: typeof unstartedRetry;
