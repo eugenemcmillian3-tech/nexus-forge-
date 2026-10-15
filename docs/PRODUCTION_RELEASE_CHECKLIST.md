@@ -54,3 +54,8 @@ Accounting-module rollback and return succeeded through managed Testing deploys,
 ### Media backup follow-up — 2026-10-15 UTC
 
 The one current design asset was downloaded through Macaly's supported Download control as a PNG matching the declared 1,191,209 bytes, retained privately, retrieved separately, byte/hash compared and rendered successfully. Both Production and Development App user uploads inventories were empty. See the operations runbook for the digest and scope. Durable database backup storage, recurring backup/retention policy, future upload coverage and agreed RPO/RTO remain open; backup stays PARTIAL.
+
+
+### Retained database backup follow-up — 2026-10-15 UTC
+
+Fresh Live snapshot (2,009 documents / 34 tables, 1,535,848 bytes) was saved privately, independently retrieved, byte/hash verified and restored through the supported Testing UI. All table counts matched; accepted mission and ledger checks passed; Testing returned to pre-drill state. The archive is not in GitHub. One-time database and media backup coverage is demonstrated; recurrence, retention, RPO/RTO and freshness monitoring remain open. Backup stays PARTIAL.
