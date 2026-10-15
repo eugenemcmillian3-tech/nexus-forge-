@@ -57,6 +57,8 @@ Supported stages retain provider-reported usage, with unknown charges kept unkno
 
 ## Release decision
 
+Current active-work source review: [ACTIVE_WORK_RECOVERY_REVIEW.md](ACTIVE_WORK_RECOVERY_REVIEW.md). Pending-call exclusion does not prevent a delayed call after success or recover an answer lost before domain persistence. The next engineering batch must combine durable logical work identity, atomic claiming/fencing and persisted-result recovery. This finding is from inspection, not an observed production duplicate; recovery remains PARTIAL.
+
 Use PRODUCTION_RELEASE_CHECKLIST.md and the checklist on Capability & Reliability. Partial/blocked evidence holds full production sign-off. Existing accepted Research, Manifest and LocalBoost receipts remain valid evidence for their recorded scope. Authentication and approval are not repeated as setup exercises.
 
 ## Production monitor notification drill
