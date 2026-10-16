@@ -1,10 +1,11 @@
-import { AuthLoading, Authenticated, Unauthenticated } from "convex/react"
-import { SignInForm } from "./sign-in-form"
+import {AuthLoading,Authenticated,Unauthenticated} from 'convex/react'
+import {Command} from 'lucide-react'
+import {SignInForm} from './sign-in-form'
 
-export function AuthWrapper({ children }: { children: React.ReactNode }) {
-  return <>
-    <AuthLoading><div className="min-h-screen nexus-shell auth-state"><span className="live-pill">● CONNECTING TO FORGE CORE</span></div></AuthLoading>
-    <Authenticated>{children}</Authenticated>
-    <Unauthenticated><SignInForm /></Unauthenticated>
-  </>
+export function AuthWrapper({children}:{children:React.ReactNode}){
+ return <>
+  <AuthLoading><main className="welcome-loading"><span className="welcome-logo" aria-hidden="true"><Command size={23}/></span><strong>NEXUS FORGE</strong><p role="status">Checking your session…</p></main></AuthLoading>
+  <Authenticated>{children}</Authenticated>
+  <Unauthenticated><SignInForm/></Unauthenticated>
+ </>
 }

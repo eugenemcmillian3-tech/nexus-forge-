@@ -14,7 +14,7 @@ describe("operator authentication flow", () => {
     signInMock.mockResolvedValue(undefined);
     optionsMock.mockReturnValue({workspaceSso:true,domain:"example.com"});
     render(<SignInForm/>);
-    fireEvent.click(screen.getByRole("button",{name:"Sign in with example.com Workspace"}));
+    fireEvent.click(screen.getByRole("button",{name:"Continue with Google Workspace"}));
     await waitFor(()=>expect(signInMock).toHaveBeenCalledWith("google",{redirectTo:"/"}));
   });
   beforeEach(() => {
@@ -25,7 +25,7 @@ describe("operator authentication flow", () => {
 
   it("requests an OTP and moves to the verification step", async () => {
     render(<SignInForm />);
-    fireEvent.change(screen.getByLabelText("EMAIL"), {
+    fireEvent.change(screen.getByLabelText("Email address"), {
       target: { value: "operator@example.test" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Send verification code" }));
@@ -34,18 +34,18 @@ describe("operator authentication flow", () => {
     expect(signInMock).toHaveBeenCalledWith("resend-otp", expect.any(FormData));
     expect((signInMock.mock.calls[0][1] as FormData).get("email")).toBe("operator@example.test");
     expect(await screen.findByRole("heading", { name: "Check your email" })).toBeInTheDocument();
-    expect(screen.getByLabelText("VERIFICATION CODE")).toBeRequired();
+    expect(screen.getByLabelText("Verification code")).toBeRequired();
   });
 
   it("submits the OTP with the same email identity", async () => {
     render(<SignInForm />);
-    fireEvent.change(screen.getByLabelText("EMAIL"), {
+    fireEvent.change(screen.getByLabelText("Email address"), {
       target: { value: "operator@example.test" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Send verification code" }));
     await screen.findByRole("heading", { name: "Check your email" });
 
-    fireEvent.change(screen.getByLabelText("VERIFICATION CODE"), {
+    fireEvent.change(screen.getByLabelText("Verification code"), {
       target: { value: "123456" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Verify and enter" }));
@@ -59,27 +59,27 @@ describe("operator authentication flow", () => {
   it("shows a recoverable message when sending an OTP fails", async () => {
     signInMock.mockRejectedValueOnce(new Error("provider unavailable"));
     render(<SignInForm />);
-    fireEvent.change(screen.getByLabelText("EMAIL"), {
+    fireEvent.change(screen.getByLabelText("Email address"), {
       target: { value: "operator@example.test" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Send verification code" }));
 
-    expect(await screen.findByText("Unable to send the verification code. Check the email address and try again.")).toBeInTheDocument();
+    expect(await screen.findByText("We couldn’t send a code. Check your email address and try again.")).toBeInTheDocument();
   });
 
   it("shows a recoverable message when OTP verification fails", async () => {
     signInMock.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("invalid OTP"));
     render(<SignInForm />);
-    fireEvent.change(screen.getByLabelText("EMAIL"), {
+    fireEvent.change(screen.getByLabelText("Email address"), {
       target: { value: "operator@example.test" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Send verification code" }));
     await screen.findByRole("heading", { name: "Check your email" });
-    fireEvent.change(screen.getByLabelText("VERIFICATION CODE"), {
+    fireEvent.change(screen.getByLabelText("Verification code"), {
       target: { value: "000000" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Verify and enter" }));
 
-    expect(await screen.findByText("That verification code is invalid or expired.")).toBeInTheDocument();
+    expect(await screen.findByText("That code is invalid or expired. Check the latest email or request a new code.")).toBeInTheDocument();
   });
 });
