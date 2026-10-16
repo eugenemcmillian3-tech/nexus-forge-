@@ -51,7 +51,7 @@ A reserved-email OTP browser session passed scoped recording and navigation chec
 
 ## Remaining work
 
-- Workspace tenant activation and real IdP sign-in validation.
+- Google returned redirect_uri_mismatch for both exact Testing and Live callbacks. Register those callbacks on the configured OAuth client, then validate real tenant sign-in. Exact steps: [EXTERNAL_ACCESS_BLOCKERS.md](EXTERNAL_ACCESS_BLOCKERS.md).
 - Broader enterprise directory synchronization and additional authenticated write-service integrations.
 - Instrument actual products and collect sufficiently long representative outcome periods to assess improvement.
 - Resolve the previously recorded image-generation provider rejection and evaluate perception quality on a labeled corpus.
