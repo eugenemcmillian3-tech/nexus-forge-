@@ -85,6 +85,7 @@ import type * as runtimeReceipts from "../runtimeReceipts.js";
 import type * as signInOptions from "../signInOptions.js";
 import type * as siteTraffic from "../siteTraffic.js";
 import type * as siteTrafficModel from "../siteTrafficModel.js";
+import type * as teamDirectorySync from "../teamDirectorySync.js";
 import type * as teamProvisioning from "../teamProvisioning.js";
 import type * as unstartedRetry from "../unstartedRetry.js";
 import type * as users from "../users.js";
@@ -174,6 +175,7 @@ declare const fullApi: ApiFromModules<{
   signInOptions: typeof signInOptions;
   siteTraffic: typeof siteTraffic;
   siteTrafficModel: typeof siteTrafficModel;
+  teamDirectorySync: typeof teamDirectorySync;
   teamProvisioning: typeof teamProvisioning;
   unstartedRetry: typeof unstartedRetry;
   users: typeof users;

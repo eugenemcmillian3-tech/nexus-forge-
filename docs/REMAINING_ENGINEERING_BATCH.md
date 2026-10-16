@@ -1,3 +1,7 @@
+# Current status
+
+See [CURRENT_PROJECT_STATUS.md](CURRENT_PROJECT_STATUS.md) for the latest release and exact remaining work. This report preserves the earlier engineering batch.
+
 # Remaining engineering batch — October 15, 2026
 
 This batch closes three implementation gaps while preserving the original 16-page guide and 22 routes. It does not complete every broader research or operational milestone.
@@ -49,7 +53,11 @@ Preparation is read-only at GitHub and saves the exact base commit/tree and cont
 
 A reserved-email OTP browser session passed scoped recording and navigation checks across all seven expansion pages. See [SEVEN_BROWSER_ACCEPTANCE.md](SEVEN_BROWSER_ACCEPTANCE.md) for exact actions, synthetic-data limits and verified Testing restoration. This is separate from a full all-services venture mission or real Workspace sign-in.
 
-## Multimodal Studio removed\n\nThe Studio and its provider execution paths are retired. Media quota and quality checks are out of scope. See [MULTIMODAL_RETIREMENT.md](MULTIMODAL_RETIREMENT.md). Historical reports remain archived evidence.\n\n## Remaining work
+## Multimodal Studio removed
+
+The Studio and its provider execution paths are retired. Media quota and quality checks are out of scope. See [MULTIMODAL_RETIREMENT.md](MULTIMODAL_RETIREMENT.md). Historical reports remain archived evidence.
+
+## Remaining work
 
 - Google callback preflight now reaches sign-in in Testing and Live; actual organization-user sign-in remains unverified. See [EXTERNAL_ACCESS_BLOCKERS.md](EXTERNAL_ACCESS_BLOCKERS.md).
 - Broader enterprise directory synchronization and additional authenticated write-service integrations.
