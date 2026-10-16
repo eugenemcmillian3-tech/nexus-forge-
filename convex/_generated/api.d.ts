@@ -81,6 +81,8 @@ import type * as readiness from "../readiness.js";
 import type * as reproducibleBenchmarks from "../reproducibleBenchmarks.js";
 import type * as research from "../research.js";
 import type * as researchData from "../researchData.js";
+import type * as resourceCapacity from "../resourceCapacity.js";
+import type * as runtimeCapacity from "../runtimeCapacity.js";
 import type * as runtimeReceipts from "../runtimeReceipts.js";
 import type * as signInOptions from "../signInOptions.js";
 import type * as siteTraffic from "../siteTraffic.js";
@@ -171,6 +173,8 @@ declare const fullApi: ApiFromModules<{
   reproducibleBenchmarks: typeof reproducibleBenchmarks;
   research: typeof research;
   researchData: typeof researchData;
+  resourceCapacity: typeof resourceCapacity;
+  runtimeCapacity: typeof runtimeCapacity;
   runtimeReceipts: typeof runtimeReceipts;
   signInOptions: typeof signInOptions;
   siteTraffic: typeof siteTraffic;

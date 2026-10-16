@@ -99,7 +99,7 @@ const roadmap:Milestone[] = [
     "n": 16,
     "title": "Cost and resource intelligence",
     "status": "partial",
-    "detail": "Durable invocation history now records mission/stage attribution, explicit runner IDs and pending/missing/gap states across current generative router paths. Complete billing reconciliation, representative workload validation and resource intelligence remain open."
+    "detail": "Durable invocation history now records mission/stage attribution, explicit runner IDs and pending/missing/gap states across current generative router paths. Security & Resilience now exposes bounded owner-private record capacity aligned with admission policies; retired media history no longer consumes active runtime quota. Billing reconciliation, compute/traffic accounting and representative workload validation remain open."
   },
   {
     "n": 18,
@@ -111,7 +111,7 @@ const roadmap:Milestone[] = [
     "n": 19,
     "title": "Advanced security and resilience at scale",
     "status": "partial",
-    "detail": "Security & Resilience now enforces transactional owner quotas for new protocols and packages, with private audit history. Existing safety guards remain. Hosting-wide rate limits, scale certification and real host interruption remain open."
+    "detail": "Security & Resilience now enforces transactional owner quotas for protocols, packages, adapters, runtime receipts and evaluation reports, with bounded capacity evidence and private audit history. Existing safety guards remain. Hosting-wide rate limits, scale certification and real host interruption remain open."
   },
   {
     "n": 20,

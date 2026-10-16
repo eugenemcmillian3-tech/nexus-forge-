@@ -3,7 +3,7 @@ import {useAction,useMutation,useQuery} from 'convex/react'
 import {api} from '../../convex/_generated/api'
 import type {Id} from '../../convex/_generated/dataModel'
 export function RuntimeWorkbench({area}:{area:'developers'|'outcomes'|'learning'|'evaluation'}){
- const packages=useQuery(api.frontierControls.overview,area==='developers'?{}:'skip'),adapters=useQuery(api.externalRuntime.list,area==='developers'?{}:'skip'),feeds=useQuery(api.outcomeFeeds.list,area==='outcomes'?{}:'skip'),jobs=useQuery(api.runtimeReceipts.list,area==='developers'?{}:'skip'),benchmarks=useQuery(api.reproducibleBenchmarks.list,area==='evaluation'?{}:'skip')
+ const packages=useQuery(api.frontierControls.overview,area==='developers'?{}:'skip'),adapters=useQuery(api.externalRuntime.list,area==='developers'?{}:'skip'),feeds=useQuery(api.outcomeFeeds.list,area==='outcomes'?{}:'skip'),jobs=useQuery(api.runtimeReceipts.activeList,area==='developers'?{}:'skip'),benchmarks=useQuery(api.reproducibleBenchmarks.list,area==='evaluation'?{}:'skip')
  const registerAdapter=useMutation(api.externalRuntime.register),enableAdapter=useMutation(api.externalRuntime.setEnabled),runAdapter=useAction(api.externalRuntime.run),createFeed=useMutation(api.outcomeFeeds.create),enableFeed=useMutation(api.outcomeFeeds.setEnabled),refresh=useMutation(api.adaptiveRuntime.refresh),runBenchmark=useMutation(api.reproducibleBenchmarks.run)
  const[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[error,setError]=useState('')
  async function work(fn:()=>Promise<unknown>){setBusy(true);setError('');try{const r=await fn();setMessage(typeof r==='string'?r:JSON.stringify(r,null,2))}catch(e){setError(e instanceof Error?e.message:'Operation failed')}finally{setBusy(false)}}

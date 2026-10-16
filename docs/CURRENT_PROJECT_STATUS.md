@@ -2,7 +2,24 @@
 
 The platform remains live at https://www.network-x-ai.com. Main project: eugenemcmillian3-tech/nexus-forge-. The separate nexus-forge1/no-dispatch repository is dispatch QA only.
 
-## Completed in this release
+## Latest resource-capacity release
+
+- Security & Resilience now shows owner-private saved-record counts, enforced limits, remaining admission slots and reached-limit states for nine collections.
+- Counts are bounded. Above a limit, the view says "at least" rather than claiming an exhaustive count.
+- Historical multimodal, Gemini-media and media-chain receipts are excluded from active runtime admission and current developer receipts. Existing owner-only history is retained unchanged.
+- New retired-media receipt admission is rejected. Active pending/failed replay protections, immutable request keys and transactional quota enforcement remain in force.
+- Configurable admission limits and fixed feed/source limits are distinguished. Retired package versions, closed protocols and disabled feeds/sources still count where their existing admission policies require.
+- Record counts are not provider quota, compute, traffic, storage or billing evidence.
+
+Sixteen targeted capacity, retirement, runtime and UI checks passed. Managed Testing deployment accepted the compatible backend. Reserved-email OTP browser acceptance verified initial counts, a new saved policy, reactive limits, reload persistence and mobile containment. All 2,030 original Testing documents across 60 table exports matched their canonical hashes after cleanup. No Live data import occurred.
+
+| Previous behavior | Current behavior |
+|---|---|
+| Retained media receipts could consume active runtime quota | Active runtime admission excludes all three retired media categories |
+| Current tool receipts included media history | Current tool view reads active receipts; legacy owner-only history remains available |
+| Admission limit had no current usage view | Nine private collection counts expose capacity and their exact scope |
+
+## Earlier directory and telemetry release
 
 - Admin-only directory roster preview and atomic apply on Team Governance.
 - Exact roster, actor, directory, verification and membership fingerprint. Stale reviews fail without partial changes.

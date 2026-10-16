@@ -1,3 +1,4 @@
+import {ResourceCapacity} from './resource-capacity'
 import { GovernedGithubWrite } from './governed-github-write'
 import { RuntimeWorkbench } from './runtime-workbench'
 import { useState } from 'react'
@@ -10,7 +11,8 @@ export function FrontierControls({area}:{area:'resilience'|'developers'}) {
  return <section className="workspace frontier-feature">{area==='resilience'?<>
  <p>Set owner-scoped admission limits for the new experiment and package workflows. Indexed ownership checks, immutable records and quota checks run in backend transactions. Existing mission/provider governance remains in force.</p>
  <form className="glass-card research-card" onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);void work(async()=>{await setPolicy({maxRecords:Number(f.get('records')),maxMediaBytes:data?.policy.maxMediaBytes??8388608});setMessage('Admission policy updated.')})}} key={data?.policy.updatedAt??'new'}>
- <h2>Resource admission policy</h2><label>Records per experiment kind and packages<input name="records" type="number" min="1" max="100" defaultValue={data?.policy.maxRecords??100} required/></label><button className="primary-button" disabled={busy||!data}>Save policy</button></form>
+ <h2>Resource admission policy</h2><label>Records per experiment kind, packages, adapters, runtime receipts and evaluations<input name="records" type="number" min="1" max="100" defaultValue={data?.policy.maxRecords??100} required/></label><button className="primary-button" disabled={busy||!data}>Save policy</button></form>
+ <ResourceCapacity/>
  <p>Limits govern new registrations; lowering a limit retains existing evidence. They do not cap hosting charges, request bandwidth or existing mission execution. This page does not certify resilience at scale.</p>
  </>:<>
  <p>Register a versioned agent/tool contract, validate exact JSON field examples and retire a version without deleting its history. Packages are private declarations; registration does not grant network, code execution or mission access.</p>
