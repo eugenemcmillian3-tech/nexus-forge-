@@ -50,6 +50,7 @@ describe("isolated end-to-end workflow journey", () => {
     expect(screen.getByRole("heading", { name: "QA test mission" })).toBeInTheDocument();
     expect(screen.getByText("38%")).toBeInTheDocument();
     expect(screen.getByText("6/16")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Continue next action →" })).toHaveAttribute("href", "/workflow");
     expect(screen.getAllByText(/On this page, use Outcome Verification/).length).toBeGreaterThan(0);
   });
 
@@ -86,7 +87,8 @@ describe("isolated end-to-end workflow journey", () => {
     const previous = activeMission.deliveries;
     activeMission.deliveries = [{ ...previous[0], stage: "blocked", status: "Execution blocked: branch missing", workflowRunUrl: "", deploymentRunUrl: "" }, ...previous];
     const view = render(<OverviewPage />);
-    expect(screen.getByRole("heading", { name: "Resolve blocked delivery" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Resolve blocked delivery" }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "Continue next action →" })).toHaveAttribute("href", "/delivery");
     expect(screen.getByRole("link", { name: "Open stage →" })).toHaveAttribute("href", "/delivery");
     view.unmount();
     render(<WorkflowPage />);
