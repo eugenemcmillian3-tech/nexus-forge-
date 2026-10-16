@@ -14,7 +14,7 @@ const { activeMission } = vi.hoisted(() => ({
       budget: 0,
     },
     agents: [{ status: "complete" }],
-    research: [{ _id: "research_test" }],
+    research: [{ _id: "research_test", citations: ["https://example.com/source"] }],
     artifacts: [{ status: "ready" }],
     deliveries: [{ stage: "verified", status: "Production deployment verified", approved: true, workflowConclusion: "success", workflowRunUrl: "https://github.com/example/repo/actions/runs/123", workflowCommitSha: "a".repeat(40), workflowRecordedAt: 1, deploymentRunUrl: "https://github.com/example/repo/actions/runs/123", deploymentCommitSha: "a".repeat(40), deploymentUrl: "https://example.com", readinessStatus: "pass", readinessPassedCount: 6, readinessTotalCount: 6 }],
     measurements: [] as Array<{ metric: string; status: string; verificationId: string; actual: number; target: number }>,

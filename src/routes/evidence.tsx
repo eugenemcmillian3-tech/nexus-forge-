@@ -23,6 +23,7 @@ export function EvidencePage() {
     try { const result = await search({ missionId, query: query.trim(), deepResearch: false }); setReceipt(`Research saved with ${result.citations.length} cited source(s). ${result.result}`) }
     catch (e) { setError(e instanceof Error ? e.message : 'Research failed.') } finally { setBusy(false) }
   }
+  const hasCitedResearch = research.some(row => (row.citations?.length ?? 0) > 0)
   const allowed = !!missionId && !!mission?.approved && councilComplete
   if (evidenceLoading) return <WorkspaceLoading title="Research & Memory" />
   return <WorkspaceLayout title="Research & Memory" eyebrow="STAGE 03 / EVIDENCE & LEARNING">
@@ -34,10 +35,10 @@ export function EvidencePage() {
     </div>
     {error && <p className="warning" role="alert">{error}</p>}{receipt && <div className="glass-card research-card" role="status"><strong>Research receipt</strong><p>{receipt}</p></div>}
     <div className="glass-card research-card"><div className="panel-title"><span>PERSISTED RESEARCH</span><span className="live-pill">{research.length} RECORDS</span></div>
-      {research.length === 0 ? <div className="empty-state"><h3>No evidence stored for this mission</h3><p>Run a research query after Council planning completes.</p></div> : research.map((row: any) => <article className="evidence-item" key={row._id}><span className="time">SOURCE</span><div><b>{row.query}</b><p>{row.result}</p>{(row.citations ?? []).map((citation: string, index: number) => <p key={index}><a href={citation} target="_blank" rel="noreferrer">{citation}</a></p>)}</div></article>)}
+      {research.length === 0 ? <div className="empty-state"><h3>No evidence stored for this mission</h3><p>Run a research query after Council planning completes.</p></div> : research.map((row: any) => <article className="evidence-item" key={row._id}><span className="time">SOURCE</span><div><b>{row.query}</b>{!(row.citations?.length > 0) && <p className="warning">No citations recorded. This record does not complete cited research; run a new query above.</p>}<p>{row.result}</p>{(row.citations ?? []).map((citation: string, index: number) => <p key={index}><a href={citation} target="_blank" rel="noreferrer">{citation}</a></p>)}</div></article>)}
     </div>
     <MemoryBrowser key={missionId ?? "all-memories"} missionId={missionId} />
     <MemoryRetrievalEvaluation key={"evaluation-" + (missionId ?? "all")} missionId={missionId} />
-    <div className="hero-actions">{research.length > 0 ? <><p>Saved research belongs to the selected mission. Review its sources, then continue to artifact generation.</p><Link className="primary-button" to="/artifacts">Continue with saved research →</Link></> : <p>Save mission-specific research above before continuing to Artifact Forge.</p>}</div></section>
+    <div className="hero-actions">{hasCitedResearch ? <><p>Saved research belongs to the selected mission. Review its sources, then continue to artifact generation.</p><Link className="primary-button" to="/artifacts">Continue with saved research →</Link></> : <p>Save mission-specific research above before continuing to Artifact Forge.</p>}</div></section>
   </WorkspaceLayout>
 }

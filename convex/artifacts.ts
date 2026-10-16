@@ -14,6 +14,21 @@ export const listInternal = internalQuery({ args: { missionId: v.id("missions") 
 export const list = query({ args: { missionId: v.id("missions") }, returns: v.array(artifactReviewValidator), handler: async (ctx, args) => { await requireOwnedMission(ctx, args.missionId); const rows = await ctx.db.query("artifacts").withIndex("by_mission", q => q.eq("missionId", args.missionId)).order("desc").take(20); const mission = await ctx.db.get("missions", args.missionId); return rows.map(row => { const quality = verifyChecks(row.content, mission?.mission ?? ""); return { ...row, qualityChecks: quality.checks, qualityScore: quality.score, qualityPassed: quality.passed } }) } })
 export const save = internalMutation({ args: { missionId: v.id("missions"), type: v.string(), name: v.string(), content: v.string(), requiresApproval: v.boolean() }, returns: v.id("artifacts"), handler: async (ctx, args) => ctx.db.insert("artifacts", { ...args, status: args.requiresApproval ? "awaiting_approval" : "ready" }) })
 
+export const revise = mutation({
+  args: { id: v.id("artifacts"), content: v.string() }, returns: v.id("artifacts"),
+  handler: async (ctx, args) => {
+    const source = await ctx.db.get(args.id)
+    if (!source) throw new Error("Artifact not found")
+    await requireOwnedMission(ctx, source.missionId)
+    const content = args.content.trim()
+    if (!content || content.length > 200000) throw new Error("Revision must contain 1–200000 characters")
+    if (content === source.content.trim()) throw new Error("Change the content before saving a revision")
+    const id = await ctx.db.insert("artifacts", { missionId: source.missionId, type: source.type, name: source.name + " · revision", content, requiresApproval: true, status: "awaiting_approval" })
+    await ctx.runMutation(internal.audit.record, { missionId: source.missionId, type: "artifact", action: "artifact_revision_created", status: "draft", detail: "New artifact " + id + " revises " + source._id + "; original content and approvals preserved." })
+    return id
+  },
+})
+
 export const approve = mutation({
   args: { id: v.id("artifacts"), approved: v.boolean() }, returns: v.null(),
   handler: async (ctx, args) => {

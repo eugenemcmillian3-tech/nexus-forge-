@@ -43,7 +43,7 @@ export function useActiveMission() {
   const sourceLinks = useQuery(api.missionSources.list, missionId ? { missionId } : 'skip')
   const evidenceLoading = !loaded || (!!missionId && [mission, research, agents, artifacts, deliveries, measurements, sourceLinks].some(value => value === undefined))
   const councilComplete = !!agents?.length && agents.every(run => run.status === 'complete')
-  const hasResearch = !!research?.length
+  const hasResearch = !!research?.some(row => (row.citations?.length ?? 0) > 0)
   const hasVerifiedArtifact = !!artifacts?.some(item => item.status === 'verified' || item.status === 'ready')
   const hasApprovedArtifact = !!artifacts?.some(item => item.status === 'ready')
   const hasApprovedDelivery = !!deliveries?.some(item => item.approved && ['github', 'test', 'build', 'deploy', 'verified', 'complete'].includes(item.stage))

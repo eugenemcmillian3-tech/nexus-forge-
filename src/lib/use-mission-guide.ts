@@ -7,7 +7,7 @@ export function useMissionGuide() {
     { title: 'Define mission', done: !!missionId, path: '/mission', note: 'Confirm the intended outcome, scope, constraints, and budget.' },
     { title: 'Review mission authorization', done: !!mission?.approved, path: '/mission', note: 'The mission approval record is a prerequisite for governed execution.' },
     { title: 'Complete AI Council planning', done: agents.length > 0 && agents.every(row => row.status === 'complete'), path: '/council', note: 'Inspect agent results and resolve blockers before proceeding.' },
-    { title: 'Gather cited research', done: research.length > 0, path: '/evidence', note: 'Persist source-backed research against the mission when research is needed.' },
+    { title: 'Gather cited research', done: research.some(row => (row.citations?.length ?? 0) > 0), path: '/evidence', note: 'Persist source-backed research against the mission when research is needed.' },
     { title: 'Generate and verify artifact', done: artifacts.some(row => row.status === 'verified' || row.status === 'ready'), path: '/artifacts', note: 'Review quality findings; artifact verification and approval are separate states.' },
     { title: 'Record artifact approval', done: artifacts.some(row => row.status === 'ready'), path: '/artifacts', note: 'Use the artifact page to review the recorded approval state before delivery.' },
     { title: 'Prepare and authorize delivery', done: deliveries.some(row => row.approved), path: '/delivery', note: 'Check the exact target and delivery authorization in the delivery workspace.' },

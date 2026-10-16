@@ -3,6 +3,7 @@ import { action, internalAction, internalMutation, internalQuery, query } from "
 import { api, internal } from "./_generated/api"
 import { callManagedAi } from "./providerAccounting"
 import { requireOwnedMission } from "./permissions"
+import { parseResearchResponse } from "./researchResponse"
 
 const researchValidator = v.object({ _id: v.id("research"), _creationTime: v.number(), missionId: v.id("missions"), query: v.string(), result: v.string(), citations: v.array(v.string()), createdAt: v.number() })
 
@@ -284,15 +285,9 @@ DEPTH: ${args.deepResearch ? "deep" : "standard"}
 RETRIEVED WEB DOSSIER:
 ${sourceDossier.slice(0, 18000)}
 
-Return JSON with exactly two fields: result (string) and citations (array of strings). citations MUST contain only URLs from the retrieved dossier that materially support the result.`
-    const responseText = await callManagedAi(ctx, { ownerKey: mission.ownerKey, missionId: args.missionId, stage: "research-discovery", role: "research", prompt: researchPrompt, maxTokens: args.deepResearch ? 1600 : 1100 })
-    let data: { result?: unknown; citations?: unknown }
-    try { data = JSON.parse(responseText) as { result?: unknown; citations?: unknown } }
-    catch { data = { result: responseText, citations: [] } }
-    const result = typeof data.result === "string" ? data.result : responseText
-    const citations = Array.isArray(data.citations)
-      ? data.citations.filter((x): x is string => typeof x === "string" && sources.some(source => source.url === x))
-      : []
+Return only complete valid JSON with exactly two fields, citations FIRST (array of strings), then result (string). Keep result under 300 words; no code blocks or full implementation. citations MUST contain at least one URL from the retrieved dossier that materially supports the result. If content was unavailable, explicitly limit claims to retrieved metadata.`
+    const responseText = await callManagedAi(ctx, { ownerKey: mission.ownerKey, missionId: args.missionId, stage: "research-discovery", role: "research", prompt: researchPrompt, maxTokens: args.deepResearch ? 2200 : 1800 })
+    const { result, citations } = parseResearchResponse(responseText, sources.map(source => source.url))
     await ctx.runMutation(internal.research.save, { missionId: args.missionId, query: researchQuery, result, citations })
     return { ok: true, result, citations }
   },

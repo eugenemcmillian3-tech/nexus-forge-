@@ -177,13 +177,12 @@ describe("Research Oracle persistence", () => {
     stubGateway();
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await t.withIdentity(identity(owner)).action(api.research.search, {
+    await expect(t.withIdentity(identity(owner)).action(api.research.search, {
       missionId,
       query: "test redirect chain limit",
       deepResearch: false,
-    });
-
-    expect(result.ok).toBe(true);
+    })).rejects.toThrow(/no supported retrieved citations/);
+    expect(await t.withIdentity(identity(owner)).query(api.research.list, { missionId })).toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[1][0]).toBe(`${GATEWAY_URL}/fetch`);
   });

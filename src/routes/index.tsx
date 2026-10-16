@@ -22,7 +22,7 @@ export function OverviewPage() {
     '/orchestrator': sourceLinks.some(link => link.path === '/orchestrator'),
     '/learning': sourceLinks.some(link => link.path === '/learning'),
     '/council': councilComplete,
-    '/evidence': research.length > 0,
+    '/evidence': research.some(row => (row.citations?.length ?? 0) > 0),
     '/artifacts': hasArtifact && hasVerified && hasArtifactApproval,
     '/delivery': hasDeliveryPrepared && hasDeliveryApproval && hasBuildEvidence,
     '/readiness': missionStages[7].done,
