@@ -1,6 +1,6 @@
 # Remaining engineering batch — October 15, 2026
 
-This batch closes three implementation gaps while preserving the original 16-page guide and 23 routes. It does not complete every broader research, media or operational milestone.
+This batch closes three implementation gaps while preserving the original 16-page guide and 22 routes. It does not complete every broader research or operational milestone.
 
 ## What changed
 
@@ -21,7 +21,7 @@ The real write used branch nexus-agent/rs74a3nrjwm2praagv0kdk0hc58gbhes, commit 
 
 Configure AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET and AUTH_GOOGLE_HOSTED_DOMAIN on the appropriate server deployment using the organization's Google Workspace OAuth client. Register the deployment's exact /api/auth/callback/google URL on its Convex site origin. Keep credentials server-side. Testing and Live need their respective callback URLs.
 
-The provider is not registered unless all three values are valid. The hosted-domain request hint is not treated as proof: the verified profile must contain email_verified=true, matching hd and matching email domain. Arbitrary email-suffix assertions are rejected. Explicit team grants remain separate from authentication; domain membership never grants team access by itself.
+Google routes are consistently registered for compatibility; readiness and verified profile checks reject unconfigured sign-in. The hosted-domain request hint is not treated as proof: the verified profile must contain email_verified=true, matching hd and matching email domain. Arbitrary email-suffix assertions are rejected. Explicit team grants remain separate from authentication; domain membership never grants team access by itself.
 
 Update, October 16 UTC: the configured URL was normalized to its exact hostname without guessing another tenant. Testing now reports Workspace SSO configuration-ready. Actual organization-user IdP sign-in must still confirm that the configured hostname matches the Workspace hosted-domain claim. Website verification is separate from tenant ownership. Live readiness is checked after publishing. No secrets were requested or exposed. SAML, SCIM and multi-tenant enterprise configuration are not implemented.
 
@@ -49,18 +49,12 @@ Preparation is read-only at GitHub and saves the exact base commit/tree and cont
 
 A reserved-email OTP browser session passed scoped recording and navigation checks across all seven expansion pages. See [SEVEN_BROWSER_ACCEPTANCE.md](SEVEN_BROWSER_ACCEPTANCE.md) for exact actions, synthetic-data limits and verified Testing restoration. This is separate from a full all-services venture mission or real Workspace sign-in.
 
-## Media-chain update
+## Multimodal Studio removed\n\nThe Studio and its provider execution paths are retired. Media quota and quality checks are out of scope. See [MULTIMODAL_RETIREMENT.md](MULTIMODAL_RETIREMENT.md). Historical reports remain archived evidence.\n\n## Remaining work
 
-The user-supplied image/music chain is now adapted with durable private caching, deduplication, cooldowns and explicit placeholders. Real generation remains blocked for the tested routes; the pipeline returns clearly labeled PNG/WAV placeholders. See [MEDIA_CHAIN_RELEASE.md](MEDIA_CHAIN_RELEASE.md) for exact provider outcomes and differences from the sample.
-
-## Remaining work
-
-- Google returned redirect_uri_mismatch for both exact Testing and Live callbacks. Register those callbacks on the configured OAuth client, then validate real tenant sign-in. Exact steps: [EXTERNAL_ACCESS_BLOCKERS.md](EXTERNAL_ACCESS_BLOCKERS.md).
+- Google callback preflight now reaches sign-in in Testing and Live; actual organization-user sign-in remains unverified. See [EXTERNAL_ACCESS_BLOCKERS.md](EXTERNAL_ACCESS_BLOCKERS.md).
 - Broader enterprise directory synchronization and additional authenticated write-service integrations.
 - Instrument actual products and collect sufficiently long representative outcome periods to assess improvement.
-- Resolve the previously recorded image-generation provider rejection and evaluate perception quality on a labeled corpus.
-- Gemini original-video analysis, image generation and 30-second music composition are now implemented. Native-video known-fixture acceptance passed; image and music real checks returned HTTP 429. See [Gemini integration evidence](GEMINI_MEDIA_BATCH.md).
-- Independent competitor/scientific replication, unseen-task evaluation and a complete signed-in all-seven mission remain empirical acceptance work.
+- Independent competitor/scientific replication, unseen-task evaluation and a complete signed-in mission covering the active capabilities remain empirical acceptance work.
 - Billing reconciliation, scheduled-backup acceptance, production workload certification and real provider/host-failure acceptance remain on hold.
 
 The real-service report from the previous batch remains valid historical evidence, including media failures. It is not superseded by passing software tests.

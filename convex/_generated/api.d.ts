@@ -57,8 +57,6 @@ import type * as liveComparisons from "../liveComparisons.js";
 import type * as manifestIntelligence from "../manifestIntelligence.js";
 import type * as manifestStrategyParser from "../manifestStrategyParser.js";
 import type * as mediaChain from "../mediaChain.js";
-import type * as mediaChainConfig from "../mediaChainConfig.js";
-import type * as mediaChainCore from "../mediaChainCore.js";
 import type * as mediaChainState from "../mediaChainState.js";
 import type * as memory from "../memory.js";
 import type * as missionRunner from "../missionRunner.js";
@@ -148,8 +146,6 @@ declare const fullApi: ApiFromModules<{
   manifestIntelligence: typeof manifestIntelligence;
   manifestStrategyParser: typeof manifestStrategyParser;
   mediaChain: typeof mediaChain;
-  mediaChainConfig: typeof mediaChainConfig;
-  mediaChainCore: typeof mediaChainCore;
   mediaChainState: typeof mediaChainState;
   memory: typeof memory;
   missionRunner: typeof missionRunner;

@@ -2,8 +2,8 @@ import {v,ConvexError} from 'convex/values'
 import {internalMutation,internalQuery,query} from './_generated/server'
 import {requireOperator} from './permissions'
 import {audit,policy} from './frontierSupport'
-import {mediaProviderConfig} from './mediaChainConfig'
-export const readiness=query({args:{},handler:async ctx=>{await requireOperator(ctx);const e=mediaProviderConfig(process.env);return{cloudflare:!!(e.account&&e.cloudflare),huggingface:!!e.hf,pollinations:!!e.pollinations,musicNotice:'MusicGen weights are non-commercial and its HF hosted availability is not guaranteed. No generated music is assumed.',freeNotice:'Provider quotas or charges can apply. No free balance or billing plan is assumed.'}}})
+export const readiness=query({args:{},handler:async ctx=>{await requireOperator(ctx);return{cloudflare:false,huggingface:false,pollinations:false,musicNotice:'Multimodal Studio has been removed.',freeNotice:'Media generation is disabled.'}}})
+/** @deprecated Retained for deployed internal-contract compatibility; no active caller. */
 export const begin=internalMutation({args:{ownerKey:v.string(),requestKey:v.string(),input:v.string(),key:v.string()},handler:async(ctx,a)=>{
  if(!/^[A-Za-z0-9_-]{8,100}$/.test(a.requestKey)||a.input.length>20000||!/^[a-f0-9]{64}$/.test(a.key))throw new ConvexError('Invalid media request')
  const existing=await ctx.db.query('runtimeJobs').withIndex('by_owner_key',q=>q.eq('ownerKey',a.ownerKey).eq('requestKey',a.requestKey)).unique()
@@ -22,8 +22,11 @@ export const begin=internalMutation({args:{ownerKey:v.string(),requestKey:v.stri
  if(row)await ctx.db.patch(row._id,data);else await ctx.db.insert('mediaChainEntries',{ownerKey:a.ownerKey,key:a.key,...data})
  return{state:'admitted' as const,jobId}
 }})
+/** @deprecated Retained for deployed internal-contract compatibility; no active caller. */
 export const cooldown=internalQuery({args:{ownerKey:v.string(),provider:v.string()},handler:async(ctx,a)=>(await ctx.db.query('mediaChainCooldowns').withIndex('by_owner_provider',q=>q.eq('ownerKey',a.ownerKey).eq('provider',a.provider)).unique())?.until??0})
+/** @deprecated Retained for deployed internal-contract compatibility; no active caller. */
 export const cool=internalMutation({args:{ownerKey:v.string(),provider:v.string(),until:v.number()},handler:async(ctx,a)=>{if(!['cloudflare-flux','huggingface-flux','pollinations','huggingface-musicgen'].includes(a.provider)||!Number.isFinite(a.until))throw new ConvexError('Invalid provider cooldown');const row=await ctx.db.query('mediaChainCooldowns').withIndex('by_owner_provider',q=>q.eq('ownerKey',a.ownerKey).eq('provider',a.provider)).unique(),until=Math.max(Date.now(),Math.min(a.until,Date.now()+86400000),row?.until??0);if(row)await ctx.db.patch(row._id,{until});else await ctx.db.insert('mediaChainCooldowns',{...a,until})}})
+/** @deprecated Retained for deployed internal-contract compatibility; no active caller. */
 export const settle=internalMutation({args:{ownerKey:v.string(),key:v.string(),jobId:v.id('runtimeJobs'),result:v.string(),success:v.boolean(),cacheable:v.boolean()},handler:async(ctx,a)=>{
  const row=await ctx.db.query('mediaChainEntries').withIndex('by_owner_key',q=>q.eq('ownerKey',a.ownerKey).eq('key',a.key)).unique(),job=await ctx.db.get(a.jobId)
  if(!row||row.jobId!==a.jobId||row.status!=='pending'||job?.ownerKey!==a.ownerKey||job.status!=='pending'||a.result.length>16000)throw new ConvexError('Invalid media settlement')

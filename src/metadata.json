@@ -70,10 +70,6 @@
       "images": "https://assets.macaly-user-data.dev/a7122926vj2ys4x7zsc7e0sj/bphntw8kdojl9qvuifywyjtk/9JW4kw1Ijwp1qyfM2L09h/generated-3u8Zbs_7.png"
     }
   },
-  "/multimodal": {
-    "title": "Multimodal Studio — NEXUS FORGE",
-    "description": "Create visual cards, retain private media, preview audio and video, and inspect file properties."
-  },
   "/resilience": {
     "title": "Security & Resilience — NEXUS FORGE",
     "description": "Manage admission limits and inspect private audit evidence for resource and recovery controls."

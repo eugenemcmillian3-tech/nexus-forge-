@@ -22,7 +22,6 @@ import { Route as IncidentsRouteImport } from './routes/incidents'
 import { Route as LearningRouteImport } from './routes/learning'
 import { Route as ManifestRouteImport } from './routes/manifest'
 import { Route as MissionRouteImport } from './routes/mission'
-import { Route as MultimodalRouteImport } from './routes/multimodal'
 import { Route as OrchestratorRouteImport } from './routes/orchestrator'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as ProvidersRouteImport } from './routes/providers'
@@ -98,11 +97,6 @@ const MissionRoute = MissionRouteImport.update({
   path: '/mission',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MultimodalRoute = MultimodalRouteImport.update({
-  id: '/multimodal',
-  path: '/multimodal',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OrchestratorRoute = OrchestratorRouteImport.update({
   id: '/orchestrator',
   path: '/orchestrator',
@@ -163,7 +157,6 @@ export interface FileRoutesByFullPath {
   '/learning': typeof LearningRoute
   '/manifest': typeof ManifestRoute
   '/mission': typeof MissionRoute
-  '/multimodal': typeof MultimodalRoute
   '/orchestrator': typeof OrchestratorRoute
   '/portfolio': typeof PortfolioRoute
   '/providers': typeof ProvidersRoute
@@ -188,7 +181,6 @@ export interface FileRoutesByTo {
   '/learning': typeof LearningRoute
   '/manifest': typeof ManifestRoute
   '/mission': typeof MissionRoute
-  '/multimodal': typeof MultimodalRoute
   '/orchestrator': typeof OrchestratorRoute
   '/portfolio': typeof PortfolioRoute
   '/providers': typeof ProvidersRoute
@@ -214,7 +206,6 @@ export interface FileRoutesById {
   '/learning': typeof LearningRoute
   '/manifest': typeof ManifestRoute
   '/mission': typeof MissionRoute
-  '/multimodal': typeof MultimodalRoute
   '/orchestrator': typeof OrchestratorRoute
   '/portfolio': typeof PortfolioRoute
   '/providers': typeof ProvidersRoute
@@ -241,7 +232,6 @@ export interface FileRouteTypes {
     | '/learning'
     | '/manifest'
     | '/mission'
-    | '/multimodal'
     | '/orchestrator'
     | '/portfolio'
     | '/providers'
@@ -266,7 +256,6 @@ export interface FileRouteTypes {
     | '/learning'
     | '/manifest'
     | '/mission'
-    | '/multimodal'
     | '/orchestrator'
     | '/portfolio'
     | '/providers'
@@ -291,7 +280,6 @@ export interface FileRouteTypes {
     | '/learning'
     | '/manifest'
     | '/mission'
-    | '/multimodal'
     | '/orchestrator'
     | '/portfolio'
     | '/providers'
@@ -317,7 +305,6 @@ export interface RootRouteChildren {
   LearningRoute: typeof LearningRoute
   ManifestRoute: typeof ManifestRoute
   MissionRoute: typeof MissionRoute
-  MultimodalRoute: typeof MultimodalRoute
   OrchestratorRoute: typeof OrchestratorRoute
   PortfolioRoute: typeof PortfolioRoute
   ProvidersRoute: typeof ProvidersRoute
@@ -422,13 +409,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MissionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/multimodal': {
-      id: '/multimodal'
-      path: '/multimodal'
-      fullPath: '/multimodal'
-      preLoaderRoute: typeof MultimodalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/orchestrator': {
       id: '/orchestrator'
       path: '/orchestrator'
@@ -509,7 +489,6 @@ const rootRouteChildren: RootRouteChildren = {
   LearningRoute: LearningRoute,
   ManifestRoute: ManifestRoute,
   MissionRoute: MissionRoute,
-  MultimodalRoute: MultimodalRoute,
   OrchestratorRoute: OrchestratorRoute,
   PortfolioRoute: PortfolioRoute,
   ProvidersRoute: ProvidersRoute,

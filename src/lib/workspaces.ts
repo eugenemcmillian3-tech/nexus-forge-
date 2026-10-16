@@ -43,16 +43,8 @@ export const workspaceGroups = [
   },
   {
   "title": "06 · EXPANDED CAPABILITIES",
-  "intro": "Create media, collaborate, govern integrations and evaluate evidence.",
+  "intro": "Collaborate, govern integrations and evaluate evidence.",
   "pages": [
-    {
-      "path": "/multimodal",
-      "title": "Multimodal Studio",
-      "icon": "◐",
-      "purpose": "Create visual cards, retain private media, preview audio and video, and inspect file properties.",
-      "use": "Use this optional capability when its inputs are available.",
-      "output": "A persisted record and explicit evidence limits."
-    },
     {
       "path": "/resilience",
       "title": "Security & Resilience",
