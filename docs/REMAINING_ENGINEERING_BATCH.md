@@ -45,6 +45,10 @@ Preparation is read-only at GitHub and saves the exact base commit/tree and cont
 
 469 tests across 79 files passed. Managed Testing deployment accepted the backward-compatible API contract. The deployed controlled telemetry/directory/write drill passed. Testing returned to 2,009 original documents across 58 document-table exports, zero storage files, with every count and canonical document hash matching the pre-drill snapshot. The isolated GitHub acceptance branch remains as evidence. No production data experiment was performed.
 
+## Latest browser acceptance
+
+A reserved-email OTP browser session passed scoped recording and navigation checks across all seven expansion pages. See [SEVEN_BROWSER_ACCEPTANCE.md](SEVEN_BROWSER_ACCEPTANCE.md) for exact actions, synthetic-data limits and verified Testing restoration. This is separate from a full all-services venture mission or real Workspace sign-in.
+
 ## Remaining work
 
 - Workspace tenant activation and real IdP sign-in validation.
