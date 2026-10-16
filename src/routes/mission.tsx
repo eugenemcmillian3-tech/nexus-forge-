@@ -64,8 +64,10 @@ export function MissionPage() {
   return <WorkspaceLayout title="Mission Console" eyebrow="STAGE 01 / INTENT & AUTHORITY">
     <section className="workspace"><div className="console-grid">
       <div id="mission-contract" className="glass-card research-card"><div className="panel-title"><span>MISSION CONTRACT</span><span className="live-pill">HUMAN CONTROL</span></div>
+        <p>Define one result you can inspect and measure. Your draft stays editable here until you create it; creating it selects the mission for the guided workflow.</p>
+        <p id="mission-brief-help" className="muted-copy">Include: the intended audience, exact deliverable, constraints, and a measurable success check. Example: “Build a landing page for a local bakery with its menu and contact form. Use supplied content, keep spend under $25, and verify the page works on mobile.”</p>
         <label htmlFor="mission-title">MISSION TITLE</label><input id="mission-title" value={title} onChange={e => setTitle(e.target.value)} />
-        <label htmlFor="mission-description">DESIRED OUTCOME</label><textarea id="mission-description" rows={5} value={description} onChange={e => setDescription(e.target.value)} />
+        <label htmlFor="mission-description">DESIRED OUTCOME</label><textarea id="mission-description" aria-describedby="mission-brief-help" rows={5} value={description} onChange={e => setDescription(e.target.value)} />
         <div className="field-grid"><div><label htmlFor="mission-autonomy">AUTHORITY LEVEL</label><select id="mission-autonomy" value={autonomy} onChange={e => setAutonomy(e.target.value)}><option>Draft only</option><option>Approval required</option><option>Narrow auto-execution</option></select></div><div><label htmlFor="mission-budget">SPEND CAP · USD</label><input id="mission-budget" type="number" min={0} max={500} value={budget} onChange={e => setBudget(Math.max(0, Math.min(500, Number(e.target.value))))} /></div></div>
         <button className="primary-button" disabled={busy} onClick={() => void create()}>{busy ? 'Creating…' : 'Create new draft mission ↗'}</button>
       </div>
