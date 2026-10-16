@@ -1,0 +1,223 @@
+{
+  "startedAt": "2026-10-16T22:05:08.369Z",
+  "finishedAt": "2026-10-16T22:05:09.505Z",
+  "target": "https://www.network-x-ai.com",
+  "workload": "Anonymous HTTPS route fetch; five sequential rounds across four entry and mission routes",
+  "summary": [
+    {
+      "path": "/",
+      "requests": 5,
+      "passed": 5,
+      "medianMs": 44,
+      "maxMs": 292
+    },
+    {
+      "path": "/mission",
+      "requests": 5,
+      "passed": 5,
+      "medianMs": 43,
+      "maxMs": 53
+    },
+    {
+      "path": "/workflow",
+      "requests": 5,
+      "passed": 5,
+      "medianMs": 43,
+      "maxMs": 55
+    },
+    {
+      "path": "/portfolio",
+      "requests": 5,
+      "passed": 5,
+      "medianMs": 43,
+      "maxMs": 53
+    }
+  ],
+  "observations": [
+    {
+      "round": 1,
+      "path": "/",
+      "status": 200,
+      "durationMs": 292,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/"
+    },
+    {
+      "round": 1,
+      "path": "/mission",
+      "status": 200,
+      "durationMs": 53,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/mission"
+    },
+    {
+      "round": 1,
+      "path": "/workflow",
+      "status": 200,
+      "durationMs": 50,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/workflow"
+    },
+    {
+      "round": 1,
+      "path": "/portfolio",
+      "status": 200,
+      "durationMs": 50,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/portfolio"
+    },
+    {
+      "round": 2,
+      "path": "/",
+      "status": 200,
+      "durationMs": 44,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/"
+    },
+    {
+      "round": 2,
+      "path": "/mission",
+      "status": 200,
+      "durationMs": 39,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/mission"
+    },
+    {
+      "round": 2,
+      "path": "/workflow",
+      "status": 200,
+      "durationMs": 43,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/workflow"
+    },
+    {
+      "round": 2,
+      "path": "/portfolio",
+      "status": 200,
+      "durationMs": 53,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/portfolio"
+    },
+    {
+      "round": 3,
+      "path": "/",
+      "status": 200,
+      "durationMs": 44,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/"
+    },
+    {
+      "round": 3,
+      "path": "/mission",
+      "status": 200,
+      "durationMs": 43,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/mission"
+    },
+    {
+      "round": 3,
+      "path": "/workflow",
+      "status": 200,
+      "durationMs": 55,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/workflow"
+    },
+    {
+      "round": 3,
+      "path": "/portfolio",
+      "status": 200,
+      "durationMs": 43,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/portfolio"
+    },
+    {
+      "round": 4,
+      "path": "/",
+      "status": 200,
+      "durationMs": 37,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/"
+    },
+    {
+      "round": 4,
+      "path": "/mission",
+      "status": 200,
+      "durationMs": 37,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/mission"
+    },
+    {
+      "round": 4,
+      "path": "/workflow",
+      "status": 200,
+      "durationMs": 43,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/workflow"
+    },
+    {
+      "round": 4,
+      "path": "/portfolio",
+      "status": 200,
+      "durationMs": 43,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/portfolio"
+    },
+    {
+      "round": 5,
+      "path": "/",
+      "status": 200,
+      "durationMs": 40,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/"
+    },
+    {
+      "round": 5,
+      "path": "/mission",
+      "status": 200,
+      "durationMs": 43,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/mission"
+    },
+    {
+      "round": 5,
+      "path": "/workflow",
+      "status": 200,
+      "durationMs": 41,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/workflow"
+    },
+    {
+      "round": 5,
+      "path": "/portfolio",
+      "status": 200,
+      "durationMs": 41,
+      "html": true,
+      "title": "NEXUS FORGE — Governed Intelligence OS",
+      "finalUrl": "https://www.network-x-ai.com/portfolio"
+    }
+  ],
+  "limitations": [
+    "Single sandbox vantage point; small sample.",
+    "Measures anonymous static HTML responses including body download, not hydrated UI, authentication, task completion, customer adoption or improvement.",
+    "No live database access or writes; no user identities or tokens collected."
+  ]
+}
