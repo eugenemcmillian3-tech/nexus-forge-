@@ -2,6 +2,8 @@ import { defineTable } from 'convex/server'
 import { v } from 'convex/values'
 export const labKind = v.union(v.literal('comparison'), v.literal('science'), v.literal('generality'))
 export const frontierTables = {
+ mediaChainEntries: defineTable({ownerKey:v.string(),key:v.string(),jobId:v.id('runtimeJobs'),status:v.union(v.literal('pending'),v.literal('complete'),v.literal('failed')),result:v.optional(v.string()),cacheUntil:v.number(),updatedAt:v.number()}).index('by_owner_key',['ownerKey','key']).index('by_owner',['ownerKey']),
+ mediaChainCooldowns: defineTable({ownerKey:v.string(),provider:v.string(),until:v.number()}).index('by_owner_provider',['ownerKey','provider']),
  productSources: defineTable({ownerKey:v.string(),missionId:v.id('missions'),name:v.string(),tokenHash:v.string(),enabled:v.boolean(),generation:v.number(),received:v.number(),pendingCount:v.number(),pendingSuccess:v.number(),pendingStart:v.optional(v.number()),batch:v.number(),createdAt:v.number()}).index('by_owner',['ownerKey']),
  productEvents: defineTable({sourceId:v.id('productSources'),eventKey:v.string(),digest:v.string(),success:v.boolean(),receivedAt:v.number()}).index('by_source_key',['sourceId','eventKey']).index('by_source',['sourceId']),
 

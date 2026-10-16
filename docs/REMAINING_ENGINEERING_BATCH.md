@@ -49,6 +49,10 @@ Preparation is read-only at GitHub and saves the exact base commit/tree and cont
 
 A reserved-email OTP browser session passed scoped recording and navigation checks across all seven expansion pages. See [SEVEN_BROWSER_ACCEPTANCE.md](SEVEN_BROWSER_ACCEPTANCE.md) for exact actions, synthetic-data limits and verified Testing restoration. This is separate from a full all-services venture mission or real Workspace sign-in.
 
+## Media-chain update
+
+The user-supplied image/music chain is now adapted with durable private caching, deduplication, cooldowns and explicit placeholders. Real generation remains blocked for the tested routes; the pipeline returns clearly labeled PNG/WAV placeholders. See [MEDIA_CHAIN_RELEASE.md](MEDIA_CHAIN_RELEASE.md) for exact provider outcomes and differences from the sample.
+
 ## Remaining work
 
 - Google returned redirect_uri_mismatch for both exact Testing and Live callbacks. Register those callbacks on the configured OAuth client, then validate real tenant sign-in. Exact steps: [EXTERNAL_ACCESS_BLOCKERS.md](EXTERNAL_ACCESS_BLOCKERS.md).

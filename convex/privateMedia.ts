@@ -3,7 +3,7 @@ import { query, internalMutation, action, internalQuery } from './_generated/ser
 import { internal } from './_generated/api'
 import { requireOperator } from './permissions'
 import { text, policy, audit } from './frontierSupport'
-const supported=['image/png','image/jpeg','image/webp','image/gif','audio/mpeg','audio/wav','audio/webm','video/mp4','video/webm','text/plain']
+const supported=['image/png','image/jpeg','image/webp','image/gif','audio/mpeg','audio/wav','audio/webm','audio/flac','video/mp4','video/webm','text/plain']
 export const register = internalMutation({args:{ownerKey:v.string(),mime:v.string(),storageId:v.id('_storage'),name:v.string(),note:v.string()},handler:async(ctx,a)=>{const ownerKey=a.ownerKey,p=await policy(ctx,ownerKey),file=await ctx.db.system.get(a.storageId);if(!file||!supported.includes(a.mime)||(file.contentType!==undefined&&file.contentType!==a.mime)||file.size>Math.min(p.maxMediaBytes,2*1024*1024))throw new ConvexError('Supported image/audio/video/text file up to 2 MiB required');
  const existing=await ctx.db.query('privateMedia').withIndex('by_storage',q=>q.eq('storageId',a.storageId)).unique();if(existing){if(existing.ownerKey!==ownerKey)throw new ConvexError('Media already registered');return existing._id}
  if((await ctx.db.query('privateMedia').withIndex('by_owner',q=>q.eq('ownerKey',ownerKey)).take(p.maxRecords)).length>=p.maxRecords)throw new ConvexError('Media quota reached');
