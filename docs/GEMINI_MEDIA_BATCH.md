@@ -18,7 +18,7 @@ One immutable owner/request key admits one provider attempt. Completed requests 
 
 ## Identity configuration blocker
 
-Google client ID and secret are present. The client ID has the expected Google suffix; the hosted-domain value fails the existing strict bare-domain validator. SSO therefore remains disabled. Set AUTH_GOOGLE_HOSTED_DOMAIN to the organization's actual Workspace domain, such as example.com, without scheme, email address or path. No tenant domain was guessed.
+Update, October 16 UTC: the configured hosted-domain URL was normalized to its exact supplied hostname, www.network-x-ai.com; no apex domain or alternative tenant was guessed. The Testing backend now reports workspaceSso=true. This confirms configuration readiness only. The organization's actual Google Workspace hosted-domain claim must match that exact hostname; a verified website/custom domain alone does not establish Workspace ownership. Actual IdP sign-in remains unverified. The custom domain is now verified by Macaly and live.
 
 Register exact OAuth callbacks in [Google Cloud clients](https://console.cloud.google.com/auth/clients):
 
@@ -38,6 +38,6 @@ A real organization-user sign-in must still validate the IdP configuration. Trus
 
 ## Still open
 
-Image/music successful real-service acceptance is blocked by HTTP 429. Correct Workspace domain configuration and real IdP sign-in remain required. Broader labeled media evaluation, independent research replication, representative product outcomes and complete signed-in all-seven acceptance remain empirical work. Previously held billing reconciliation, backup and host/provider failure acceptance remain on hold.
+Image/music successful real-service acceptance is blocked by HTTP 429. Real IdP sign-in and confirmation that the configured hostname is the actual Workspace tenant remain required. A reviewed recheck of each generation mode on October 16 UTC again returned HTTP 429 without a detailed quota reason; no generated content was returned. Broader labeled media evaluation, independent research replication, representative product outcomes and complete signed-in all-seven acceptance remain empirical work. Previously held billing reconciliation, backup and host/provider failure acceptance remain on hold.
 
 Official API contracts: [image](https://ai.google.dev/gemini-api/docs/image-generation), [music](https://ai.google.dev/gemini-api/docs/music-generation), [video](https://ai.google.dev/gemini-api/docs/video-understanding).

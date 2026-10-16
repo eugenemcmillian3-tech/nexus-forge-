@@ -23,7 +23,7 @@ Configure AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET and AUTH_GOOGLE_HOSTED_DOMAIN on th
 
 The provider is not registered unless all three values are valid. The hosted-domain request hint is not treated as proof: the verified profile must contain email_verified=true, matching hd and matching email domain. Arbitrary email-suffix assertions are rejected. Explicit team grants remain separate from authentication; domain membership never grants team access by itself.
 
-Update: Google client ID and secret are now present, and the client ID has the expected suffix. AUTH_GOOGLE_HOSTED_DOMAIN fails bare-domain validation, so Workspace SSO remains disabled. Supply the organization's exact domain (for example, example.com), without a URL, email address or path. Live configuration readiness is checked after publishing. No secrets were requested or exposed. SAML, SCIM and multi-tenant enterprise configuration are not implemented.
+Update, October 16 UTC: the configured URL was normalized to its exact hostname without guessing another tenant. Testing now reports Workspace SSO configuration-ready. Actual organization-user IdP sign-in must still confirm that the configured hostname matches the Workspace hosted-domain claim. Website verification is separate from tenant ownership. Live readiness is checked after publishing. No secrets were requested or exposed. SAML, SCIM and multi-tenant enterprise configuration are not implemented.
 
 ## Product integration
 
