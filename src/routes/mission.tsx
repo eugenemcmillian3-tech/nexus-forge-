@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react'
 import { api } from '../../convex/_generated/api'
 import { WorkspaceLoading } from '../components/workspace-loading'
 import { WorkspaceLayout } from '../components/workspace-layout'
-import { useActiveMission } from '../hooks/use-active-mission'
+import { useMissionGuide } from '../lib/use-mission-guide'
 
 export const Route = createFileRoute('/mission')({ component: MissionPage })
 
 export function MissionPage() {
   const pathname = useRouterState({ select: state => state.location.pathname })
-  const { evidenceLoading, missionId, setMissionId, mission: activeMission, sourceLinks } = useActiveMission()
+  const { evidenceLoading, missionId, setMissionId, mission: activeMission, sourceLinks, nextStage } = useMissionGuide()
   const missions = useQuery(api.missions.list, { ownerKey: 'local-workspace', paginationOpts: { numItems: 30, cursor: null } })
   const createMission = useMutation(api.missions.create)
   const approveMission = useMutation(api.missions.approve)
@@ -74,15 +74,15 @@ export function MissionPage() {
       <div id="active-mission-contract" className="glass-card research-card"><div className="panel-title"><span>ACTIVE MISSION</span><span className="live-pill">{activeMission ? activeMission.status.toUpperCase() : 'NOT SELECTED'}</span></div>
         {activeMission ? <><h3>{activeMission.title}</h3><p>{activeMission.mission}</p>{sourceLinks.map(link => <p key={link.sourceMemoryId}>Draft source: <Link to={link.path}>{link.key} →</Link><small> · Saved receipt {link.sourceMemoryId}</small></p>)}<div className="decision-line"><span>AUTHORITY</span><strong>{activeMission.autonomy}</strong></div><div className="decision-line"><span>SPEND CAP</span><strong>${activeMission.budget}</strong></div><div className="decision-line"><span>MISSION APPROVAL</span><strong>{activeMission.approved ? 'APPROVED' : 'PENDING'}</strong></div>
           {!activeMission.approved && <button className="secondary-button" disabled={busy} onClick={() => void approve()}>Approve mission contract</button>}
-          {activeMission.approved && <p className="receipt">Approved. Continue to the AI Council page to explicitly start planning.</p>}
+          {activeMission.approved && <p className="receipt">Approved. Follow the guided next step below to continue from saved progress.</p>}
         </> : <p>Create a draft mission to begin. Existing missions can be selected below.</p>}
       </div>
     </div>
     {error && <p className="warning" role="alert">{error}</p>}{receipt && <p className="receipt" role="status">{receipt}</p>}
-    <div className="glass-card research-card" data-testid="mission-next-step"><div className="panel-title"><span>GUIDED NEXT STEP</span><span className="live-pill">{activeMission ? (activeMission.approved ? 'READY FOR COUNCIL' : 'REVIEW REQUIRED') : 'START HERE'}</span></div>{activeMission ? activeMission.approved ? <><p>The selected mission contract is approved. Continue to AI Council when you are ready to explicitly start planning.</p><Link className="primary-button inline-flex" to="/council">Continue to AI Council →</Link></> : <><p>Review the active mission title, desired outcome, authority and spend cap. Then use the existing approval control above; approval does not start execution.</p><a className="secondary-button inline-flex" href="#active-mission-contract">Review active mission contract ↑</a></> : <><p>Start by defining a clear outcome and budget. Creating a draft does not approve it or start execution.</p><a className="primary-button inline-flex" href="#mission-contract">Define mission contract ↓</a></>}</div>
+    <div className="glass-card research-card" data-testid="mission-next-step"><div className="panel-title"><span>GUIDED NEXT STEP</span><span className="live-pill">{activeMission ? (activeMission.approved ? 'CONTINUE FROM SAVED PROGRESS' : 'REVIEW REQUIRED') : 'START HERE'}</span></div>{activeMission ? activeMission.approved ? <><h3>{nextStage?.title ?? 'Review your verified outcome'}</h3><p>{nextStage?.note ?? 'Mission checkpoints have recorded evidence. Continue to Learning Engine to compare results and capture lessons.'}</p><Link className="primary-button inline-flex" to={nextStage?.path ?? '/learning'}>Continue next mission action →</Link></> : <><p>Review the active mission title, desired outcome, authority and spend cap. Then use the existing approval control above; approval does not start execution.</p><a className="secondary-button inline-flex" href="#active-mission-contract">Review active mission contract ↑</a></> : <><p>Start by defining a clear outcome and budget. Creating a draft does not approve it or start execution.</p><a className="primary-button inline-flex" href="#mission-contract">Define mission contract ↓</a></>}</div>
     <div className="glass-card research-card"><div className="panel-title"><span>MISSION HISTORY</span><span className="live-pill">{rows.length} SHOWN</span></div>
       {rows.length === 0 ? <p>No saved missions yet.</p> : rows.map(row => <button key={row._id} className="portfolio-row" onClick={() => { setMissionId(row._id); setReceipt(`Selected ${row.title}. Confirm its approval state before continuing.`); setError('') }}><div className="portfolio-main"><strong>{row.title}</strong><p>{row.mission}</p></div><div className="portfolio-cell"><small>STATUS</small><b>{row.status.toUpperCase()}</b></div><div className="portfolio-cell"><small>APPROVAL</small><b>{row.approved ? 'APPROVED' : 'PENDING'}</b></div></button>)}
     </div>
-    <div className="hero-actions"><Link className="secondary-button" to="/council">Continue to AI Council →</Link></div></section>
+    <div className="hero-actions"><Link className="secondary-button" to="/workflow">View full mission guide →</Link></div></section>
   </WorkspaceLayout>
 }
