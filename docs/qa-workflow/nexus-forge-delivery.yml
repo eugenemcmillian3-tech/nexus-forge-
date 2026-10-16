@@ -164,6 +164,12 @@ jobs:
     needs: build-test-deploy
     if: ${{ failure() }}
     steps:
+      - name: Validate callback origin
+        run: |
+          case "$CONVEX_SITE_URL" in
+            https://quick-rabbit-810.eu-west-1.convex.site|https://tame-rat-826.eu-west-1.convex.site) ;;
+            *) echo "Callback origin is not allowlisted"; exit 1 ;;
+          esac
       - name: Report failed delivery to Convex
         env:
           DELIVERY_ID: ${{ inputs.delivery_id }}
