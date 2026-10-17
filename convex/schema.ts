@@ -1,3 +1,4 @@
+import { taskFields } from './platformTaskModel'
 import { frontierTables } from './frontierModel'
 import { invocationFields } from './providerUsageModel'
 import { councilSelectionFields, councilEvaluationFields, councilPolicyFields } from "./councilMemoryModel"
@@ -10,6 +11,7 @@ import { authTables } from "@convex-dev/auth/server"
 
 export default defineSchema({
   ...authTables,
+  platformTaskRuns: defineTable(taskFields).index('by_owner', ['ownerKey']).index('by_mission', ['missionId']).index('by_source', ['sourceRef']),
   ...frontierTables,
   providerInvocations: defineTable(invocationFields).index('by_owner', ['ownerKey']).index('by_mission', ['missionId']).index('by_missionRunId_and_stage_and_role_and_outcome', ['missionRunId', 'stage', 'role', 'outcome']),
   executionEffects: defineTable({ claimId: v.id('executionClaims'), effectKey: v.string(), payload: v.string() }).index('by_claim', ['claimId']).index('by_claimId_and_effectKey', ['claimId', 'effectKey']),

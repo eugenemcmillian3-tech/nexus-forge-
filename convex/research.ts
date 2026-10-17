@@ -272,6 +272,8 @@ export const search = action({
     if (!mission) throw new Error("Mission not found or access denied")
     const researchQuery = args.query.trim()
     if (researchQuery.length < 3 || researchQuery.length > MAX_QUERY_LENGTH) throw new Error(`Research question must contain 3–${MAX_QUERY_LENGTH} characters.`)
+    const taskId = await ctx.runMutation(internal.platformTasks.begin, { missionId: args.missionId, kind: 'research' })
+    try {
     const sources = await discoverWebSources(researchQuery, args.deepResearch ? 5 : 3)
     const sourceDossier = sources.map((source, index) => `SOURCE ${index + 1}
 TITLE: ${source.title}
@@ -288,8 +290,13 @@ ${sourceDossier.slice(0, 18000)}
 Return only complete valid JSON with exactly two fields, citations FIRST (array of strings), then result (string). Keep result under 300 words; no code blocks or full implementation. citations MUST contain at least one URL from the retrieved dossier that materially supports the result. If content was unavailable, explicitly limit claims to retrieved metadata.`
     const responseText = await callManagedAi(ctx, { ownerKey: mission.ownerKey, missionId: args.missionId, stage: "research-discovery", role: "research", prompt: researchPrompt, maxTokens: args.deepResearch ? 2200 : 1800 })
     const { result, citations } = parseResearchResponse(responseText, sources.map(source => source.url))
-    await ctx.runMutation(internal.research.save, { missionId: args.missionId, query: researchQuery, result, citations })
+    const researchId = await ctx.runMutation(internal.research.save, { missionId: args.missionId, query: researchQuery, result, citations })
+    await ctx.runMutation(internal.platformTasks.finish, { id: taskId, success: citations.length > 0, sourceRef: String(researchId) })
     return { ok: true, result, citations }
+    } catch (error) {
+      await ctx.runMutation(internal.platformTasks.finish, { id: taskId, success: false })
+      throw error
+    }
   },
 } as any)
 

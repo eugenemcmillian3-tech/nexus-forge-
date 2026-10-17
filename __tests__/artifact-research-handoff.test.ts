@@ -34,5 +34,7 @@ describe('artifact research handoff', () => {
     const saved = await t.run(ctx => ctx.db.get(result.artifactId as Id<'artifacts'>))
     expect(saved?.missionId).toBe(missionId)
     expect(saved?.requiresApproval).toBe(true)
+    const metrics = await operator.query(api.platformTasks.summary, { missionId })
+    expect(metrics.rows[1]).toMatchObject({ successes: 0, failures: 1, pending: 0, timedCount: 1 })
   })
 })

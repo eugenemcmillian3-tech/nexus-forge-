@@ -98,6 +98,7 @@ describe("Research Oracle persistence", () => {
     const rows = await operator.query(api.research.list, { missionId });
 
     expect(result.ok).toBe(true);
+    expect((await operator.query(api.platformTasks.summary, { missionId })).rows[0]).toMatchObject({ successes: 1, failures: 0, pending: 0, timedCount: 1 });
     expect(result.result).toContain("narrow, testable opportunity");
     expect(result.citations).toEqual([target]);
     expect(fetchMock).toHaveBeenCalledTimes(3);
@@ -183,6 +184,7 @@ describe("Research Oracle persistence", () => {
       deepResearch: false,
     })).rejects.toThrow(/no supported retrieved citations/);
     expect(await t.withIdentity(identity(owner)).query(api.research.list, { missionId })).toEqual([]);
+    expect((await t.withIdentity(identity(owner)).query(api.platformTasks.summary, { missionId })).rows[0]).toMatchObject({ successes: 0, failures: 1, pending: 0 });
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[1][0]).toBe(`${GATEWAY_URL}/fetch`);
   });

@@ -125,6 +125,8 @@ export const generateInternal = internalAction({
   handler: async (ctx, args): Promise<{ ok: boolean; artifactId: Id<'artifacts'>; content: string }> => {
     const missionRecord = await ctx.runQuery(internal.missions.getByIdInternal, { id: args.missionId })
     if (!missionRecord) throw new Error("Mission not found")
+    const taskId = await ctx.runMutation(internal.platformTasks.begin, { missionId: args.missionId, kind: 'artifact' })
+    try {
     const research: Doc<'research'>[] = await ctx.runQuery(internal.researchData.listForSynthesisInternal, { missionId: args.missionId })
     const researchContext = JSON.stringify(research.slice(0, 5).map(row => ({
       recordId: row._id, query: row.query.slice(0, 500), result: row.result.slice(0, 2200),
@@ -146,7 +148,12 @@ export const generateInternal = internalAction({
     if (!quality.passed) {
       await ctx.runMutation(internal.audit.record, { missionId: args.missionId, type: "artifact", action: "artifact_generation_quality_failed", status: "failed", detail: `Builder produced an artifact that failed structural verification after regeneration: ${quality.checks.join(" | ")}` })
     }
+    await ctx.runMutation(internal.platformTasks.finish, { id: taskId, success: quality.passed, sourceRef: String(artifactId) })
     return { ok: true, artifactId, content }
+    } catch (error) {
+      await ctx.runMutation(internal.platformTasks.finish, { id: taskId, success: false })
+      throw error
+    }
   },
 })
 
