@@ -1,5 +1,22 @@
 # Isolated recovery lab bootstrap — 17 October 2026 UTC
 
+## Current result — registry blocker resolved at 16:06 UTC
+
+The template used stale image namespace ghcr.io/get-convex. A fresh read of the official Compose file now specifies ghcr.io/convex/convex-backend:latest and ghcr.io/convex/convex-dashboard:latest: https://raw.githubusercontent.com/get-convex/convex-backend/main/self-hosted/docker/docker-compose.yml . Earlier indexed metadata and the historical statements below are superseded by this direct source and fresh runtime evidence. Earlier conclusions that the old names were current were incorrect.
+
+Verified anonymously from Railway: current namespace token and manifest requests both HTTP 200; both indexes advertise Linux amd64 and arm64. Pinned lab sources to the observed immutable index digests:
+
+- Backend ghcr.io/convex/convex-backend@sha256:d715e9ec088784407ca4ba2d3db592702cd328d02c76cdca3852c0018f2a76b4
+- Dashboard ghcr.io/convex/convex-dashboard@sha256:f85cf0d0448b9c835ae3df5c7c1c6f0145dd4c8f0f92eb0245daf304efdd9f1a
+
+Backend deployment 026b0701-555e-4eb9-8c97-e79ee0da5b83 and dashboard deployment c4b6f0b3-5967-469b-b928-da9b4ac71d0e both reached SUCCESS. The prior dashboard port fix (6791) applied. Backend startup now uses restrictive umask 077 and writes generated admin output to its persistent credentials directory instead of printing it in logs; failures stop startup. No admin key was read, published or copied into application code.
+
+A separate bounded internal health script (deployment abf246af-06d1-4da0-a467-5e7a5933e023, SUCCESS) completed at 16:06:11 UTC. Backend private /version returned HTTP 200 with the literal value unknown (therefore no semantic backend version claim); dashboard private root returned HTTP 200, 4175 bytes. Image digests provide deployment identity. Postgres is online. Initial transient search-bootstrap errors were followed by SearchIndexBootstrapWorker completion; no search functionality acceptance was performed.
+
+Bootstrap is now verified at container and internal HTTP health scope. Synthetic fixture deployment, authenticated admin access validation, durable-state interruption/recovery, four-hour RTO and managed Macaly host-recovery proof remain separate and incomplete. No production/managed Testing data, backup records, provider execution or customer payments changed.
+
+## Historical investigation (superseded where noted)
+
 Created separate private Railway project nexus-forge-recovery-lab (b6124b64-1d28-4818-930a-71e3680b5746), environment fault-lab (e4c8f286-62de-4f3d-b13a-07aefff65dae). No production records, provider keys, NEXUS FORGE connection variables or payment integration copied.
 
 Deployed the reviewed Convex template with official Convex backend/dashboard images and Postgres 17. Postgres reached SUCCESS, one running replica, persistent volume. Both Convex images failed at CREATE_CONTAINER: Railway reported it could not connect to the image registry. Build and deploy logs were empty, so no application runtime failure was inferred. A single explicit source reconnection/retry using the official documented image names also failed before container startup. No restart/recovery acceptance was performed or claimed.
