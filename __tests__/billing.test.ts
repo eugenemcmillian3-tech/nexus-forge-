@@ -20,6 +20,13 @@ async function fixture(){
  return {t,owner,other,missionId,buy,begin}
 }
 describe('paid subscriptions and prepaid usage',()=>{
+ it('gates diagnostic inference and serializes its included request allowance',async()=>{
+  const {t,buy}=await fixture()
+  await expect(t.mutation(internal.billingDiagnostics.authorize,{ownerKey:'billing-owner'})).rejects.toThrow(/Funded paid/)
+  await buy()
+  await t.mutation(internal.billingDiagnostics.authorize,{ownerKey:'billing-owner'})
+  await expect(t.mutation(internal.billingDiagnostics.authorize,{ownerKey:'billing-owner'})).rejects.toThrow(/ten minutes/)
+ })
  it('uses a pinned exact-model rate card and safe capped cent rounding',()=>{
   expect(reportCost({provider:'groq',model:'openai/gpt-oss-20b',promptTokens:1000000,completionTokens:1000000},RATE_VERSION)).toEqual({usd:0.375,basis:RATE_VERSION})
   expect(reportCost({provider:'groq',model:'unknown',promptTokens:10,completionTokens:10},RATE_VERSION)).toBeNull()
@@ -40,7 +47,7 @@ describe('paid subscriptions and prepaid usage',()=>{
   const {t,owner,other,buy}=await fixture(),intent=await buy()
   expect((await owner.query(api.billing.catalog,{})).products).toHaveLength(7)
   await t.mutation(internal.billing.grant,{intentId:intent.id,mode:'test',key:'payment-one',paidCents:1000,customerId:'customer-one'})
-  expect((await owner.query(api.billing.mine,{})).account.prepaid).toBe(1000)
+  expect((await owner.query(api.billing.mine,{})).account!.prepaid).toBe(1000)
   expect((await other.query(api.billing.mine,{})).account).toBeNull()
   await expect(t.query(api.billing.mine,{})).rejects.toThrow(/Authenticated/)
   vi.stubEnv('VITE_STRIPE_MODE','live')
@@ -63,9 +70,9 @@ describe('paid subscriptions and prepaid usage',()=>{
   await t.mutation(internal.billing.grant,args)
   await t.run(async c=>{const account=await c.db.query('billingAccounts').first();await c.db.patch(account!._id,{included:200})})
   await t.mutation(internal.billing.grant,{...args,key:'duplicate-period-invoice'})
-  expect((await owner.query(api.billing.mine,{})).account.included).toBe(200)
+  expect((await owner.query(api.billing.mine,{})).account!.included).toBe(200)
   await t.mutation(internal.billing.grant,{...args,key:'invoice-two',periodEnd:periodEnd+10000})
-  expect((await owner.query(api.billing.mine,{})).account.included).toBe(1000)
+  expect((await owner.query(api.billing.mine,{})).account!.included).toBe(1000)
  })
  it('blocks unfunded AI and serializes balance reservations without overdraft',async()=>{
   const {t,owner,buy,begin}=await fixture()
@@ -87,7 +94,7 @@ describe('paid subscriptions and prepaid usage',()=>{
   await t.mutation(internal.billingReview.reversePlatformError,{id:mine.usage[0]._id,evidence:'Confirmed duplicate platform processing error receipt'})
   await t.mutation(internal.billingReview.reversePlatformError,{id:mine.usage[0]._id,evidence:'Confirmed duplicate platform processing error receipt'})
   mine=await owner.query(api.billing.mine,{})
-  expect(mine.account.prepaid).toBe(1000)
+  expect(mine.account!.prepaid).toBe(1000)
  })
  it('keeps missing costs under review and blocks new execution until reviewed',async()=>{
   const {t,owner,buy,begin}=await fixture();await buy()

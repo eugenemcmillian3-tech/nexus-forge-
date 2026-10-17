@@ -3,7 +3,7 @@ import { currentPaymentMode } from './billingModel'
 import { accountFor } from './billing'
 
 // Cloud runtime has a built-in URL. Offline unit fixtures have no deployed payment environment.
-function executionMode() {
+export function executionMode() {
   if(!process.env.CONVEX_CLOUD_URL)return null
   const mode=currentPaymentMode()
   if(mode==='test'&&process.env.CONVEX_CLOUD_URL!=='https://quick-rabbit-810.eu-west-1.convex.cloud')throw new Error('Real payments are not activated. Open Billing; test purchases cannot fund production AI.')

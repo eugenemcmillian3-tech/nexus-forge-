@@ -25,6 +25,7 @@ import type * as auth from "../auth.js";
 import type * as benchmarkProvenance from "../benchmarkProvenance.js";
 import type * as benchmarks from "../benchmarks.js";
 import type * as billing from "../billing.js";
+import type * as billingDiagnostics from "../billingDiagnostics.js";
 import type * as billingModel from "../billingModel.js";
 import type * as billingRates from "../billingRates.js";
 import type * as billingReview from "../billingReview.js";
@@ -127,6 +128,7 @@ declare const fullApi: ApiFromModules<{
   benchmarkProvenance: typeof benchmarkProvenance;
   benchmarks: typeof benchmarks;
   billing: typeof billing;
+  billingDiagnostics: typeof billingDiagnostics;
   billingModel: typeof billingModel;
   billingRates: typeof billingRates;
   billingReview: typeof billingReview;

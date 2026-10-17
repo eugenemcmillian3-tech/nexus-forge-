@@ -62,6 +62,7 @@ export const check: any = (action as any)({
   })),
   handler: async (ctx) => {
     const operatorId = await requireOperator(ctx);
+    await ctx.runMutation((internal as any).billingDiagnostics.authorize, { ownerKey: operatorId });
     const results: Array<{
       name: string;
       label: string;
