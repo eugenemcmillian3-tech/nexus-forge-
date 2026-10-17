@@ -21,7 +21,7 @@ This current aggregate summary supersedes older approval/restore-blocker wording
 2. Observe the next timer-triggered production capture and assess its actual bytes, retrieval, freshness and media coverage. Do not substitute an immediate/manual invocation for timer evidence.
 3. Validate full application continuation under controlled interruption, representative workloads and actual provider billing evidence within their authorized scopes.
 
-The CLI retrieval route requires a separate authenticated session and registered SSH key. Sign-in succeeded, but automatic approval review blocked registration of a dedicated transfer key as a broader account-access change. No archive-transfer success is claimed. The key registration needs explicit approval; the requested operation is limited to retrieving the existing private lab archive, with temporary access removal afterward.
+The operator approved the temporary transfer key and CLI authentication succeeded. SSH retrieval and the supported volume-file download both failed because this environment could not resolve the Railway SSH/SFTP endpoint. No archive bytes were transferred and no external ZIP verification is claimed. No account SSH key was registered; the unused local key files were removed. The private archive and prior verified recovery points remain preserved. Functional authorized SSH/SFTP network access is the remaining transfer dependency.
 
 ## Evidence
 
