@@ -1,10 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { ProductionReleaseReadiness } from '../src/components/production-release-readiness'
 import { releaseReady } from '../src/lib/production-readiness'
 import { confirmsAnonymousDenial, inspectPublicShell, summarizeProbe } from '../src/lib/production-probe'
 
 describe('release evidence boundaries', () => {
+  it('keeps lab-only results separate from archive retention and the release decision', () => {
+    render(<ProductionReleaseReadiness />)
+    const table = screen.getByRole('table', { name: 'Operational recovery evidence' })
+    expect(within(table).getByRole('row', { name: /Retained backup restore and return/ })).toHaveTextContent('Managed Testing')
+    const retention = within(table).getByRole('row', { name: /External private archive retention/ })
+    expect(retention).toHaveTextContent('Isolated lab')
+    expect(retention).toHaveTextContent('BLOCKED')
+    expect(retention).toHaveTextContent('The saved receipt is not a database backup')
+    expect(within(table).getByRole('row', { name: /Daily capture and recovery targets/ })).toHaveTextContent('PARTIAL')
+    expect(screen.getByText('RELEASE HOLD')).toBeInTheDocument()
+  })
+
   it('does not call an empty or incomplete checklist ready', () => {
     expect(releaseReady([])).toBe(false)
     expect(releaseReady([{ status: 'verified' }, { status: 'partial' }])).toBe(false)
