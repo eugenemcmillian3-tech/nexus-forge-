@@ -1,6 +1,6 @@
 
 const fs=require("node:fs"),path=require("node:path"),cp=require("node:child_process"),crypto=require("node:crypto");
-const MODE="seed";
+const MODE="verify";
 const root="/convex/data/recovery-drill/fixture";
 function log(v){console.log(JSON.stringify({event:"authenticated_recovery_fixture",mode:MODE,...v,time:new Date().toISOString()}));}
 function run(cmd,args,env){const r=cp.spawnSync(cmd,args,{cwd:root,env,encoding:"utf8",timeout:150000,maxBuffer:4000000});if(r.status!==0){fs.writeFileSync(path.join(root,"last-command-error"),(r.stderr||"")+"\n"+(r.stdout||""),{mode:0o600});throw Error("COMMAND_FAILED_"+cmd+"_"+r.status);}return r.stdout;}
