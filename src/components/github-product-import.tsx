@@ -18,7 +18,7 @@ export function GitHubProductImport({ missionId }: { missionId: Id<'missions'> }
     finally { setBusy(false) }
   }
   return <details><summary>Import a committed GitHub outcome report</summary>
-    <p>Commit a product-outcome-v1 JSON report to eugenemcmillian3-tech/nexus-forge- at the path below, then import its exact source commit. Report content is visible to repository readers. The app reads it with the existing server GitHub connection and retains source identities; report figures remain repository-authored observations.</p>
+    <p>Commit a product-outcome-v1 JSON report to nexus-forge1/nexus-forge- at the path below, then import its exact source commit. Report content is visible to repository readers. The app reads it with the existing server GitHub connection and retains source identities; report figures remain repository-authored observations.</p>
     <p>Report path: <code>{path}</code></p>
     <form onSubmit={event => { event.preventDefault(); void run() }}>
       <label htmlFor="outcome-report-id">REPORT ID</label><input id="outcome-report-id" required pattern="[A-Za-z0-9_-]{1,64}" maxLength={64} value={reportId} onChange={event => setReportId(event.target.value)} />

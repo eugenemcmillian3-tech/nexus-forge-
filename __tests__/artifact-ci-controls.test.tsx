@@ -7,7 +7,7 @@ const state = vi.hoisted(() => ({ publish: vi.fn(), importRun: vi.fn() }))
 vi.mock('convex/react', () => ({ useAction: (ref: any) => getFunctionName(ref) === 'artifactCiActions:publish' ? state.publish : state.importRun }))
 const testRunId = 'saved-run' as Id<'artifactTestRuns'>
 const ci = { branch: 'nexus-forge-checks/saved-run', commitSha: 'a'.repeat(40), snapshotSha: 'c'.repeat(64), dispatchedAt: 1 }
-beforeEach(() => { cleanup(); vi.clearAllMocks(); state.publish.mockResolvedValue({ workflowUrl: 'https://github.com/eugenemcmillian3-tech/nexus-forge-/actions' }); state.importRun.mockResolvedValue(null) })
+beforeEach(() => { cleanup(); vi.clearAllMocks(); state.publish.mockResolvedValue({ workflowUrl: 'https://github.com/nexus-forge1/nexus-forge-/actions' }); state.importRun.mockResolvedValue(null) })
 describe('exact artifact CI controls', () => {
   it('makes external snapshot publication explicit and never starts on render', async () => {
     render(<ArtifactCiControls testRunId={testRunId} current />)
@@ -28,7 +28,7 @@ describe('exact artifact CI controls', () => {
   })
   it('submits a run URL for server verification without client-supplied result claims', async () => {
     render(<ArtifactCiControls testRunId={testRunId} ci={ci} current />)
-    const runUrl = 'https://github.com/eugenemcmillian3-tech/nexus-forge-/actions/runs/123'
+    const runUrl = 'https://github.com/nexus-forge1/nexus-forge-/actions/runs/123'
     fireEvent.change(screen.getByLabelText('COMPLETED EXACT-SNAPSHOT CI RUN URL'), { target: { value: runUrl } })
     fireEvent.click(screen.getByRole('button', { name: 'Verify & save exact CI report' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Matching GitHub CI report verified')

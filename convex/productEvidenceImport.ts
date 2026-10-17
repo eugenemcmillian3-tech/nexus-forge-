@@ -8,7 +8,7 @@ import type { Id } from "./_generated/dataModel"
 import { api, internal } from "./_generated/api"
 import { productOutcomeInput } from "./productOutcomeModel"
 
-const repository = "eugenemcmillian3-tech/nexus-forge-"
+const repository = "nexus-forge1/nexus-forge-"
 const inputValidator = v.object(productOutcomeInput)
 async function fetchReport(args:{missionId:Id<"missions">;commitSha:string;reportId:string}) {    const commitSha = args.commitSha.toLowerCase()
     if (!/^[0-9a-f]{40}$/.test(commitSha) || !/^[A-Za-z0-9_-]{1,64}$/.test(args.reportId)) throw new ConvexError("Use a full 40-character commit SHA and a report ID with letters, numbers, underscore or hyphen.")

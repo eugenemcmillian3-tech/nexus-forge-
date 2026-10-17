@@ -24,7 +24,7 @@ export function ArtifactCiControls({ testRunId, ci, current }: { testRunId: Id<'
     catch (cause) { setError(cause instanceof Error ? cause.message : 'CI report verification failed. Review the run and retry.') }
     finally { setBusy('') }
   }
-  const workflowUrl = workflow || (ci ? 'https://github.com/eugenemcmillian3-tech/nexus-forge-/actions/workflows/nexus-forge-artifact-checks.yml?query=' + encodeURIComponent('branch:' + ci.branch) : '')
+  const workflowUrl = workflow || (ci ? 'https://github.com/nexus-forge1/nexus-forge-/actions/workflows/nexus-forge-artifact-checks.yml?query=' + encodeURIComponent('branch:' + ci.branch) : '')
   return <div className="glass-card research-card"><h4>Exact snapshot CI</h4>
     <p>Run this saved HTML and acceptance-test plan in Chromium CI. Publishing sends the artifact content, mission text, and test plan to the NEXUS FORGE GitHub repository, where repository readers can see them. It creates a dedicated test branch and does not deploy the artifact.</p>
     {!ci?.dispatchedAt && <button className="secondary-button" type="button" disabled={!!busy || !current} onClick={() => void send()}>{busy === 'publish' ? 'Publishing snapshot…' : ci ? 'Retry snapshot CI dispatch' : 'Publish saved snapshot & run CI'}</button>}

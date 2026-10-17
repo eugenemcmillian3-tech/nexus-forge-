@@ -1,6 +1,6 @@
 import { summarizeBrowserRun } from './artifactTestPlan'
 import type { BrowserCase } from './artifactTestPlan'
-export const artifactCiRepository = 'eugenemcmillian3-tech/nexus-forge-'
+export const artifactCiRepository = 'nexus-forge1/nexus-forge-'
 export const artifactCiWorkflow = '.github/workflows/nexus-forge-artifact-checks.yml'
 export const artifactCiCheckName = 'NEXUS artifact snapshot v1'
 export function exactRunId(value: string) {

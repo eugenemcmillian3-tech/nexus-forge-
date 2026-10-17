@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { ArtifactBenchmarkEvidence } from '../src/components/artifact-benchmark-evidence'
 const state = vi.hoisted(() => ({ history: undefined as any, verify: vi.fn() }))
 vi.mock('convex/react', () => ({ useQuery: () => state.history, useAction: () => state.verify }))
-const runUrl = 'https://github.com/eugenemcmillian3-tech/nexus-forge-/actions/runs/12345678'
+const runUrl = 'https://github.com/nexus-forge1/nexus-forge-/actions/runs/12345678'
 beforeEach(() => { cleanup(); vi.clearAllMocks(); state.history = undefined; state.verify.mockResolvedValue('receipt-test') })
 describe('capability benchmark evidence', () => {
   it('separates defined fixtures from recorded CI evidence', () => {

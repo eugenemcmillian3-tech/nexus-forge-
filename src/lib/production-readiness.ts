@@ -1,6 +1,6 @@
 export type ReleaseStatus = 'verified' | 'partial' | 'blocked'
 export type ReleaseGate = { id: string; title: string; status: ReleaseStatus; evidence: string; exit: string; reference: string }
-const repo = 'https://github.com/eugenemcmillian3-tech/nexus-forge-'
+const repo = 'https://github.com/nexus-forge1/nexus-forge-'
 export const releaseAudit = {
   date: '2026-10-15',
   baselineCommit: '3da2bfbd2b5e439492d69396cb1765cfd01b13d8',

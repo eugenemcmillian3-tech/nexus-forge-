@@ -1,7 +1,7 @@
 import type { BrowserCase } from './artifactTestPlan'
 export const benchmarkSuite = {
   version: 'artifact-dom-v3',
-  repository: 'eugenemcmillian3-tech/nexus-forge-',
+  repository: 'nexus-forge1/nexus-forge-',
   workflowPath: '.github/workflows/ci.yml',
   jobName: 'Artifact DOM benchmarks v3',
   chromiumStepName: 'Run isolated Chromium benchmark suite v3',

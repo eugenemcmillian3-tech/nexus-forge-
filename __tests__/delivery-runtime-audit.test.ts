@@ -27,7 +27,7 @@ describe("audited delivery runtime contracts", () => {
     const { owner, args } = await fixture()
     const first = await owner.mutation(api.delivery.prepare, args)
     expect(await owner.mutation(api.delivery.prepare, { ...args, target: " " + args.target + " ", branch: " main " })).toBe(first)
-    expect(await owner.mutation(api.delivery.prepare, { ...args, target: "eugenemcmillian3-tech/nexus-forge-" })).not.toBe(first)
+    expect(await owner.mutation(api.delivery.prepare, { ...args, target: "nexus-forge1/nexus-forge-" })).not.toBe(first)
     expect(await owner.mutation(api.delivery.prepare, { ...args, branch: "qa-only" })).not.toBe(first)
   })
   it("applies the same target and branch identity in runner preparation", async () => {

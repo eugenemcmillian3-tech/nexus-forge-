@@ -23,7 +23,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('benchmark provenance boundaries', () => {
   it('accepts only a canonical project run URL', () => {
     expect(parseBenchmarkRunUrl(runUrl + '/')).toEqual({ runId, runUrl })
-    for (const value of [runUrl.replace('https:', 'http:'), runUrl.replace('github.com', 'attacker.example'), runUrl.replace('eugenemcmillian3-tech/nexus-forge-', 'nexus-forge1/no-dispatch'), runUrl + '?override=1', runUrl + '/job/1', 'https://github.com/']) expect(() => parseBenchmarkRunUrl(value)).toThrow()
+    for (const value of [runUrl.replace('https:', 'http:'), runUrl.replace('github.com', 'attacker.example'), runUrl.replace('nexus-forge1/nexus-forge-', 'nexus-forge1/no-dispatch'), runUrl + '?override=1', runUrl + '/job/1', 'https://github.com/']) expect(() => parseBenchmarkRunUrl(value)).toThrow()
   })
   it('distinguishes a passed suite, failed assertions, and a suite that never ran', () => {
     const pass = metadata()
