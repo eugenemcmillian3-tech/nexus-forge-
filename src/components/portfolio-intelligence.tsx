@@ -1,3 +1,4 @@
+import { missionProgressPercent } from '../lib/mission-progress'
 import { ProductInstrumentation } from './product-instrumentation'
 import { RuntimeWorkbench } from './runtime-workbench'
 import { useAction, useMutation, useQuery } from 'convex/react'
@@ -35,7 +36,7 @@ export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }
       <div className="panel-title"><span>OPPORTUNITY DISCOVERY</span><span className="live-pill">● WEB + AI SCOUT</span></div>
       <p>Discover new venture candidates from live web evidence. Discovery is advisory only: recommendations are persisted, but nothing is approved, executed, deployed, or measured automatically.</p>
       <div className="field-grid">
-        <div><label>DISCOVERY THEME</label><input value={discoveryTheme} onChange={event => setDiscoveryTheme(event.target.value)} /></div>
+        <div><label htmlFor="portfolio-discovery-theme">DISCOVERY THEME</label><input id="portfolio-discovery-theme" value={discoveryTheme} onChange={event => setDiscoveryTheme(event.target.value)} /></div>
         <div><label>GOVERNANCE</label><div className="fake-input">Human decision required</div></div>
       </div>
       <button className="primary-button small" disabled={discoveryBusy || !discoveryTheme.trim()} onClick={async () => {
@@ -72,7 +73,7 @@ export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }
       <div className="panel-title"><span>HUMAN REVIEW QUEUE</span><span className="live-pill">● ACTION REQUIRED</span></div>
       <p>Review-blocked missions stop the venture loop by design. Resolving one below only returns it to draft; it never approves or resumes execution.</p>
       {reviewQueue.slice(0, 8).map((review) => <div className="guard-item" key={review._id}>
-        <span>!</span><div><strong>{review.title}</strong><small>{review.mission.slice(0, 220)} · {review.completion}% complete · {review.approved ? 'previously approved' : 'not approved'}</small></div>
+        <span>!</span><div><strong>{review.title}</strong><small>{review.mission.slice(0, 220)} · {missionProgressPercent(review.completion)}% complete · {review.approved ? 'previously approved' : 'not approved'}</small></div>
         <div className="button-row">
           <button className="secondary-button" disabled={opportunityBusy} onClick={async () => {
             setOpportunityBusy(true); setOpportunityReceipt(null); setOpportunityError(null); setSelectedDraft(null)
@@ -111,7 +112,7 @@ export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }
     <div className="glass-card research-card portfolio-table">
       {!portfolio || !missions ? <p>Loading portfolio intelligence…</p> : rows.length === 0 ? <div className="empty-state"><h3>No missions yet</h3><p>Forge your first mission and this view will become the portfolio-level source of truth.</p></div> : <>
         <div className="decision-line"><span>PORTFOLIO RATIONALE</span><strong>{portfolio.rationale[0] ?? 'No additional rationale.'}</strong></div>
-        {rows.map(row => <button className="portfolio-row" key={row._id} onClick={() => onSelect(row._id)}><div className="portfolio-main"><strong>{row.title}</strong><p>{row.mission}</p></div><div className="portfolio-cell"><small>STATUS</small><b>{row.status.toUpperCase()}</b></div><div className="portfolio-cell"><small>PROGRESS</small><b>{row.completion}%</b></div><div className="portfolio-cell"><small>AUTONOMY</small><b>{row.autonomy.toUpperCase()}</b></div><div className="portfolio-cell"><small>APPROVAL</small><b>{row.approved ? 'APPROVED' : 'PENDING'}</b></div></button>)}
+        {rows.map(row => <button className="portfolio-row" key={row._id} onClick={() => onSelect(row._id)}><div className="portfolio-main"><strong>{row.title}</strong><p>{row.mission}</p></div><div className="portfolio-cell"><small>STATUS</small><b>{row.status.toUpperCase()}</b></div><div className="portfolio-cell"><small>PROGRESS</small><b>{missionProgressPercent(row.completion, row.status)}%</b></div><div className="portfolio-cell"><small>AUTONOMY</small><b>{row.autonomy.toUpperCase()}</b></div><div className="portfolio-cell"><small>APPROVAL</small><b>{row.approved ? 'APPROVED' : 'PENDING'}</b></div></button>)}
       </>}
     </div>
   </section>

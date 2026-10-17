@@ -1,3 +1,4 @@
+import { missionProgressPercent } from '../lib/mission-progress'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAction, useQuery } from 'convex/react'
 import { useState } from 'react'
@@ -65,7 +66,7 @@ function CapabilityDashboard() {
         </div>
         <div className="glass-card research-card">
           <div className="panel-title"><span>ACTIVE MISSION CONTEXT</span><span className="live-pill">{mission ? mission.status.toUpperCase() : 'NOT SELECTED'}</span></div>
-          {mission ? <><h3>{mission.title}</h3><div className="decision-line"><span>APPROVAL</span><strong>{mission.approved ? 'RECORDED' : 'PENDING'}</strong></div><div className="decision-line"><span>COMPLETION</span><strong>{Math.round(mission.completion * 100)}%</strong></div><div className="decision-line"><span>BUDGET CAP</span><strong>${mission.budget} USD</strong></div></> : <><p>No active mission selected. Mission-specific incidents and verification results will remain unavailable until a mission is selected.</p><Link className="primary-button small" to="/mission">Select a mission →</Link></>}
+          {mission ? <><h3>{mission.title}</h3><div className="decision-line"><span>APPROVAL</span><strong>{mission.approved ? 'RECORDED' : 'PENDING'}</strong></div><div className="decision-line"><span>COMPLETION</span><strong>{missionProgressPercent(mission.completion, mission.status)}%</strong></div><div className="decision-line"><span>BUDGET CAP</span><strong>${mission.budget} USD</strong></div></> : <><p>No active mission selected. Mission-specific incidents and verification results will remain unavailable until a mission is selected.</p><Link className="primary-button small" to="/mission">Select a mission →</Link></>}
         </div>
       </div>
 
