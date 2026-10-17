@@ -1,8 +1,13 @@
 # Backup operating policy and activation status
 
+## Held work resumed — 17 October 2026 UTC
+
+Previously paused acceptance work is active again. A fresh private Live backup was saved and independently retrieved, daily capture resumed, actual test-payment receipts reconciled, concurrent funded inference and a real client disconnect passed, and 540 regressions passed. The isolated Testing overwrite was canceled after automatic approval review rejected it; specific approval for replacement-and-return remains necessary. See [current resumption results and exact dependencies](HELD_WORK_RESUMPTION_2026_10_17.md). Full readiness remains partial; business activation, actual provider invoices, representative workload targets and managed-host fault controls are not fabricated.
+
+
 Status: Operating targets adopted for setup following the operator's Proceed instruction on 2026-10-14 America/New_York. External scheduled assistant tasks are enabled; first scheduled capture/drill evidence and retention enforcement remain pending. This document does not close the backup release gate. The filename is retained to preserve existing links.
 
-Scope: NEXUS FORGE platform project bphntw8kdojl9qvuifywyjtk; platform source eugenemcmillian3-tech/nexus-forge-. Dispatch repository nexus-forge1/no-dispatch is separate. Live database tame-rat-826; isolated Testing database quick-rabbit-810. Verify identities before every restore.
+Scope: NEXUS FORGE platform project bphntw8kdojl9qvuifywyjtk; platform source nexus-forge1/nexus-forge-. Dispatch repository nexus-forge1/no-dispatch is separate. Live database tame-rat-826; isolated Testing database quick-rabbit-810. Verify identities before every restore.
 
 ## Operating targets
 

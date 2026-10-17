@@ -1,6 +1,20 @@
-# NEXUS FORGE current status — October 16, 2026
+# NEXUS FORGE current status — October 17, 2026 UTC
 
-The platform remains live at https://www.network-x-ai.com. Main project: eugenemcmillian3-tech/nexus-forge-. The separate nexus-forge1/no-dispatch repository is dispatch QA only.
+## Held work resumed — 17 October 2026 UTC
+
+Previously paused acceptance work is active again. A fresh private Live backup was saved and independently retrieved, daily capture resumed, actual test-payment receipts reconciled, concurrent funded inference and a real client disconnect passed, and 540 regressions passed. The isolated Testing overwrite was canceled after automatic approval review rejected it; specific approval for replacement-and-return remains necessary. See [current resumption results and exact dependencies](HELD_WORK_RESUMPTION_2026_10_17.md). Full readiness remains partial; business activation, actual provider invoices, representative workload targets and managed-host fault controls are not fabricated.
+
+
+## Latest product measurement setup release
+
+Portfolio task instrumentation now uses the resolved selected mission instead of a copied raw ID. Regional Convex deployment URLs correctly resolve to the HTTP site ingestion endpoint. Setup distinguishes loading and empty sources, documents the existing server environment variables, preserves rejected form drafts and clears one-time token state when switching missions. Sixteen targeted setup/client/ingestion/outcome/recovery tests passed. No customer events were fabricated; representative measurements still require an actual product server reporting completed tasks.
+
+## Latest completed user journey and organization transfer
+
+Main project is now nexus-forge1/nexus-forge-; dispatch QA remains nexus-forge1/no-dispatch. The existing bakery QA mission completed real Council, cited research, artifact revision/approval, GitHub build/test/deploy, both callbacks, 6/6 readiness, and 4/4 delivery-outcome verification with a saved lesson. Run 38986923179 passed. Main-project regression: 505 tests across 91 files passed. See [closure evidence](QA_DELIVERY_CLOSURE_2026_10_17.md). Representative customer outcomes and the remaining operational certification gates remain open.
+
+
+The platform remains live at https://www.network-x-ai.com. Main project: nexus-forge1/nexus-forge-. The separate nexus-forge1/no-dispatch repository is dispatch QA only.
 
 ## Latest resource-capacity release
 
@@ -58,9 +72,9 @@ Full regression, strict checks and production probe results are reported with th
 | Independent/scientific/unseen-task validation | Independent evaluators, frozen representative task sets and actual evidence are required. Passing public software fixtures is not independent certification. |
 | Full active-capability production acceptance | Requires the relevant organization and product evidence above; the earlier LocalBoost core E2E remains accepted historical evidence. |
 
-## On hold
+## Resumed acceptance
 
-Billing reconciliation, scheduled-backup acceptance, production workload certification and actual provider/host-failure acceptance remain on hold. Ordinary publishing and scoped Testing verification continue.
+Billing reconciliation, scheduled-backup acceptance, workload validation and recovery acceptance resumed on October 17. See the latest report above for completed checks and remaining dependencies.
 
 ## Removed scope
 

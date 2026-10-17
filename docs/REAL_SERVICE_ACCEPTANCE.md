@@ -1,5 +1,7 @@
 # Real-service acceptance — October 15, 2026
 
+Latest update: previously held acceptance resumed on October 17. See [resumption evidence and exact remaining dependencies](HELD_WORK_RESUMPTION_2026_10_17.md). A real client disconnect completed with recorded usage; managed-host/provider-network failure is still unverified. Historical notes below retain their original scope.
+
 Latest enterprise, authenticated-write and instrumentation status: [REMAINING_ENGINEERING_BATCH.md](REMAINING_ENGINEERING_BATCH.md). The snapshot below preserves its original scope.
 
 The batch used Managed Testing (quick-rabbit-810) and real configured external services. Tests used trusted administrative test identities, not a new browser OTP session. Live data was not used for experiments. Earlier LocalBoost production acceptance remains separate evidence.
@@ -45,7 +47,7 @@ Actual task-score reports are retained at nexus-forge-outcomes/k97fjhre91z0vzn1t
 - SSO/enterprise provisioning: identity provider, tenant and configuration; no enterprise IdP is configured.
 - Product/business improvement: instrumented real products and sufficiently long comparable user/task observations. Public task-score reports do not substitute for those outcomes.
 - Independent competitor/scientific replication and unseen transfer: independent protocols/data and sustained observation.
-- Billing reconciliation, scheduled-backup acceptance, production workload certification and real provider/host-failure acceptance remain on hold.
+- Billing reconciliation, backup acceptance, workload validation and recovery work resumed on October 17; remaining external evidence is specified in the current report.
 
 ## Final verification
 

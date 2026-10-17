@@ -1,5 +1,7 @@
 # Reviewed Council continuation — 2026-10-15
 
+Latest update: previously held acceptance resumed on October 17. See [resumption evidence and exact remaining dependencies](HELD_WORK_RESUMPTION_2026_10_17.md). A real client disconnect completed with recorded usage; managed-host/provider-network failure is still unverified. Historical notes below retain their original scope.
+
 Owner review now continues bounded, partially completed runner Council work when every admitted provider stage has a confirmed durable answer and all remaining stages are proven unstarted. Pending, failed, ambiguous and legacy answer-less work remains blocked.
 
 ## Before and after comparison
@@ -35,7 +37,7 @@ The continuation preserves the paused execution-recovery checkpoint after Counci
 - New backend continuation suite: 19 cases. Operator UI includes a separate deliberate continuation test.
 - Tested: identical final output, two saved answers/six remaining calls, immutable inputs after source changes, original deadline and retry preservation, no duplicate stage records/evidence, stale worker rejection, one ticket consumer, anonymous/foreign denial, stale review tokens, changed request contracts, pending/failed/missing/ambiguous results, expired/exhausted bounds, later handoffs, active tick claims, open incidents, changed authorization/dependencies and lost resource reservations.
 - Managed Testing deployment accepted the additive contract as backward-compatible. No production records were experimentally changed and no real provider inference/dispatch was invoked for the comparison.
-- Still unverified: real host termination, network interruption during an actual successful provider call, cloud interruption recovery and long-horizon repeated reliability. These operational acceptance checks remain on hold.
+- Still unverified: real host termination, network interruption during an actual successful provider call, cloud interruption recovery and long-horizon repeated reliability. These operational acceptance checks resumed on October 17; managed-host/provider-network failure still requires supported fault controls.
 - A genuinely pending remote call cannot safely be replayed from an assumption of failure. No automatic claim expiry, arbitrary reservation reset or exactly-once claim is introduced.
 - Retired claims and copied receipts increase audit retention; long-term retention remains an operating-policy task.
 

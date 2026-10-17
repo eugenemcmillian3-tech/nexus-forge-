@@ -1,5 +1,10 @@
 # External acceptance status — October 16, 2026 UTC
 
+## Held work resumed — 17 October 2026 UTC
+
+Previously paused acceptance work is active again. A fresh private Live backup was saved and independently retrieved, daily capture resumed, actual test-payment receipts reconciled, concurrent funded inference and a real client disconnect passed, and 540 regressions passed. The isolated Testing overwrite was canceled after automatic approval review rejected it; specific approval for replacement-and-return remains necessary. See [current resumption results and exact dependencies](HELD_WORK_RESUMPTION_2026_10_17.md). Full readiness remains partial; business activation, actual provider invoices, representative workload targets and managed-host fault controls are not fabricated.
+
+
 ## Workspace sign-in
 
 Following callback registration, the most recent Testing and Live authorization preflight reached Google sign-in. The previously recorded redirect_uri_mismatch is resolved in preflight. An actual organization user must still complete sign-in and satisfy the verified hosted-domain and email checks.
@@ -20,4 +25,4 @@ Multimodal Studio, image/music generation and video perception are removed at th
 
 ## Previously held work
 
-Billing reconciliation, scheduled-backup acceptance, production workload certification and actual provider/host-failure acceptance remain on hold.
+Billing reconciliation, scheduled-backup acceptance, workload validation and recovery acceptance resumed on October 17; exact results and remaining access/evidence dependencies are in the report above.

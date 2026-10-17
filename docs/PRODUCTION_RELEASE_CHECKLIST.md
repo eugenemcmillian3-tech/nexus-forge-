@@ -1,5 +1,10 @@
 # Production release checklist — 2026-10-14, updated 2026-10-15
 
+## Held work resumed — 17 October 2026 UTC
+
+Previously paused acceptance work is active again. A fresh private Live backup was saved and independently retrieved, daily capture resumed, actual test-payment receipts reconciled, concurrent funded inference and a real client disconnect passed, and 540 regressions passed. The isolated Testing overwrite was canceled after automatic approval review rejected it; specific approval for replacement-and-return remains necessary. See [current resumption results and exact dependencies](HELD_WORK_RESUMPTION_2026_10_17.md). Full readiness remains partial; business activation, actual provider invoices, representative workload targets and managed-host fault controls are not fabricated.
+
+
 **Decision: HOLD full production-readiness sign-off. The application is live.** The operational-evidence batch of 2026-10-14/15 UTC recorded drill results for backup/restore, rollback, recovery, alert delivery, sustained workload and provider accounting in [docs/evidence/operational-evidence-20261015.md](evidence/operational-evidence-20261015.md); gates that depend on Managed Testing or provider billing remain open, so the HOLD stands.
 
 This is one finite release checklist for the current operator product. All 16 feature pages remain separate. The nine mission lifecycle checkpoints and the 24-milestone capability roadmap are different inventories. Multimodal, enterprise, external-agent and frontier-research expansions are outside this release scope.

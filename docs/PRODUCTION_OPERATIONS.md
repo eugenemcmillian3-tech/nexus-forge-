@@ -1,5 +1,10 @@
 # Production operations runbook
 
+## Held work resumed — 17 October 2026 UTC
+
+Previously paused acceptance work is active again. A fresh private Live backup was saved and independently retrieved, daily capture resumed, actual test-payment receipts reconciled, concurrent funded inference and a real client disconnect passed, and 540 regressions passed. The isolated Testing overwrite was canceled after automatic approval review rejected it; specific approval for replacement-and-return remains necessary. See [current resumption results and exact dependencies](HELD_WORK_RESUMPTION_2026_10_17.md). Full readiness remains partial; business activation, actual provider invoices, representative workload targets and managed-host fault controls are not fabricated.
+
+
 Latest recovery update (2026-10-15 18:30 UTC): [reviewed Council continuation](COUNCIL_CONTINUATION.md) is implemented. Controlled interrupted/uninterrupted results matched; 443 regressions across 73 files passed. Existing input snapshots and successful durable answers are reused through a replacement claim; pending/failed/ambiguous provider calls remain blocked. External-access acceptance work remains on hold. Older dated notes below retain their original scope.
 
 Current batch status (2026-10-15 17:20 UTC): see [consolidated evidence](evidence/consolidated-batch-20261015.md). 409 tests / 70 files passed. Saved-completion confirmation, fresh retained/retrieved backup restore and exact Testing return, backend-changing application rollback/return, bounded Live capacity and supported usage history are verified for their recorded scopes. Older dated limitations below are historical; the current consolidated evidence controls. Scheduled backup success, achieved recovery targets, actual billing, expected execution load and real host/provider interruption remain open.
