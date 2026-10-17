@@ -87,7 +87,8 @@ try{
   const replay=await Promise.all(Array.from({length:4},()=>client.action("drill:complete",{missionId:ids.completed})));
   const completed=await client.query("drill:state",{missionId:ids.completed});
   state=await client.query("drill:state",{missionId:ids.interrupted});
-  if(completed.admissions!==1||completed.effects!==1||completed.claims.length!==1||completed.claims[0].result!==ids.completedResult||replay.some(x=>JSON.stringify(x)!==ids.completedResult)||state.admissions!==1||state.effects!==0||state.claims[0].status!=="uncertain")throw Error("REPLAY_INVARIANT_FAILED");
+  log({phase:"replay_diagnostics",completedAdmissions:completed.admissions,completedEffects:completed.effects,completedClaims:completed.claims.length,savedResultUnchanged:completed.claims[0]?.result===ids.completedResult,replayResults:replay,storedSyntheticResult:JSON.parse(ids.completedResult),interruptedAdmissions:state.admissions,interruptedEffects:state.effects,interruptedStatus:state.claims[0]?.status});
+  if(completed.admissions!==1||completed.effects!==1||completed.claims.length!==1||completed.claims[0].result!==ids.completedResult||replay.some(x=>JSON.stringify(x,Object.keys(x).sort())!==JSON.stringify(JSON.parse(ids.completedResult),Object.keys(JSON.parse(ids.completedResult)).sort()))||state.admissions!==1||state.effects!==0||state.claims[0].status!=="uncertain")throw Error("REPLAY_INVARIANT_FAILED");
   log({phase:"interrupted_job_recovery",result:"PASS",preReviewStatus:statusBeforeReview,finalStatus:"uncertain",concurrentBlocked:4,uncertainRetryBlocked:true,staleEffectFenced:true,staleFinishFenced:true,interruptedAdmissions:1,interruptedEffects:0,cachedReplays:4,completedAdmissions:1,completedEffects:1,productionHelperGitBlobs:ids.sourceGitBlobs,noProviderOrDelivery:true});
  }
 
