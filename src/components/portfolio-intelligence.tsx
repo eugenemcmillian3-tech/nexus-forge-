@@ -1,3 +1,4 @@
+import type { Id } from '../../convex/_generated/dataModel'
 import { missionProgressPercent } from '../lib/mission-progress'
 import { ProductInstrumentation } from './product-instrumentation'
 import { RuntimeWorkbench } from './runtime-workbench'
@@ -6,7 +7,7 @@ import { api } from '../../convex/_generated/api'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 
-export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }: { ownerKey?: string; onSelect: (id: string) => void }) {
+export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect, selectedMissionId = null, selectedMissionTitle }: { ownerKey?: string; onSelect: (id: string) => void; selectedMissionId?: Id<'missions'> | null; selectedMissionTitle?: string }) {
   const portfolio = useQuery(api.portfolio.decisionSnapshot)
   const learning = useQuery(api.portfolio.learningSnapshot)
   const opportunity = useQuery(api.portfolio.nextOpportunity)
@@ -27,7 +28,7 @@ export function PortfolioIntelligence({ ownerKey = 'local-workspace', onSelect }
   const rows = missions?.page ?? []
   const topSignal = learning?.prioritySignals[0]
   return <section id="portfolio" className="workspace portfolio-section">
-    <ProductInstrumentation/><RuntimeWorkbench area="outcomes"/><div className="workspace-head"><div><div className="section-kicker">PORTFOLIO INTELLIGENCE / 007</div><h2>Mission History</h2></div><span className="status-chip"><span className="pulse-dot" /> PORTFOLIO LIVE</span></div>
+    <ProductInstrumentation key={selectedMissionId ?? 'no-mission'} missionId={selectedMissionId} missionTitle={selectedMissionTitle}/><RuntimeWorkbench area="outcomes"/><div className="workspace-head"><div><div className="section-kicker">PORTFOLIO INTELLIGENCE / 007</div><h2>Mission History</h2></div><span className="status-chip"><span className="pulse-dot" /> PORTFOLIO LIVE</span></div>
     {opportunityError && <div className="glass-card research-card"><p role="alert">{opportunityError}</p><Link className="secondary-button" to="/incidents">Review incidents →</Link></div>}
     {opportunityReceipt && <div className="glass-card research-card"><p className="receipt" role="status">{opportunityReceipt}</p>{selectedDraft && <Link className="primary-button" to="/mission">Continue to selected draft mission →</Link>}</div>}
     <div className="stats-strip compact"><div><strong>{portfolio?.totalMissions ?? 0}</strong><span>Missions</span></div><div><strong>{portfolio?.active ?? 0}</strong><span>Active</span></div><div><strong>{portfolio?.blocked ?? 0}</strong><span>Review</span></div><div><strong>{Math.round((portfolio?.completionRate ?? 0) * 100)}%</strong><span>Completion</span></div><div><strong>{portfolio?.recommendation?.toUpperCase() ?? '—'}</strong><span>Recommendation</span></div></div>
