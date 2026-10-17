@@ -1,3 +1,4 @@
+import { billingTables } from './billingModel'
 import { taskFields } from './platformTaskModel'
 import { frontierTables } from './frontierModel'
 import { invocationFields } from './providerUsageModel'
@@ -11,6 +12,7 @@ import { authTables } from "@convex-dev/auth/server"
 
 export default defineSchema({
   ...authTables,
+  ...billingTables,
   platformTaskRuns: defineTable(taskFields).index('by_owner', ['ownerKey']).index('by_mission', ['missionId']).index('by_source', ['sourceRef']),
   ...frontierTables,
   providerInvocations: defineTable(invocationFields).index('by_owner', ['ownerKey']).index('by_mission', ['missionId']).index('by_missionRunId_and_stage_and_role_and_outcome', ['missionRunId', 'stage', 'role', 'outcome']),

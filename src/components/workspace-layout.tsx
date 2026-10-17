@@ -35,7 +35,7 @@ export function WorkspaceLayout({ title, eyebrow, children }: { title: string; e
       <div className="sidebar-footer"><span className="pulse-dot" /><div><strong>CORE ONLINE</strong><small>{missionId ? 'Mission selected' : 'No active mission'}</small></div></div>
     </aside>
     <div className="workspace-page-content">
-      <header className="topbar"><div className="brand-lockup"><div className="brand-mark">N</div><div><div className="brand-name">NEXUS FORGE</div><div className="brand-sub">GOVERNED INTELLIGENCE OS</div></div></div><div className="top-actions"><span className="live-pill"><span className="pulse-dot" /> CORE ONLINE</span><button className="profile-button" type="button" disabled={signingOut} onClick={() => void leaveSession()}>{signingOut ? 'Signing out…' : 'Sign out'}</button></div></header>
+      <header className="topbar"><div className="brand-lockup"><div className="brand-mark">N</div><div><div className="brand-name">NEXUS FORGE</div><div className="brand-sub">GOVERNED INTELLIGENCE OS</div></div></div><div className="top-actions"><Link to="/billing" className="ghost-button">Billing</Link><span className="live-pill"><span className="pulse-dot" /> CORE ONLINE</span><button className="profile-button" type="button" disabled={signingOut} onClick={() => void leaveSession()}>{signingOut ? 'Signing out…' : 'Sign out'}</button></div></header>
       {signOutError && <p role="alert">{signOutError}</p>}
       <section className="page-heading"><div className="section-kicker">{eyebrow}</div><h1>{title}</h1><p>Use Guided Workflow to understand the sequence, then use each dedicated workspace for its own controls and evidence.</p></section>
       <WorkspaceGuide />

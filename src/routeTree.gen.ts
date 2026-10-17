@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArtifactsRouteImport } from './routes/artifacts'
+import { Route as BillingRouteImport } from './routes/billing'
 import { Route as CapabilitiesRouteImport } from './routes/capabilities'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ComparisonsRouteImport } from './routes/comparisons'
 import { Route as CouncilRouteImport } from './routes/council'
 import { Route as DeliveryRouteImport } from './routes/delivery'
@@ -24,6 +26,7 @@ import { Route as ManifestRouteImport } from './routes/manifest'
 import { Route as MissionRouteImport } from './routes/mission'
 import { Route as OrchestratorRouteImport } from './routes/orchestrator'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ProvidersRouteImport } from './routes/providers'
 import { Route as ReadinessRouteImport } from './routes/readiness'
 import { Route as ResilienceRouteImport } from './routes/resilience'
@@ -42,9 +45,19 @@ const ArtifactsRoute = ArtifactsRouteImport.update({
   path: '/artifacts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BillingRoute = BillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CapabilitiesRoute = CapabilitiesRouteImport.update({
   id: '/capabilities',
   path: '/capabilities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComparisonsRoute = ComparisonsRouteImport.update({
@@ -107,6 +120,11 @@ const PortfolioRoute = PortfolioRouteImport.update({
   path: '/portfolio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProvidersRoute = ProvidersRouteImport.update({
   id: '/providers',
   path: '/providers',
@@ -146,7 +164,9 @@ const WorkflowRoute = WorkflowRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/artifacts': typeof ArtifactsRoute
+  '/billing': typeof BillingRoute
   '/capabilities': typeof CapabilitiesRoute
+  '/checkout': typeof CheckoutRoute
   '/comparisons': typeof ComparisonsRoute
   '/council': typeof CouncilRoute
   '/delivery': typeof DeliveryRoute
@@ -159,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/mission': typeof MissionRoute
   '/orchestrator': typeof OrchestratorRoute
   '/portfolio': typeof PortfolioRoute
+  '/pricing': typeof PricingRoute
   '/providers': typeof ProvidersRoute
   '/readiness': typeof ReadinessRoute
   '/resilience': typeof ResilienceRoute
@@ -170,7 +191,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/artifacts': typeof ArtifactsRoute
+  '/billing': typeof BillingRoute
   '/capabilities': typeof CapabilitiesRoute
+  '/checkout': typeof CheckoutRoute
   '/comparisons': typeof ComparisonsRoute
   '/council': typeof CouncilRoute
   '/delivery': typeof DeliveryRoute
@@ -183,6 +206,7 @@ export interface FileRoutesByTo {
   '/mission': typeof MissionRoute
   '/orchestrator': typeof OrchestratorRoute
   '/portfolio': typeof PortfolioRoute
+  '/pricing': typeof PricingRoute
   '/providers': typeof ProvidersRoute
   '/readiness': typeof ReadinessRoute
   '/resilience': typeof ResilienceRoute
@@ -195,7 +219,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/artifacts': typeof ArtifactsRoute
+  '/billing': typeof BillingRoute
   '/capabilities': typeof CapabilitiesRoute
+  '/checkout': typeof CheckoutRoute
   '/comparisons': typeof ComparisonsRoute
   '/council': typeof CouncilRoute
   '/delivery': typeof DeliveryRoute
@@ -208,6 +234,7 @@ export interface FileRoutesById {
   '/mission': typeof MissionRoute
   '/orchestrator': typeof OrchestratorRoute
   '/portfolio': typeof PortfolioRoute
+  '/pricing': typeof PricingRoute
   '/providers': typeof ProvidersRoute
   '/readiness': typeof ReadinessRoute
   '/resilience': typeof ResilienceRoute
@@ -221,7 +248,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/artifacts'
+    | '/billing'
     | '/capabilities'
+    | '/checkout'
     | '/comparisons'
     | '/council'
     | '/delivery'
@@ -234,6 +263,7 @@ export interface FileRouteTypes {
     | '/mission'
     | '/orchestrator'
     | '/portfolio'
+    | '/pricing'
     | '/providers'
     | '/readiness'
     | '/resilience'
@@ -245,7 +275,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/artifacts'
+    | '/billing'
     | '/capabilities'
+    | '/checkout'
     | '/comparisons'
     | '/council'
     | '/delivery'
@@ -258,6 +290,7 @@ export interface FileRouteTypes {
     | '/mission'
     | '/orchestrator'
     | '/portfolio'
+    | '/pricing'
     | '/providers'
     | '/readiness'
     | '/resilience'
@@ -269,7 +302,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/artifacts'
+    | '/billing'
     | '/capabilities'
+    | '/checkout'
     | '/comparisons'
     | '/council'
     | '/delivery'
@@ -282,6 +317,7 @@ export interface FileRouteTypes {
     | '/mission'
     | '/orchestrator'
     | '/portfolio'
+    | '/pricing'
     | '/providers'
     | '/readiness'
     | '/resilience'
@@ -294,7 +330,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArtifactsRoute: typeof ArtifactsRoute
+  BillingRoute: typeof BillingRoute
   CapabilitiesRoute: typeof CapabilitiesRoute
+  CheckoutRoute: typeof CheckoutRoute
   ComparisonsRoute: typeof ComparisonsRoute
   CouncilRoute: typeof CouncilRoute
   DeliveryRoute: typeof DeliveryRoute
@@ -307,6 +345,7 @@ export interface RootRouteChildren {
   MissionRoute: typeof MissionRoute
   OrchestratorRoute: typeof OrchestratorRoute
   PortfolioRoute: typeof PortfolioRoute
+  PricingRoute: typeof PricingRoute
   ProvidersRoute: typeof ProvidersRoute
   ReadinessRoute: typeof ReadinessRoute
   ResilienceRoute: typeof ResilienceRoute
@@ -332,11 +371,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArtifactsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/billing': {
+      id: '/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof BillingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/capabilities': {
       id: '/capabilities'
       path: '/capabilities'
       fullPath: '/capabilities'
       preLoaderRoute: typeof CapabilitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/comparisons': {
@@ -423,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortfolioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/providers': {
       id: '/providers'
       path: '/providers'
@@ -478,7 +538,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArtifactsRoute: ArtifactsRoute,
+  BillingRoute: BillingRoute,
   CapabilitiesRoute: CapabilitiesRoute,
+  CheckoutRoute: CheckoutRoute,
   ComparisonsRoute: ComparisonsRoute,
   CouncilRoute: CouncilRoute,
   DeliveryRoute: DeliveryRoute,
@@ -491,6 +553,7 @@ const rootRouteChildren: RootRouteChildren = {
   MissionRoute: MissionRoute,
   OrchestratorRoute: OrchestratorRoute,
   PortfolioRoute: PortfolioRoute,
+  PricingRoute: PricingRoute,
   ProvidersRoute: ProvidersRoute,
   ReadinessRoute: ReadinessRoute,
   ResilienceRoute: ResilienceRoute,

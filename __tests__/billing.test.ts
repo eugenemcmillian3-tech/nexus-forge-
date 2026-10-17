@@ -1,0 +1,117 @@
+import { afterEach,beforeEach,describe,expect,it,vi } from 'vitest'
+import { convexTest } from 'convex-test'
+import Stripe from 'stripe'
+import { chargeCents, RATE_VERSION, reportCost } from '../convex/billingRates'
+import schema from '../convex/schema'
+import {api,internal} from '../convex/_generated/api'
+const modules=import.meta.glob('../convex/**/*.ts')
+beforeEach(()=>{vi.stubEnv('VITE_STRIPE_MODE','test');vi.stubEnv('CONVEX_CLOUD_URL','https://quick-rabbit-810.eu-west-1.convex.cloud')})
+afterEach(()=>{vi.unstubAllEnvs();vi.useRealTimers()})
+async function fixture(){
+ const t=convexTest(schema,modules),owner=t.withIdentity({subject:'billing-owner'}),other=t.withIdentity({subject:'other'})
+ await t.mutation(internal.billing.seed,{})
+ const missionId=await t.run(c=>c.db.insert('missions',{ownerKey:'billing-owner',title:'Paid test',mission:'Verify funded operations',autonomy:'guided',budget:10,status:'draft',approved:false,completion:0}))
+ const buy=async(sku='credit-10',key='payment-one')=>{
+  const intent=await owner.mutation(internal.billing.intent,{sku,requestKey:'checkout_key_123456789_'+key})
+  await t.mutation(internal.billing.grant,{intentId:intent.id,mode:'test',key,paidCents:intent.product.price*100,customerId:'customer-one',...(intent.product.recurring?{subscriptionId:'subscription-one',periodEnd:Date.now()+86400000}: {})})
+  return intent
+ }
+ const begin=()=>t.mutation(internal.providerUsage.begin,{ownerKey:'billing-owner',missionId,stage:'paid-test',role:'research'})
+ return {t,owner,other,missionId,buy,begin}
+}
+describe('paid subscriptions and prepaid usage',()=>{
+ it('uses a pinned exact-model rate card and safe capped cent rounding',()=>{
+  expect(reportCost({provider:'groq',model:'openai/gpt-oss-20b',promptTokens:1000000,completionTokens:1000000},RATE_VERSION)).toEqual({usd:0.375,basis:RATE_VERSION})
+  expect(reportCost({provider:'groq',model:'unknown',promptTokens:10,completionTokens:10},RATE_VERSION)).toBeNull()
+  expect(reportCost({provider:'groq',model:'openai/gpt-oss-20b',promptTokens:10},RATE_VERSION)).toBeNull()
+  expect(reportCost({provider:'groq',model:'openai/gpt-oss-20b',promptTokens:10,completionTokens:10},'older-version')).toBeNull()
+  expect(chargeCents(0.1+0.2)).toBe(60);expect(chargeCents(0.000001)).toBe(1);expect(chargeCents(10)).toBe(100);expect(chargeCents(0)).toBe(0)
+ })
+ it('settles known model token usage without inventing an invoiced cost',async()=>{
+  const {t,owner,buy,begin}=await fixture();await buy()
+  const id=await begin()
+  await t.run(c=>c.db.patch(id,{reports:[{ordinal:1,provider:'groq',model:'openai/gpt-oss-20b',promptTokens:1000,completionTokens:1000,capturedAt:Date.now()}]}))
+  await t.mutation(internal.providerUsage.finish,{invocationId:id,outcome:'succeeded',observedReports:1})
+  const mine=await owner.query(api.billing.mine,{})
+  expect(mine.account).toMatchObject({prepaid:999,held:0,unresolved:0})
+  expect(mine.usage[0]).toMatchObject({charged:1,costBasis:RATE_VERSION})
+ })
+ it('publishes no free offer and grants paid topups exactly once with owner and mode isolation',async()=>{
+  const {t,owner,other,buy}=await fixture(),intent=await buy()
+  expect((await owner.query(api.billing.catalog,{})).products).toHaveLength(7)
+  await t.mutation(internal.billing.grant,{intentId:intent.id,mode:'test',key:'payment-one',paidCents:1000,customerId:'customer-one'})
+  expect((await owner.query(api.billing.mine,{})).account.prepaid).toBe(1000)
+  expect((await other.query(api.billing.mine,{})).account).toBeNull()
+  await expect(t.query(api.billing.mine,{})).rejects.toThrow(/Authenticated/)
+  vi.stubEnv('VITE_STRIPE_MODE','live')
+  expect((await owner.query(api.billing.mine,{})).account).toBeNull()
+  vi.stubEnv('VITE_STRIPE_MODE','')
+  expect(await owner.query(api.billing.mine,{})).toMatchObject({mode:'unconfigured',account:null,receipts:[],usage:[]})
+ })
+ it('rejects client-chosen prices and competing subscription checkouts',async()=>{
+  const {t,owner}=await fixture()
+  const intent=await owner.mutation(internal.billing.intent,{sku:'core',requestKey:'checkout_core_123456789'})
+  const repeat=await owner.mutation(internal.billing.intent,{sku:'core',requestKey:'checkout_core_987654321'})
+  expect(repeat.id).toBe(intent.id)
+  await expect(owner.mutation(internal.billing.intent,{sku:'pro',requestKey:'checkout_pro_123456789'})).rejects.toThrow(/still open/)
+  await expect(t.mutation(internal.billing.grant,{intentId:intent.id,mode:'test',key:'bad-payment',paidCents:1,customerId:'customer-one',subscriptionId:'subscription-one',periodEnd:Date.now()+10000})).rejects.toThrow(/catalog/)
+ })
+ it('does not grant unpaid subscriptions and renews allowances only for a later paid period',async()=>{
+  const {t,owner}=await fixture(),intent=await owner.mutation(internal.billing.intent,{sku:'core',requestKey:'checkout_core_123456789'})
+  expect((await owner.query(api.billing.mine,{})).account).toBeNull()
+  const periodEnd=Date.now()+10000,args={intentId:intent.id,mode:'test' as const,key:'invoice-one',paidCents:4900,customerId:'customer-one',subscriptionId:'subscription-one',periodEnd}
+  await t.mutation(internal.billing.grant,args)
+  await t.run(async c=>{const account=await c.db.query('billingAccounts').first();await c.db.patch(account!._id,{included:200})})
+  await t.mutation(internal.billing.grant,{...args,key:'duplicate-period-invoice'})
+  expect((await owner.query(api.billing.mine,{})).account.included).toBe(200)
+  await t.mutation(internal.billing.grant,{...args,key:'invoice-two',periodEnd:periodEnd+10000})
+  expect((await owner.query(api.billing.mine,{})).account.included).toBe(1000)
+ })
+ it('blocks unfunded AI and serializes balance reservations without overdraft',async()=>{
+  const {t,owner,buy,begin}=await fixture()
+  await expect(begin()).rejects.toThrow(/Paid usage/)
+  await buy()
+  for(let i=0;i<10;i++)await begin()
+  await expect(begin()).rejects.toThrow(/credit/)
+  expect((await owner.query(api.billing.mine,{})).account).toMatchObject({prepaid:0,held:1000})
+  expect(await t.run(c=>c.db.query('providerInvocations').collect())).toHaveLength(10)
+ })
+ it('settles 2x observed costs once and permits evidence-backed platform-error credit reversal',async()=>{
+  const {t,owner,buy,begin}=await fixture();await buy()
+  const id=await begin()
+  await t.run(c=>c.db.patch(id,{reports:[{ordinal:1,provider:'groq',model:'model',reportedCostUsd:0.2,capturedAt:Date.now()}]}))
+  const finish={invocationId:id,outcome:'succeeded' as const,observedReports:1}
+  await t.mutation(internal.providerUsage.finish,finish);await t.mutation(internal.providerUsage.finish,finish)
+  let mine=await owner.query(api.billing.mine,{})
+  expect(mine.account).toMatchObject({prepaid:960,held:0});expect(mine.usage[0].charged).toBe(40)
+  await t.mutation(internal.billingReview.reversePlatformError,{id:mine.usage[0]._id,evidence:'Confirmed duplicate platform processing error receipt'})
+  await t.mutation(internal.billingReview.reversePlatformError,{id:mine.usage[0]._id,evidence:'Confirmed duplicate platform processing error receipt'})
+  mine=await owner.query(api.billing.mine,{})
+  expect(mine.account.prepaid).toBe(1000)
+ })
+ it('keeps missing costs under review and blocks new execution until reviewed',async()=>{
+  const {t,owner,buy,begin}=await fixture();await buy()
+  const id=await begin()
+  await t.mutation(internal.providerUsage.finish,{invocationId:id,outcome:'failed',observedReports:0})
+  let mine=await owner.query(api.billing.mine,{})
+  expect(mine.account).toMatchObject({prepaid:900,held:100,unresolved:1})
+  await expect(begin()).rejects.toThrow(/billing review/)
+  await t.mutation(internal.billingReview.resolveHold,{id:mine.usage[0]._id,chargedCents:0,evidence:'Provider reconciliation confirms no billable usage occurred'})
+  mine=await owner.query(api.billing.mine,{})
+  expect(mine.account).toMatchObject({prepaid:1000,held:0,unresolved:0})
+ })
+ it('does not allow test purchases to authorize production AI',async()=>{
+  const {buy,begin}=await fixture();await buy()
+  vi.stubEnv('CONVEX_CLOUD_URL','https://tame-rat-826.eu-west-1.convex.cloud')
+  await expect(begin()).rejects.toThrow(/Real payments are not activated/)
+ })
+ it('requires a valid signed event and matching mode before fulfillment',async()=>{
+  const {t}=await fixture()
+  vi.stubEnv('STRIPE_SECRET_KEY','sk_test_fixture');vi.stubEnv('STRIPE_WEBHOOK_SECRET','whsec_fixture')
+  const payload=JSON.stringify({id:'evt_fixture',object:'event',livemode:false,type:'checkout.session.expired',data:{object:{id:'cs_fixture'}}})
+  const signature=Stripe.webhooks.generateTestHeaderString({payload,secret:'whsec_fixture'})
+  expect(await t.action(internal.payments.webhook,{payload,signature:'forged',mode:'test'})).toEqual({success:false})
+  expect(await t.action(internal.payments.webhook,{payload,signature,mode:'live'})).toEqual({success:false})
+  expect(await t.action(internal.payments.webhook,{payload,signature,mode:'test'})).toEqual({success:true})
+ })
+})

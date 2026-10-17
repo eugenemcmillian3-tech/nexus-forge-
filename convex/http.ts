@@ -86,4 +86,12 @@ http.route({
 })
 
 http.route({path:'/product-events',method:'POST',handler:httpAction(async(ctx,request)=>{const header=request.headers.get('Authorization')??'',secret=header.startsWith('Bearer ')?header.slice(7):'';if(!/^[a-f0-9]{64}$/.test(secret))return unauthorized();let body;try{body=JSON.parse(await boundedText(request,8000))}catch{return new Response(JSON.stringify({error:'Invalid bounded JSON'}),{status:400})}if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).sort().join(',')!=='eventKey,sourceId,success'||typeof body.sourceId!=='string'||typeof body.eventKey!=='string'||typeof body.success!=='boolean')return new Response(JSON.stringify({error:'Expected sourceId, eventKey and success'}),{status:400});try{const result=await ctx.runMutation(internal.productTelemetry.ingest,{...body,tokenHash:await tokenDigest(secret),digest:await tokenDigest(JSON.stringify([body.eventKey,body.success]))});return Response.json(result)}catch{return new Response(JSON.stringify({error:'Event authorization, quota or immutable identity check failed'}),{status:409,headers:{'Content-Type':'application/json'}})}})})
+http.route({path:'/stripe/webhook',method:'POST',handler:httpAction(async(ctx,request)=>{
+ const mode=request.headers.get('x-stripe-mode')
+ if(mode!=='test'&&mode!=='live')return new Response('Invalid payment mode',{status:400})
+ try{
+  const result=await ctx.runAction(internal.payments.webhook,{payload:await boundedText(request,1000000),signature:request.headers.get('stripe-signature')??'',mode})
+  return Response.json({received:result.success},{status:result.success?200:400})
+ }catch{return new Response('Payment processing requires retry',{status:500})}
+})})
 export default http

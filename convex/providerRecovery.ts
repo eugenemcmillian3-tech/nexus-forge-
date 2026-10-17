@@ -1,3 +1,4 @@
+import { reserveUsage, settleUsage } from './billingUsage'
 import { checkProviderClaim } from './providerClaimFence'
 import { v } from 'convex/values'
 import { internalMutation } from './_generated/server'
@@ -31,6 +32,7 @@ export const reserve = internalMutation({
     }
     const { requestDigest: _digest, executionClaimId: _claim, ...fields } = args
     const invocationId = await ctx.db.insert('providerInvocations', { ...fields, startedAt: Date.now(), outcome: 'pending', usageStatus: 'pending', reports: [] })
+    await reserveUsage(ctx, invocationId, args.ownerKey)
     return { invocationId }
   },
 })
@@ -52,6 +54,7 @@ export const complete = internalMutation({
     await ctx.db.insert('providerResults', { invocationId: row._id, requestDigest: args.requestDigest, answer: args.answer })
     const usageStatus = !args.observedReports ? 'missing' as const : row.reports.length === args.observedReports ? 'recorded' as const : 'gap' as const
     // Answer and success commit together. If this transaction fails, pending remains.
+    await settleUsage(ctx, row, usageStatus)
     await ctx.db.patch(row._id, { outcome: 'succeeded', observedReports: args.observedReports, usageStatus, finishedAt: Date.now() })
     return null
   },

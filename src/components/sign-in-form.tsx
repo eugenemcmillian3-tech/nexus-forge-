@@ -89,6 +89,7 @@ export function SignInForm(){
      </form>
      <div className="welcome-recovery"><button type="button" disabled={loading||resendIn>0} onClick={()=>void resend()}>{resendIn>0?'Resend code in '+resendIn+'s':'Resend code'}</button><button type="button" disabled={loading} onClick={()=>{setStep('email');setCode('');setError(null);setNotice('')}}>Use another email</button></div>
     </>}
+    <p className="welcome-account-note">Paid access: monthly subscriptions or prepaid usage. No free plan or free trial. <a href="/pricing">View pricing →</a></p>
     <div className="welcome-trust"><ShieldCheck size={16} aria-hidden="true"/><p>Your workspace starts private.<br/><span>You decide what to share and approve.</span></p></div>
    </section>
   </div>

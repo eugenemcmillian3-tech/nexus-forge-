@@ -1,3 +1,4 @@
+import { reserveUsage, settleUsage } from './billingUsage'
 import { checkProviderClaim } from './providerClaimFence'
 import { v } from 'convex/values'
 import { paginationOptsValidator, paginationResultValidator } from 'convex/server'
@@ -26,7 +27,9 @@ export const begin = internalMutation({
       if (active) throw new Error('Provider work is already pending for this run stage; review its invocation before retrying')
     }
     const { executionClaimId: _claim, ...fields } = args
-    return ctx.db.insert('providerInvocations', { ...fields, startedAt: Date.now(), outcome: 'pending', usageStatus: 'pending', reports: [] })
+    const id = await ctx.db.insert('providerInvocations', { ...fields, startedAt: Date.now(), outcome: 'pending', usageStatus: 'pending', reports: [] })
+    await reserveUsage(ctx, id, args.ownerKey)
+    return id
   },
 })
 export const finish = internalMutation({
@@ -40,6 +43,7 @@ export const finish = internalMutation({
       return null
     }
     const usageStatus = !args.observedReports ? 'missing' as const : row.reports.length === args.observedReports ? 'recorded' as const : 'gap' as const
+    await settleUsage(ctx, row, usageStatus)
     await ctx.db.patch(row._id, { outcome: args.outcome, observedReports: args.observedReports, usageStatus, finishedAt: Date.now() })
     return null
   },
