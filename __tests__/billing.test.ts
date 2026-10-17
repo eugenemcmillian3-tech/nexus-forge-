@@ -20,6 +20,22 @@ async function fixture(){
  return {t,owner,other,missionId,buy,begin}
 }
 describe('paid subscriptions and prepaid usage',()=>{
+ it('retains a scheduled cancellation without removing the paid current-period allowance',async()=>{
+  const {t,owner,buy}=await fixture(),intent=await buy('core','paid-core')
+  await t.mutation(internal.billing.subscriptionState,{intentId:intent.id,mode:'test',customerId:'customer-one',subscriptionId:'subscription-one',status:'active',cancelAtPeriodEnd:true})
+  expect((await owner.query(api.billing.mine,{})).account).toMatchObject({included:1000,subscriptionStatus:'active',cancelAtPeriodEnd:true})
+  const cancelAt=Date.now()+86400000
+  await t.mutation(internal.billing.subscriptionState,{intentId:intent.id,mode:'test',customerId:'customer-one',subscriptionId:'subscription-one',status:'active',cancelAtPeriodEnd:false,cancelAt})
+  expect((await owner.query(api.billing.mine,{})).account).toMatchObject({included:1000,subscriptionStatus:'active',cancelAt})
+ })
+ it('blocks credit if a refund notification precedes account fulfillment',async()=>{
+  const {t,owner}=await fixture()
+  const intent=await owner.mutation(internal.billing.intent,{sku:'credit-10',requestKey:'checkout_refund_123456789'})
+  await t.mutation(internal.billing.freeze,{customerId:'customer-one',mode:'test'})
+  await t.mutation(internal.billing.freeze,{customerId:'customer-one',mode:'test'})
+  await expect(t.mutation(internal.billing.grant,{intentId:intent.id,mode:'test',key:'refunded-payment',paidCents:1000,customerId:'customer-one'})).rejects.toThrow(/refund review/)
+  expect((await owner.query(api.billing.mine,{})).account).toBeNull()
+ })
  it('gates diagnostic inference and serializes its included request allowance',async()=>{
   const {t,buy}=await fixture()
   await expect(t.mutation(internal.billingDiagnostics.authorize,{ownerKey:'billing-owner'})).rejects.toThrow(/Funded paid/)

@@ -23,7 +23,7 @@ export const mine = query({ args: {}, returns: v.any(), handler: async ctx => {
   const mode = currentPaymentMode(), account = await accountFor(ctx,ownerKey,mode)
   const receipts = await ctx.db.query('billingReceipts').withIndex('by_owner_mode',q=>q.eq('ownerKey',ownerKey).eq('mode',mode)).order('desc').take(20)
   const usage = await ctx.db.query('billingHolds').withIndex('by_owner_mode',q=>q.eq('ownerKey',ownerKey).eq('mode',mode)).order('desc').take(20)
-  return { mode, usage, account: account ? { prepaid: account.prepaid, included: account.expiresAt>Date.now()?account.included:0, held:account.held, unresolved:account.unresolved, frozen:account.frozen, plan:account.plan, subscriptionStatus:account.subscriptionStatus, expiresAt:account.expiresAt } : null, receipts }
+  return { mode, usage, account: account ? { prepaid: account.prepaid, included: account.expiresAt>Date.now()?account.included:0, held:account.held, unresolved:account.unresolved, frozen:account.frozen, plan:account.plan, subscriptionStatus:account.subscriptionStatus, cancelAtPeriodEnd:account.cancelAtPeriodEnd??false, cancelAt:account.cancelAt, expiresAt:account.expiresAt } : null, receipts }
 }})
 export const context = internalQuery({ args:{}, returns:v.any(), handler:async ctx=>{
   const ownerKey=await requireOperator(ctx),mode=currentPaymentMode()
@@ -52,6 +52,11 @@ export const bindSession = internalMutation({args:{id:v.id('billingIntents'),ses
   if(row.sessionId&&row.sessionId!==a.sessionId)throw new Error('Conflicting checkout session')
   await ctx.db.patch(a.id,{sessionId:a.sessionId});return null
 }})
+export const customerCanPay = internalQuery({args:{customerId:v.string(),mode:paymentMode},returns:v.null(),handler:async(ctx,a)=>{
+ const block=await ctx.db.query('billingRefundBlocks').withIndex('by_customer_mode',q=>q.eq('customerId',a.customerId).eq('mode',a.mode)).unique()
+ if(block)throw new Error('Refund review is required before another purchase')
+ return null
+}})
 export const getIntent = internalQuery({args:{id:v.id('billingIntents'),mode:paymentMode},returns:v.any(),handler:async(ctx,a)=>{
   const intent=await ctx.db.get(a.id);if(!intent||intent.mode!==a.mode)return null
   const product=await ctx.db.query('billingProducts').withIndex('by_sku',q=>q.eq('sku',intent.sku)).unique()
@@ -64,6 +69,8 @@ export const grant = internalMutation({args:{intentId:v.id('billingIntents'),mod
   if(product.recurring&&(!a.periodEnd||!Number.isFinite(a.periodEnd)))throw new Error('Paid subscription period missing')
   const prior=await ctx.db.query('billingReceipts').withIndex('by_key_mode',q=>q.eq('key',a.key).eq('mode',a.mode)).unique()
   if(prior){if(prior.ownerKey!==intent.ownerKey||prior.paidCents!==a.paidCents||prior.sku!==intent.sku)throw new Error('Conflicting payment');return null}
+  const refundBlock=await ctx.db.query('billingRefundBlocks').withIndex('by_customer_mode',q=>q.eq('customerId',a.customerId).eq('mode',a.mode)).unique()
+  if(refundBlock)throw new Error('Billing requires refund review')
   const old=await accountFor(ctx,intent.ownerKey,a.mode)
   if(old?.customerId&&old.customerId!==a.customerId)throw new Error('Payment customer mismatch')
   if(old?.frozen)throw new Error('Billing requires review')
@@ -76,14 +83,16 @@ export const grant = internalMutation({args:{intentId:v.id('billingIntents'),mod
   await ctx.db.insert('billingReceipts',{ownerKey:intent.ownerKey,mode:a.mode,key:a.key,sku:intent.sku,paidCents:a.paidCents,creditCents:Math.round(product.credit*100),createdAt:Date.now(),...(a.invoiceUrl?{invoiceUrl:a.invoiceUrl}:{}),...(a.paymentIntentId?{paymentIntentId:a.paymentIntentId}:{})})
   return null
 }})
-export const subscriptionState = internalMutation({args:{intentId:v.id('billingIntents'),mode:paymentMode,customerId:v.string(),subscriptionId:v.string(),status:v.string()},returns:v.null(),handler:async(ctx,a)=>{
+export const subscriptionState = internalMutation({args:{intentId:v.id('billingIntents'),mode:paymentMode,customerId:v.string(),subscriptionId:v.string(),status:v.string(),cancelAtPeriodEnd:v.optional(v.boolean()),cancelAt:v.optional(v.number())},returns:v.null(),handler:async(ctx,a)=>{
  const intent=await ctx.db.get(a.intentId);if(!intent||intent.mode!==a.mode)return null
  const account=await accountFor(ctx,intent.ownerKey,a.mode)
  if(account?.subscriptionId===a.subscriptionId&&account.customerId===a.customerId){
-   await ctx.db.patch(account._id,{subscriptionStatus:a.status,...(['canceled','unpaid','past_due','incomplete_expired'].includes(a.status)?{included:0}:{})})
+   await ctx.db.patch(account._id,{subscriptionStatus:a.status,...(a.cancelAtPeriodEnd!==undefined?{cancelAtPeriodEnd:a.cancelAtPeriodEnd}:{}),...(a.cancelAt!==undefined?{cancelAt:a.cancelAt}:{}),...(['canceled','unpaid','past_due','incomplete_expired'].includes(a.status)?{included:0}:{})})
  }return null
 }})
 export const freeze = internalMutation({args:{customerId:v.string(),mode:paymentMode},returns:v.null(),handler:async(ctx,a)=>{
+ const block=await ctx.db.query('billingRefundBlocks').withIndex('by_customer_mode',q=>q.eq('customerId',a.customerId).eq('mode',a.mode)).unique()
+ if(!block)await ctx.db.insert('billingRefundBlocks',{customerId:a.customerId,mode:a.mode,createdAt:Date.now()})
  const rows=await ctx.db.query('billingAccounts').withIndex('by_customer_mode',q=>q.eq('customerId',a.customerId).eq('mode',a.mode)).take(10)
  for(const row of rows)await ctx.db.patch(row._id,{frozen:true})
  return null

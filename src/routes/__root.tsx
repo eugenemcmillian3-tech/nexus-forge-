@@ -1,7 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import { MacalyBridge } from '@macaly/bridge'
 import AppConvexProvider from '@/components/convex-client-provider'
-import { AuthWrapper } from '@/components/auth-wrapper'
+import { RouteAccess } from '@/components/route-access'
 import '../styles.css'
 import siteMetadata from '../metadata.json'
 
@@ -42,7 +42,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head><HeadContent /></head>
       <MacalyBridge>
         <body>
-          <AppConvexProvider><AuthWrapper>{children}</AuthWrapper></AppConvexProvider>
+          <AppConvexProvider><RouteAccess>{children}</RouteAccess></AppConvexProvider>
           <Scripts />
         </body>
       </MacalyBridge>

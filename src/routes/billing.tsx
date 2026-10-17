@@ -13,6 +13,7 @@ function Account(){
  <p>Mode: <strong>{mine.mode==='live'?'Real payments':mine.mode==='test'?'Test payments · no real charges':'Payments awaiting activation'}</strong></p>
  <p>Prepaid: {money(mine.account?.prepaid??0)} · Available monthly credit: {money(mine.account?.included??0)} · Reserved: {money(mine.account?.held??0)}</p>
  <p>Plan: {mine.account?.plan??'No subscription'} · Status: {mine.account?.subscriptionStatus??'No paid subscription'}</p>
+ {(mine.account?.cancelAtPeriodEnd||!!mine.account?.cancelAt)&&<p role="status">Cancellation scheduled. Your subscription ends {new Date(mine.account.cancelAt||mine.account.expiresAt).toLocaleDateString()}.</p>}
  {!!mine.account?.unresolved&&<p role="alert">Usage cost requires billing review. New AI execution is paused; reserved funds have not been finalized as charges.</p>}
  {mine.account?.frozen&&<p role="alert">Billing is frozen pending refund review.</p>}
  <button className="secondary-button" disabled={busy||!mine.receipts.length} onClick={async()=>{
