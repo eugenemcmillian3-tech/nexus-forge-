@@ -23,3 +23,20 @@ Railway documentation search returned a private-container-registry guide URL who
 Tested backend source ghcr.io/get-convex/convex-backend:c449d75382dafa006f431521da4623d74edbad1a, a published tag shown in the official GitHub package listing (https://github.com/get-convex/convex-backend/pkgs/container/convex-backend). Deployment 649f173e-0d87-4a0f-9844-589414139417 reached FAILED at CREATE_CONTAINER with the same registry-connectivity error. The failure is therefore not confined to the literal latest reference; this does not prove the underlying transport/authentication/manifest cause. The backend remains configured to this diagnostic version tag; dashboard remains latest. Neither has started, no fixture was loaded, and no runtime compatibility or recovery was tested. Environment settled with five failures, both Convex services offline, Postgres online, no pending work.
 
 The current Railway registry documentation was successfully retrieved at https://docs.railway.com/builds/private-registries . The older guide URL mismatch is a documentation-location issue. The current guide confirms GHCR support and describes credentials for private registries; it does not justify adding credentials or upgrading a plan to remedy this observed public-image failure. No credentials or plan changes were made.
+
+## In-lab registry controls — 16:03 UTC
+
+Created a bounded, no-server Railway Bun diagnostic script in this isolated environment: service registry-diagnostic-once (735cfd0c-cc2d-4636-8388-1fbebfe4e491). It reads no environment credentials, uses only anonymous registry requests, logs no tokens, creates no domain or schedule, and exits after its checks. Initial deployment 20e35905-bc4c-43d2-9b88-bc0d83f0dfbb and control deployment adb37be0-f42c-4a75-b91e-c3f204248741 both reached SUCCESS and logged completion. This is diagnostic execution success, not Convex deployment or recovery success.
+
+Observed control results from the Railway runtime:
+
+| Request | HTTP | Registry response |
+| --- | --- | --- |
+| https://ghcr.io/v2/ | 401 | UNAUTHORIZED, authentication required (registry challenge) |
+| Anonymous token scope repository:get-convex/convex-backend:pull | 403 | DENIED, requested access to the resource is denied |
+| Anonymous token scope repository:get-convex/convex-dashboard:pull | 403 | DENIED, requested access to the resource is denied |
+| Anonymous token scope repository:railwayapp-templates/postgres-ssl:pull | 200 | Token response received; token not logged |
+
+The request pattern was https://ghcr.io/token?service=ghcr.io&scope=repository:<package>:pull . These controls demonstrate GHCR reachability and a successful anonymous-token control from the lab runtime, while the two Convex package scopes deny anonymous access. This narrows the actionable issue to those package scopes and supersedes a broad connectivity hypothesis for this runtime. It does not prove the separate Railway image-puller uses identical routing, or distinguish package visibility, removal, naming, or package-specific policy. Search-index public-package metadata is insufficient to override fresh HTTP results. Manifest and blob checks for Convex could not proceed because no anonymous token was issued.
+
+Next dependency: establish a currently accessible official Convex package reference, or confirm package visibility/access with its publisher and inspect Railway's puller error. Do not add arbitrary credentials, buy a plan, use an unverified mirror, or claim application/runtime failure. Both Convex services remain offline; durable Postgres remains online. Production, managed Testing, customer payments and backup copies were untouched.
